@@ -36,7 +36,13 @@
       "PowerShell(Select-String *)",
       "PowerShell(claude doctor *)",
       "PowerShell(\\(Get-Content \"C:/Users/sangs/OneDrive/Desktop/Musaai/plan.html\" | Measure-Object -Line\\).Lines; \\(Get-Content \"C:/Users/sangs/OneDrive/Desktop/Musaai/plan-template.js\" | Measure-Object -Line\\).Lines)",
-      "PowerShell(\\(Get-Content \"C:/Users/sangs/OneDrive/Desktop/Musaai/lifting.html\" | Measure-Object -Line\\).Lines)"
+      "PowerShell(\\(Get-Content \"C:/Users/sangs/OneDrive/Desktop/Musaai/lifting.html\" | Measure-Object -Line\\).Lines)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(Get-Content \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\")",
+      "Bash(Measure-Object -Line)",
+      "Bash(Select-Object -ExpandProperty Lines)",
+      "PowerShell(Get-Content *)"
     ]
   }
 }
