@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2C5282">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="무사이(Musai) — 고소작업 안전검토 계산기. 산업안전보건기준에 관한 규칙 기반.">
+  <title>무사이 · 고소작업 안전검토</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    /* =====================================================
+       scaffold.html — 고소작업 안전검토 계산기
+       자체완결형 (외부 CSS 없음). 네이비 + 스틸블루 테마.
+       ===================================================== */
+    :root {
+      --p:       #2C5282;
+      --p-dk:    #1E3A5F;
+      --steel:   #7B9EE0;
+      --bg:      #F5F5F7;
+      --bg-card: #FFFFFF;
+      --border:  rgba(0,0,0,0.10);
+      --border-s: rgba(0,0,0,0.06);
+      --text:    #1D1D1F;
+      --text-s:  #3C3C43;
+      --text-m:  #6E6E73;
+      --text-l:  #86868B;
+      --ok:      #34C759;
+      --warn:    #FF9500;
+      --ng:      #FF3B30;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* ── 앱 컨테이너 ── */
+    .app {
+      width: 100%;
+      max-width: 540px;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    @media (min-width: 560px) {
+      .app {
+        background: #fff;
+        border: 0.5px solid var(--border);
+        border-radius: 18px;
+        min-height: auto;
+        margin: 24px 0 40px;
+        overflow: hidden;
+      }
+    }
+
+    /* ── 상단바 ── */
+    .topbar {
+      background: #fff;
+      border-bottom: 0.5px solid var(--border);
+      padding: env(safe-area-inset-top,0) 16px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 52px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .btn-back {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.05);
+      border: none; cursor: pointer;
+      color: var(--p-dk); font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none;
+    }
+    .topbar-logo { font-size: 17px; font-weight: 700; letter-spacing: -0.5px; color: var(--text); }
+    .topbar-logo em { color: var(--steel); font-style: normal; }
+    .topbar-sub { font-size: 11px; color: var(--text-l); letter-spacing: -0.1px; }
+    .topbar-badge {
+      font-size: 10px; font-weight: 600;
+      background: rgba(0,0,0,0.05); color: var(--text-m);
+      padding: 3px 9px; border-radius: 20px; letter-spacing: 0.05em;
+    }
+
+    /* ── 진행 표시 ── */
+    .prog-wrap { padding: 10px 20px 0; flex-shrink: 0; }
+    .prog-labels { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .prog-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+      color: var(--text-l); text-transform: uppercase; transition: color 0.2s;
+    }
+    .prog-label.on { color: var(--p); }
+    .prog { height: 3px; border-radius: 2px; background: rgba(0,0,0,0.06); overflow: hidden; }
+    .prog-fill { height: 100%; background: var(--p); border-radius: 2px; transition: width 0.3s ease; }
+    .prog-step { font-size: 11px; color: var(--text-l); margin-top: 5px; margin-bottom: 2px; text-align: right; }
+
+    /* ── 스크롤 영역 ── */
+    .content {
+      flex: 1; overflow-y: auto; padding: 20px 20px 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── 스텝 패널 ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .step-title { font-size: 22px; font-weight: 700; letter-spacing: -0.6px; color: var(--text); margin-bottom: 4px; }
+    .step-desc { font-size: 13px; color: var(--text-m); margin-bottom: 20px; line-height: 1.55; word-break: keep-all; }
+
+    /* ── 카드 ── */
+    .card {
+      background: #fff;
+      border: 0.5px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .card-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-m); letter-spacing: 0.05em;
+      text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    /* ── 작업 유형 선택 카드 (Step 1) ── */
+    .work-list { display: flex; flex-direction: column; gap: 8px; }
+    .work-btn {
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 12px;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .work-icon {
+      flex-shrink: 0; width: 32px; height: 32px;
+      color: var(--p);
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(44,82,130,0.08); border-radius: 8px;
+    }
+    .work-icon svg { width: 18px; height: 18px; display: block; }
+    .work-info { flex: 1; min-width: 0; }
+    .work-name { font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+    .work-sub { font-size: 11px; color: var(--text-l); margin-top: 2px; }
+    .work-arrow { font-size: 14px; color: var(--text-l); flex-shrink: 0; }
+    .work-btn.on { border-color: var(--p); background: #EEF3FA; }
+    .work-btn.on .work-name { color: var(--p); }
+    .work-btn.on .work-icon { background: rgba(44,82,130,0.14); }
+    .work-btn.on .work-arrow { color: var(--p); }
+
+    /* ── 입력 필드 ── */
+    .field-group { display: flex; flex-direction: column; gap: 10px; }
+    .field-item {}
+    .field-label { font-size: 11px; font-weight: 600; color: var(--text-m); margin-bottom: 4px; letter-spacing: 0.02em; display: block; }
+    .field-wrap {
+      display: flex; align-items: center;
+      border: 0.5px solid var(--border);
+      border-radius: 10px; overflow: hidden; background: #fff;
+    }
+    .field-wrap:focus-within { border-color: var(--p); }
+    .field-inp {
+      flex: 1; min-width: 0; width: 0;
+      border: none; outline: none;
+      padding: 10px 10px;
+      font-size: 16px; font-weight: 300; color: var(--text);
+      background: transparent; font-family: inherit;
+    }
+    .field-unit { font-size: 11px; color: var(--text-l); padding: 0 10px 0 2px; white-space: nowrap; flex-shrink: 0; }
+
+    /* ── 2열 그리드 입력 ── */
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    /* ── 토글 버튼 그룹 ── */
+    .toggle-group { display: flex; gap: 6px; }
+    .toggle-btn {
+      flex: 1;
+      border: 0.5px solid var(--border); border-radius: 8px;
+      background: #fff; padding: 9px 4px;
+      font-family: inherit; font-size: 12px; font-weight: 500;
+      color: var(--text-m); cursor: pointer;
+      transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+      text-align: center;
+    }
+    .toggle-btn.on { background: #EEF3FA; border-color: var(--p); color: var(--p); font-weight: 600; }
+
+    /* ── 체크 토글 (환경 조건) ── */
+    .env-list { display: flex; flex-direction: column; gap: 0; }
+    .env-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 0; border-bottom: 0.5px solid var(--border-s);
+    }
+    .env-item:last-child { border-bottom: none; }
+    .env-label { font-size: 13px; color: var(--text-s); display: flex; align-items: center; gap: 8px; }
+    .env-label svg { width: 16px; height: 16px; color: var(--text-m); flex-shrink: 0; }
+    .env-switch {
+      width: 44px; height: 26px;
+      background: rgba(0,0,0,0.12); border-radius: 13px;
+      position: relative; cursor: pointer;
+      transition: background 0.2s; border: none; flex-shrink: 0;
+    }
+    .env-switch::after {
+      content: ''; position: absolute;
+      top: 3px; left: 3px;
+      width: 20px; height: 20px;
+      background: #fff; border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .env-switch.on { background: var(--p); }
+    .env-switch.on::after { transform: translateX(18px); }
+
+    /* ── 자동 계산 결과 표시박스 ── */
+    .calc-display {
+      background: rgba(44,82,130,0.07);
+      border-radius: 10px; padding: 12px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 10px;
+    }
+    .calc-display-label { font-size: 12px; color: var(--text-m); }
+    .calc-display-val { font-size: 22px; font-weight: 300; color: var(--p); letter-spacing: -0.5px; }
+    .calc-display-unit { font-size: 11px; color: var(--text-m); margin-left: 2px; }
+
+    /* ── 판정 체크리스트 (Step 3) ── */
+    .judge-list { display: flex; flex-direction: column; gap: 0; }
+    .judge-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 11px 0; border-bottom: 0.5px solid var(--border-s);
+    }
+    .judge-item:last-child { border-bottom: none; }
+    .judge-badge {
+      flex-shrink: 0; margin-top: 2px;
+      display: flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px;
+    }
+    .judge-badge svg { width: 18px; height: 18px; display: block; }
+    .judge-badge.ok  svg { color: var(--ok); }
+    .judge-badge.warn svg { color: var(--warn); }
+    .judge-badge.ng  svg { color: var(--ng); }
+    .judge-content { flex: 1; min-width: 0; }
+    .judge-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; }
+    .judge-detail { font-size: 11px; color: var(--text-m); margin-top: 2px; line-height: 1.45; }
+
+    /* ── 종합 판정 배너 ── */
+    .verdict-banner {
+      border-radius: 12px; padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 12px;
+    }
+    .verdict-banner.ok   { background: rgba(52,199,89,0.10); border: 0.5px solid rgba(52,199,89,0.35); }
+    .verdict-banner.warn { background: rgba(255,149,0,0.10); border: 0.5px solid rgba(255,149,0,0.35); }
+    .verdict-banner.ng   { background: rgba(255,59,48,0.08); border: 0.5px solid rgba(255,59,48,0.30); }
+    .verdict-icon { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+    .verdict-icon svg { width: 28px; height: 28px; }
+    .verdict-banner.ok   .verdict-icon svg { color: var(--ok); }
+    .verdict-banner.warn .verdict-icon svg { color: var(--warn); }
+    .verdict-banner.ng   .verdict-icon svg { color: var(--ng); }
+    .verdict-text {}
+    .verdict-label { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 2px; }
+    .verdict-banner.ok   .verdict-label { color: #1a7a35; }
+    .verdict-banner.warn .verdict-label { color: #7a4900; }
+    .verdict-banner.ng   .verdict-label { color: #8a0000; }
+    .verdict-title { font-size: 18px; font-weight: 700; letter-spacing: -0.4px; }
+    .verdict-banner.ok   .verdict-title { color: #1a7a35; }
+    .verdict-banner.warn .verdict-title { color: #7a4900; }
+    .verdict-banner.ng   .verdict-title { color: #8a0000; }
+
+    /* ── 히어로 카드 (Step 4) ── */
+    .hero-card {
+      border-radius: 14px; padding: 20px 18px; margin-bottom: 12px;
+      color: #fff;
+    }
+    .hero-card.ok   { background: var(--ok); }
+    .hero-card.warn { background: var(--warn); }
+    .hero-card.ng   { background: var(--ng); }
+    .hero-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+    .hero-verdict-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.7); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+    .hero-verdict-title { font-size: 28px; font-weight: 700; letter-spacing: -0.8px; }
+    .hero-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .hero-icon svg { width: 22px; height: 22px; color: #fff; }
+    .hero-divider { height: 0.5px; background: rgba(255,255,255,0.25); margin-bottom: 12px; }
+    .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .hero-stat-label { font-size: 10px; color: rgba(255,255,255,0.65); margin-bottom: 2px; }
+    .hero-stat-val { font-size: 18px; font-weight: 300; color: #fff; letter-spacing: -0.5px; }
+    .hero-stat-val small { font-size: 10px; }
+
+    /* ── 요약 테이블 ── */
+    .summary-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .summary-table tr { border-bottom: 0.5px solid var(--border-s); }
+    .summary-table tr:last-child { border-bottom: none; }
+    .summary-table td { padding: 9px 0; vertical-align: top; }
+    .summary-table td:first-child { color: var(--text-m); width: 90px; }
+    .summary-table td:last-child { color: var(--text); font-weight: 500; text-align: right; }
+
+    /* ── 체크리스트 (Step 4) ── */
+    .checklist { display: flex; flex-direction: column; gap: 0; }
+    .check-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--border-s); }
+    .check-item:last-child { border-bottom: none; }
+    .check-box {
+      width: 20px; height: 20px; flex-shrink: 0;
+      border: 1.5px solid var(--border); border-radius: 6px; margin-top: 1px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .check-box.checked { background: var(--ok); border-color: var(--ok); }
+    .check-box svg { width: 12px; height: 12px; color: #fff; display: none; }
+    .check-box.checked svg { display: block; }
+    .check-text { font-size: 13px; color: var(--text-s); line-height: 1.5; word-break: keep-all; }
+    .check-text strong { color: var(--text); font-weight: 600; }
+
+    /* ── 접이식 법령 섹션 ── */
+    .law-details { margin-bottom: 12px; }
+    .law-summary {
+      background: #fff; border: 0.5px solid var(--border); border-radius: 14px;
+      padding: 14px 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; font-weight: 600; color: var(--text-m);
+      letter-spacing: 0.05em; text-transform: uppercase;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+    .law-summary svg { width: 16px; height: 16px; color: var(--text-l); transition: transform 0.2s; }
+    .law-details[open] .law-summary { border-radius: 14px 14px 0 0; border-bottom-color: var(--border-s); }
+    .law-details[open] .law-summary svg { transform: rotate(180deg); }
+    .law-body { background: #fff; border: 0.5px solid var(--border); border-top: none; border-radius: 0 0 14px 14px; padding: 4px 16px 12px; }
+    .law-list { display: flex; flex-direction: column; gap: 0; }
+    .law-item { font-size: 12px; color: var(--text-m); padding: 7px 0; border-bottom: 0.5px solid var(--border-s); line-height: 1.45; }
+    .law-item:last-child { border-bottom: none; }
+    .law-num { color: var(--p); font-weight: 600; }
+
+    /* ── 경고 박스 ── */
+    .alert-box {
+      border-radius: 10px; padding: 12px 14px;
+      font-size: 12px; line-height: 1.5; margin-bottom: 10px;
+    }
+    .alert-box.warn {
+      background: rgba(255,149,0,0.10);
+      border: 0.5px solid rgba(255,149,0,0.3); color: #7a4900;
+    }
+    .alert-box.ng {
+      background: rgba(255,59,48,0.08);
+      border: 0.5px solid rgba(255,59,48,0.25); color: #8a0000;
+    }
+    .alert-box strong { font-weight: 700; }
+
+    /* ── 하단 내비게이션 ── */
+    .nav {
+      padding: 14px 20px;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom, 0));
+      background: #fff; border-top: 0.5px solid var(--border);
+      display: flex; gap: 10px; flex-shrink: 0;
+      position: sticky; bottom: 0;
+    }
+    .btn {
+      flex: 1; height: 48px; border: none; border-radius: 12px;
+      font-family: inherit; font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { opacity: 0.75; }
+    .btn-prev { background: rgba(0,0,0,0.05); color: var(--text-s); }
+    .btn-next { background: var(--p); color: #fff; }
+    .btn-next:disabled { background: rgba(0,0,0,0.12); color: rgba(0,0,0,0.3); cursor: not-allowed; }
+    .btn-print { background: var(--p); color: #fff; }
+    .btn-reset { background: rgba(0,0,0,0.05); color: var(--text-s); flex: 0.6; }
+
+    /* ── print ── */
+    @media print {
+      .topbar, .nav, .prog-wrap, .btn-back { display: none !important; }
+      body { background: #fff; }
+      .app { border: none; }
+      .panel { display: none !important; }
+      .panel.active { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SVG 아이콘 스프라이트 ── -->
+<svg aria-hidden="true" style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 작업 유형 아이콘 -->
+  <!-- s-scaffold-m: 이동식 비계 (격자 프레임) -->
+  <symbol id="s-scaffold-m" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="3" width="16" height="14" rx="1"/>
+    <line x1="2" y1="8" x2="18" y2="8"/>
+    <line x1="2" y1="13" x2="18" y2="13"/>
+    <line x1="7" y1="3" x2="7" y2="17"/>
+    <line x1="13" y1="3" x2="13" y2="17"/>
+  </symbol>
+  <!-- s-gondola: 달비계 (매달린 플랫폼) -->
+  <symbol id="s-gondola" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="5" y1="2" x2="5" y2="13"/>
+    <line x1="15" y1="2" x2="15" y2="13"/>
+    <line x1="2" y1="2" x2="18" y2="2"/>
+    <rect x="3" y="13" width="14" height="4" rx="1"/>
+    <line x1="8" y1="5" x2="8" y2="13"/>
+    <line x1="12" y1="5" x2="12" y2="13"/>
+  </symbol>
+  <!-- s-boom-lift: 고소작업대 (붐리프트) -->
+  <symbol id="s-boom-lift" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="1" y="15" width="8" height="3" rx="1"/>
+    <circle cx="3" cy="18" r="1.2"/>
+    <circle cx="7" cy="18" r="1.2"/>
+    <line x1="5" y1="15" x2="5" y2="12"/>
+    <line x1="5" y1="12" x2="12" y2="6"/>
+    <rect x="12" y="3" width="6" height="4" rx="1"/>
+    <line x1="12" y1="5" x2="15" y2="5"/>
+  </symbol>
+  <!-- s-ladder-m: 이동식 사다리 -->
+  <symbol id="s-ladder-m" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="6" y1="18" x2="9" y2="2"/>
+    <line x1="14" y1="18" x2="11" y2="2"/>
+    <line x1="7.5" y1="14.5" x2="12.5" y2="14.5"/>
+    <line x1="8.25" y1="10.5" x2="11.75" y2="10.5"/>
+    <line x1="9" y1="6.5" x2="11" y2="6.5"/>
+  </symbol>
+  <!-- s-ladder-f: 고정식 사다리 -->
+  <symbol id="s-ladder-f" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="7" y1="2" x2="7" y2="18"/>
+    <line x1="13" y1="2" x2="13" y2="18"/>
+    <line x1="7" y1="6" x2="13" y2="6"/>
+    <line x1="7" y1="10" x2="13" y2="10"/>
+    <line x1="7" y1="14" x2="13" y2="14"/>
+  </symbol>
+  <!-- 판정 아이콘 -->
+  <!-- s-check-circle: 체크 원 -->
+  <symbol id="s-check-circle" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="10" cy="10" r="8"/>
+    <path d="M6.5 10.5 L9 13 L13.5 7.5"/>
+  </symbol>
+  <!-- s-warn: 경고 삼각형 -->
+  <symbol id="s-warn" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 2.5 L18 17 H2 Z"/>
+    <line x1="10" y1="8.5" x2="10" y2="12.5"/>
+    <circle cx="10" cy="14.8" r="0.9" fill="currentColor" stroke="none"/>
+  </symbol>
+  <!-- s-x-circle: X 원 -->
+  <symbol id="s-x-circle" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="10" cy="10" r="8"/>
+    <line x1="7" y1="7" x2="13" y2="13"/>
+    <line x1="13" y1="7" x2="7" y2="13"/>
+  </symbol>
+  <!-- 기타 UI 아이콘 -->
+  <symbol id="s-chevron-down" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="4 7 10 13 16 7"/>
+  </symbol>
+  <symbol id="s-wind" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 8 Q9 8 12 8 Q15 8 15 6 Q15 4 13 4 Q11 4 11 6"/>
+    <path d="M3 12 Q10 12 14 12 Q17 12 17 14 Q17 16 15 16 Q13 16 13 14"/>
+  </symbol>
+  <symbol id="s-rain" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11 Q4 6 8 5 Q9 2 13 3 Q16 3 16.5 6.5 Q19 7.5 18 10.5 Q17.5 12 15 12"/>
+    <line x1="7" y1="14" x2="6" y2="17"/>
+    <line x1="11" y1="14" x2="10" y2="17"/>
+    <line x1="15" y1="14" x2="14" y2="17"/>
+  </symbol>
+  <symbol id="s-moon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 13 Q13 14 11 12 Q7 10 8 5 Q5 7 5 11 Q5 16 10 17.5 Q15 18.5 17 13Z"/>
+  </symbol>
+  <symbol id="s-checkmark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="4 10 8 14 16 6"/>
+  </symbol>
+</svg>
+
+<div class="app">
+
+  <!-- 상단바 -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="index.html" class="btn-back">&#8249;</a>
+      <div>
+        <div class="topbar-logo">무사<em>이</em></div>
+        <div class="topbar-sub">고소작업 안전검토</div>
+      </div>
+    </div>
+    <div class="topbar-badge">고소작업</div>
+  </div>
+
+  <!-- 진행 표시 -->
+  <div class="prog-wrap">
+    <div class="prog-labels">
+      <span class="prog-label on" id="lbl1">작업유형</span>
+      <span class="prog-label" id="lbl2">세부정보</span>
+      <span class="prog-label" id="lbl3">안전판정</span>
+      <span class="prog-label" id="lbl4">결과</span>
+    </div>
+    <div class="prog"><div class="prog-fill" id="progFill" style="width:25%"></div></div>
+    <div class="prog-step" id="progStep">Step 1 / 4</div>
+  </div>
+
+  <!-- 컨텐츠 영역 -->
+  <div class="content">
+
+    <!-- ================================ STEP 1: 작업 유형 선택 ================================ -->
+    <div class="panel active" id="panel1">
+      <div class="step-title">작업 유형 선택</div>
+      <div class="step-desc">수행할 고소작업 유형을 선택하세요. 유형에 따라 안전기준이 달라집니다.</div>
+      <div class="work-list">
+        <button class="work-btn" data-type="scaffold-m" onclick="selWorkType(this)">
+          <span class="work-icon"><svg><use href="#s-scaffold-m"/></svg></span>
+          <div class="work-info">
+            <div class="work-name">이동식 비계</div>
+            <div class="work-sub">이동식 비계 조립·해체 및 사용 작업</div>
+          </div>
+          <span class="work-arrow">›</span>
+        </button>
+        <button class="work-btn" data-type="gondola" onclick="selWorkType(this)">
+          <span class="work-icon"><svg><use href="#s-gondola"/></svg></span>
+          <div class="work-info">
+            <div class="work-name">달비계·곤돌라</div>
+            <div class="work-sub">외벽 도장·청소 등 매달아 사용하는 비계</div>
+          </div>
+          <span class="work-arrow">›</span>
+        </button>
+        <button class="work-btn" data-type="boom-lift" onclick="selWorkType(this)">
+          <span class="work-icon"><svg><use href="#s-boom-lift"/></svg></span>
+          <div class="work-info">
+            <div class="work-name">고소작업대</div>
+            <div class="work-sub">시저 리프트·붐 리프트 탑승 작업</div>
+          </div>
+          <span class="work-arrow">›</span>
+        </button>
+        <button class="work-btn" data-type="ladder-m" onclick="selWorkType(this)">
+          <span class="work-icon"><svg><use href="#s-ladder-m"/></svg></span>
+          <div class="work-info">
+            <div class="work-name">이동식 사다리</div>
+            <div class="work-sub">현장 이동·설치하여 사용하는 사다리</div>
+          </div>
+          <span class="work-arrow">›</span>
+        </button>
+        <button class="work-btn" data-type="ladder-f" onclick="selWorkType(this)">
+          <span class="work-icon"><svg><use href="#s-ladder-f"/></svg></span>
+          <div class="work-info">
+            <div class="work-name">고정식 사다리</div>
+            <div class="work-sub">구조물에 고정 설치된 사다리</div>
+          </div>
+          <span class="work-arrow">›</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ================================ STEP 2: 세부 정보 입력 ================================ -->
+    <div class="panel" id="panel2">
+      <div class="step-title">세부 정보 입력</div>
+      <div class="step-desc">작업 높이, 하중, 환경 조건을 입력하세요.</div>
+
+      <!-- 공통 입력 -->
+      <div class="card">
+        <div class="card-label">공통 정보</div>
+        <div class="field-group">
+          <!-- 작업 높이 -->
+          <div class="field-item">
+            <label class="field-label">작업 높이</label>
+            <div class="field-wrap">
+              <input class="field-inp" id="inpHeight" type="number" min="0" step="0.1" placeholder="0.0" oninput="onCommonChange()">
+              <span class="field-unit">m</span>
+            </div>
+          </div>
+          <!-- 하중 입력 -->
+          <div class="field-item">
+            <label class="field-label">하중 계산</label>
+            <div class="field-grid">
+              <div>
+                <label class="field-label" style="color:var(--text-l)">작업자 수</label>
+                <div class="field-wrap">
+                  <input class="field-inp" id="inpWorkers" type="number" min="1" step="1" placeholder="1" oninput="onLoadChange()">
+                  <span class="field-unit">명</span>
+                </div>
+              </div>
+              <div>
+                <label class="field-label" style="color:var(--text-l)">1인당 체중</label>
+                <div class="field-wrap">
+                  <input class="field-inp" id="inpWorkerWeight" type="number" min="50" step="1" placeholder="100" oninput="onLoadChange()">
+                  <span class="field-unit">kg</span>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:8px;">
+              <label class="field-label" style="color:var(--text-l)">자재 하중</label>
+              <div class="field-wrap">
+                <input class="field-inp" id="inpMaterials" type="number" min="0" step="1" placeholder="0" oninput="onLoadChange()">
+                <span class="field-unit">kg</span>
+              </div>
+            </div>
+            <div class="calc-display">
+              <span class="calc-display-label">총 하중 (자동 합산)</span>
+              <span><span class="calc-display-val" id="totalLoadDisplay">—</span><span class="calc-display-unit">kg</span></span>
+            </div>
+          </div>
+          <!-- 지반 상태 -->
+          <div class="field-item">
+            <label class="field-label">지반 상태</label>
+            <div class="toggle-group">
+              <button class="toggle-btn on" data-ground="견고" onclick="selGround(this)">견고</button>
+              <button class="toggle-btn" data-ground="연약" onclick="selGround(this)">연약</button>
+              <button class="toggle-btn" data-ground="경사" onclick="selGround(this)">경사</button>
+            </div>
+          </div>
+          <!-- 환경 조건 -->
+          <div class="field-item">
+            <label class="field-label">환경 조건</label>
+            <div class="env-list">
+              <div class="env-item">
+                <span class="env-label">
+                  <svg><use href="#s-wind"/></svg>
+                  강풍 (평균풍속 10m/s 이상)
+                </span>
+                <button class="env-switch" id="switchWind" onclick="toggleEnv('wind')"></button>
+              </div>
+              <div class="env-item">
+                <span class="env-label">
+                  <svg><use href="#s-rain"/></svg>
+                  우천·강설
+                </span>
+                <button class="env-switch" id="switchRain" onclick="toggleEnv('rain')"></button>
+              </div>
+              <div class="env-item">
+                <span class="env-label">
+                  <svg><use href="#s-moon"/></svg>
+                  야간 작업
+                </span>
+                <button class="env-switch" id="switchNight" onclick="toggleEnv('night')"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 작업 유형별 추가 입력 -->
+      <div class="card" id="extraCard">
+        <div class="card-label" id="extraCardLabel">추가 정보</div>
+        <div class="field-group" id="extraFields">
+          <!-- JS로 동적 렌더링 -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================================ STEP 3: 안전기준 판정 ================================ -->
+    <div class="panel" id="panel3">
+      <div class="step-title">안전기준 판정</div>
+      <div class="step-desc">입력된 값을 기반으로 법적 안전기준과 비교한 결과입니다.</div>
+      <div id="step3Content">
+        <!-- JS로 렌더링 -->
+      </div>
+    </div>
+
+    <!-- ================================ STEP 4: 결과 및 체크리스트 ================================ -->
+    <div class="panel" id="panel4">
+      <div class="step-title">검토 결과</div>
+      <div class="step-desc">종합 판정 결과와 현장 조치사항을 확인하세요.</div>
+      <div id="step4Content">
+        <!-- JS로 렌더링 -->
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- 하단 내비게이션 -->
+  <div class="nav">
+    <button class="btn btn-reset" id="btnReset" onclick="resetAll()" style="display:none">처음으로</button>
+    <button class="btn btn-prev" id="btnPrev" onclick="prevStep()" style="display:none">이전</button>
+    <button class="btn btn-next" id="btnNext" onclick="nextStep()" disabled>다음</button>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+  var step = 1;
+
+  var state = {
+    workType: '',
+    height: null,
+    totalLoad: null,
+    workers: 1,
+    workerWeight: 100,
+    materials: 0,
+    groundState: '견고',
+    hasWind: false,
+    hasRain: false,
+    isNight: false,
+    extraData: {}
+  };
+
+  /* ================================================
+     진행바 업데이트
+  ================================================ */
+  function updateProg() {
+    var pct = (step / 4) * 100;
+    document.getElementById('progFill').style.width = pct + '%';
+    document.getElementById('progStep').textContent = 'Step ' + step + ' / 4';
+    var ids = ['lbl1','lbl2','lbl3','lbl4'];
+    for (var i = 0; i < ids.length; i++) {
+      var el = document.getElementById(ids[i]);
+      if (i < step) el.classList.add('on'); else el.classList.remove('on');
+    }
+  }
+
+  /* ================================================
+     스텝 전환
+  ================================================ */
+  function showStep(n) {
+    for (var i = 1; i <= 4; i++) {
+      document.getElementById('panel' + i).classList.toggle('active', i === n);
+    }
+    step = n;
+    var btnPrev = document.getElementById('btnPrev');
+    var btnReset = document.getElementById('btnReset');
+    var btnNext = document.getElementById('btnNext');
+    btnPrev.style.display = n > 1 ? 'block' : 'none';
+    btnReset.style.display = n === 4 ? 'block' : 'none';
+    if (n === 4) {
+      btnNext.textContent = '인쇄';
+      btnNext.className = 'btn btn-print';
+      btnNext.disabled = false;
+    } else {
+      btnNext.textContent = '다음';
+      btnNext.className = 'btn btn-next';
+      btnNext.disabled = !canAdvance(n);
+    }
+    updateProg();
+    if (n === 2) renderExtraFields();
+    if (n === 3) { calcAll(); renderStep3(); }
+    if (n === 4) renderStep4();
+    document.querySelector('.content').scrollTop = 0;
+  }
+
+  function nextStep() {
+    if (step === 4) { window.print(); return; }
+    if (!canAdvance(step)) return;
+    showStep(step + 1);
+  }
+  function prevStep() {
+    if (step > 1) showStep(step - 1);
+  }
+  function resetAll() {
+    step = 1;
+    state.workType = '';
+    state.height = null;
+    state.totalLoad = null;
+    state.workers = 1;
+    state.workerWeight = 100;
+    state.materials = 0;
+    state.groundState = '견고';
+    state.hasWind = false;
+    state.hasRain = false;
+    state.isNight = false;
+    state.extraData = {};
+    /* Step1 선택 해제 */
+    var btns = document.querySelectorAll('.work-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('on');
+    showStep(1);
+    document.getElementById('btnPrev').style.display = 'none';
+    document.getElementById('btnReset').style.display = 'none';
+    document.getElementById('btnNext').disabled = true;
+  }
+
+  /* ================================================
+     유효성 검사
+  ================================================ */
+  function canAdvance(s) {
+    if (s === 1) return state.workType !== '';
+    if (s === 2) {
+      if (state.height === null || state.height <= 0) return false;
+      if (state.totalLoad === null || state.totalLoad <= 0) return false;
+      return extraValid();
+    }
+    if (s === 3) return true;
+    return true;
+  }
+
+  function extraValid() {
+    var t = state.workType;
+    var e = state.extraData;
+    if (t === 'scaffold-m') {
+      return (e.boardWidth > 0) && (e.baseWidth > 0);
+    }
+    if (t === 'gondola') {
+      return (e.swl > 0);
+    }
+    if (t === 'boom-lift') {
+      return (e.ratedLoad > 0);
+    }
+    if (t === 'ladder-m') {
+      /* 각도 직접 입력 or 거리+높이로 계산 */
+      return (e.angle > 0 && e.angle <= 90);
+    }
+    if (t === 'ladder-f') {
+      return (e.ladderLen > 0);
+    }
+    return true;
+  }
+
+  function validateStep() {
+    var btn = document.getElementById('btnNext');
+    if (step === 4) return;
+    btn.disabled = !canAdvance(step);
+  }
+
+  /* ================================================
+     Step 1: 작업 유형 선택
+  ================================================ */
+  function selWorkType(btn) {
+    var btns = document.querySelectorAll('.work-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('on');
+    btn.classList.add('on');
+    state.workType = btn.dataset.type;
+    state.extraData = {};
+    validateStep();
+  }
+
+  /* ================================================
+     Step 2: 공통 입력
+  ================================================ */
+  function onCommonChange() {
+    var h = parseFloat(document.getElementById('inpHeight').value);
+    state.height = (isNaN(h) || h <= 0) ? null : h;
+    validateStep();
+  }
+
+  function onLoadChange() {
+    var w = parseInt(document.getElementById('inpWorkers').value) || 1;
+    var ww = parseFloat(document.getElementById('inpWorkerWeight').value);
+    var m = parseFloat(document.getElementById('inpMaterials').value) || 0;
+    state.workers = w < 1 ? 1 : w;
+    state.workerWeight = (isNaN(ww) || ww < 50) ? 100 : ww;
+    state.materials = isNaN(m) ? 0 : m;
+    state.totalLoad = state.workers * state.workerWeight + state.materials;
+    var disp = document.getElementById('totalLoadDisplay');
+    disp.textContent = state.totalLoad > 0 ? state.totalLoad : '—';
+    validateStep();
+  }
+
+  function selGround(btn) {
+    var btns = document.querySelectorAll('[data-ground]');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('on');
+    btn.classList.add('on');
+    state.groundState = btn.dataset.ground;
+    validateStep();
+  }
+
+  function toggleEnv(key) {
+    var idMap = { wind: 'switchWind', rain: 'switchRain', night: 'switchNight' };
+    var stateMap = { wind: 'hasWind', rain: 'hasRain', night: 'isNight' };
+    state[stateMap[key]] = !state[stateMap[key]];
+    var el = document.getElementById(idMap[key]);
+    if (state[stateMap[key]]) el.classList.add('on'); else el.classList.remove('on');
+    validateStep();
+  }
+
+  /* ── 작업 유형별 추가 입력 렌더링 ── */
+  function renderExtraFields() {
+    var t = state.workType;
+    var container = document.getElementById('extraFields');
+    var label = document.getElementById('extraCardLabel');
+    var card = document.getElementById('extraCard');
+    card.style.display = 'block';
+
+    if (t === 'scaffold-m') {
+      label.textContent = '이동식 비계 정보';
+      container.innerHTML =
+        '<div class="field-item">' +
+          '<label class="field-label">발판 폭</label>' +
+          '<div class="field-wrap">' +
+            '<input class="field-inp" id="inpBoardWidth" type="number" min="0" step="1" placeholder="40" oninput="onExtraChange()">' +
+            '<span class="field-unit">cm</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="field-item">' +
+          '<label class="field-label">비계 밑면 최소 폭</label>' +
+          '<div class="field-wrap">' +
+            '<input class="field-inp" id="inpBaseWidth" type="number" min="0" step="1" placeholder="100" oninput="onExtraChange()">' +
+            '<span class="field-unit">cm</span>' +
+          '</div>' +
+        '</div>';
+    } else if (t === 'gondola') {
+      label.textContent = '달비계·곤돌라 정보';
+      container.innerHTML =
+        '<div class="field-item">' +
+          '<label class="field-label">와이어 로프 SWL (2가닥 합산)</label>' +
+          '<div class="field-wrap">' +
+            '<input class="field-inp" id="inpSWL" type="number" min="0" step="10" placeholder="500" oninput="onExtraChange()">' +
+            '<span class="field-unit">kg</span>' +
+          '</div>' +
+        '</div>';
+    } else if (t === 'boom-lift') {
+      label.textContent = '고소작업대 정보';
+      container.innerHTML =
+        '<div class="field-item">' +
+          '<label class="field-label">장비 정격하중</label>' +
+          '<div class="field-wrap">' +
+            '<input class="field-inp" id="inpRatedLoad" type="number" min="0" step="10" placeholder="300" oninput="onExtraChange()">' +
+            '<span class="field-unit">kg</span>' +
+          '</div>' +
+        '</div>';
+    } else if (t === 'ladder-m') {
+      label.textContent = '이동식 사다리 정보';
+      container.innerHTML =
+        '<div class="field-item">' +
+          '<label class="field-label">설치각도 (직접 입력)</label>' +
+          '<div class="field-wrap">' +
+            '<input class="field-inp" id="inpAngle" type="number" min="0" max="90" step="0.5" placeholder="75" oninput="onAngleChange()">' +
+            '<span class="field-unit">°</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="text-align:center; font-size:11px; color:var(--text-l); padding:4px 0 2px;">— 또는 치수로 자동 계산 —</div>' +
+        '<div class="field-grid">' +
+          '<div>' +
+            '<label class="field-label" style="color:var(--text-l)">벽과의 거리</label>' +
+            '<div class="field-wrap">' +
+              '<input class="field-inp" id="inpDist" type="number" min="0" step="0.01" placeholder="0.27" oninput="onAngleCalc()">' +
+              '<span class="field-unit">m</span>' +
+            '</div>' +
+          '</div>' +
+          '<div>' +
+            '<label class="field-label" style="color:var(--text-l)">사다리 높이</label>' +
+            '<div class="field-wrap">' +
+              '<input class="field-inp" id="inpLadH" type="number" min="0" step="0.1" placeholder="1.0" oninput="onAngleCalc()">' +
+              '<span class="field-unit">m</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="calc-display" id="angleDisplay" style="display:none;">' +
+          '<span class="calc-display-label">계산된 각도</span>' +
+          '<span><span class="calc-display-val" id="calcAngleVal">—</span><span class="calc-display-unit">°</span></span>' +
+        '</div>' +
+        '<div class="field-item" style="margin-top:4px;">' +
+          '<label class="field-label">상단 돌출 여부 (벽 상단으로 60cm 이상)</label>' +
+          '<div class="toggle-group">' +
+            '<button class="toggle-btn on" data-ext="yes" onclick="selExt(this)">60cm 이상</button>' +
+            '<button class="toggle-btn" data-ext="no" onclick="selExt(this)">미달</button>' +
+          '</div>' +
+        '</div>';
+      state.extraData.extension = 'yes';
+    } else if (t === 'ladder-f') {
+      label.textContent = '고정식 사다리 정보';
+      container.innerHTML =
+        '<div class="field-item">' +
+          '<label class="field-label">사다리 길이</label>' +
+          '<div class="field-wrap">' +
+            '<input class="field-inp" id="inpLadderLen" type="number" min="0" step="0.1" placeholder="3.0" oninput="onExtraChange()">' +
+            '<span class="field-unit">m</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="field-item">' +
+          '<label class="field-label">사다리 폭</label>' +
+          '<div class="field-wrap">' +
+            '<input class="field-inp" id="inpLadderWidth" type="number" min="0" step="1" placeholder="30" oninput="onExtraChange()">' +
+            '<span class="field-unit">cm</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="field-item">' +
+          '<label class="field-label">발판 간격</label>' +
+          '<div class="field-wrap">' +
+            '<input class="field-inp" id="inpRungSpacing" type="number" min="0" step="1" placeholder="30" oninput="onExtraChange()">' +
+            '<span class="field-unit">cm</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="field-item">' +
+          '<label class="field-label">상단 돌출 여부 (60cm 이상)</label>' +
+          '<div class="toggle-group">' +
+            '<button class="toggle-btn on" data-ext="yes" onclick="selExt(this)">60cm 이상</button>' +
+            '<button class="toggle-btn" data-ext="no" onclick="selExt(this)">미달</button>' +
+          '</div>' +
+        '</div>';
+      state.extraData.extension = 'yes';
+    }
+
+    /* 기존 값 복원 */
+    restoreExtraFields();
+    validateStep();
+  }
+
+  function restoreExtraFields() {
+    var e = state.extraData;
+    var t = state.workType;
+    if (t === 'scaffold-m') {
+      if (e.boardWidth) { var el = document.getElementById('inpBoardWidth'); if(el) el.value = e.boardWidth; }
+      if (e.baseWidth)  { var el = document.getElementById('inpBaseWidth');  if(el) el.value = e.baseWidth; }
+    } else if (t === 'gondola') {
+      if (e.swl) { var el = document.getElementById('inpSWL'); if(el) el.value = e.swl; }
+    } else if (t === 'boom-lift') {
+      if (e.ratedLoad) { var el = document.getElementById('inpRatedLoad'); if(el) el.value = e.ratedLoad; }
+    } else if (t === 'ladder-m') {
+      if (e.angle) { var el = document.getElementById('inpAngle'); if(el) el.value = e.angle; }
+    } else if (t === 'ladder-f') {
+      if (e.ladderLen)    { var el = document.getElementById('inpLadderLen');   if(el) el.value = e.ladderLen; }
+      if (e.ladderWidth)  { var el = document.getElementById('inpLadderWidth'); if(el) el.value = e.ladderWidth; }
+      if (e.rungSpacing)  { var el = document.getElementById('inpRungSpacing'); if(el) el.value = e.rungSpacing; }
+    }
+  }
+
+  function onExtraChange() {
+    var t = state.workType;
+    if (t === 'scaffold-m') {
+      var bw = parseFloat(document.getElementById('inpBoardWidth').value) || 0;
+      var bsw = parseFloat(document.getElementById('inpBaseWidth').value) || 0;
+      state.extraData.boardWidth = bw;
+      state.extraData.baseWidth = bsw;
+    } else if (t === 'gondola') {
+      var swl = parseFloat(document.getElementById('inpSWL').value) || 0;
+      state.extraData.swl = swl;
+    } else if (t === 'boom-lift') {
+      var rl = parseFloat(document.getElementById('inpRatedLoad').value) || 0;
+      state.extraData.ratedLoad = rl;
+    } else if (t === 'ladder-f') {
+      var ll = parseFloat(document.getElementById('inpLadderLen').value) || 0;
+      var lw = parseFloat(document.getElementById('inpLadderWidth').value) || 0;
+      var rs = parseFloat(document.getElementById('inpRungSpacing').value) || 0;
+      state.extraData.ladderLen = ll;
+      state.extraData.ladderWidth = lw;
+      state.extraData.rungSpacing = rs;
+    }
+    validateStep();
+  }
+
+  /* 이동식 사다리 각도 계산 */
+  function onAngleChange() {
+    var a = parseFloat(document.getElementById('inpAngle').value) || 0;
+    state.extraData.angle = a;
+    validateStep();
+  }
+
+  function onAngleCalc() {
+    var dist = parseFloat(document.getElementById('inpDist').value) || 0;
+    var h = parseFloat(document.getElementById('inpLadH').value) || 0;
+    var disp = document.getElementById('angleDisplay');
+    if (dist > 0 && h > 0) {
+      var rad = Math.atan2(h, dist);
+      var deg = rad * (180 / Math.PI);
+      var degRound = Math.round(deg * 10) / 10;
+      state.extraData.angle = degRound;
+      document.getElementById('calcAngleVal').textContent = degRound;
+      document.getElementById('inpAngle').value = degRound;
+      if (disp) disp.style.display = 'flex';
+    } else {
+      if (disp) disp.style.display = 'none';
+    }
+    validateStep();
+  }
+
+  function selExt(btn) {
+    var parent = btn.parentNode;
+    var siblings = parent.querySelectorAll('[data-ext]');
+    for (var i = 0; i < siblings.length; i++) siblings[i].classList.remove('on');
+    btn.classList.add('on');
+    state.extraData.extension = btn.dataset.ext;
+    validateStep();
+  }
+
+  /* ================================================
+     계산 로직 (calcAll)
+  ================================================ */
+  var results = [];  /* 전역 결과 배열 */
+  var overallVerdict = 'ok'; /* ok | warn | ng */
+
+  function calcAll() {
+    results = [];
+    overallVerdict = 'ok';
+    var t = state.workType;
+    var h = state.height || 0;
+    var load = state.totalLoad || 0;
+    var e = state.extraData;
+
+    /* 공통: 지반 상태 */
+    if (state.groundState === '연약') {
+      results.push({ status: 'warn', title: '지반 상태 — 연약지반', detail: '연약지반에서 이동식 장비 사용 시 기저판 깔판 설치 필요. 하중 분산 조치 후 작업하세요.' });
+      if (overallVerdict === 'ok') overallVerdict = 'warn';
+    } else if (state.groundState === '경사') {
+      results.push({ status: 'warn', title: '지반 상태 — 경사지반', detail: '경사지반 작업 시 쐐기·고임목으로 수평 확보 필수. 경사도가 심하면 작업 금지.' });
+      if (overallVerdict === 'ok') overallVerdict = 'warn';
+    } else {
+      results.push({ status: 'ok', title: '지반 상태 — 견고', detail: '견고한 지반으로 확인. 장비 설치 전 이물질 제거 및 수평 확인 필요.' });
+    }
+
+    /* 공통: 환경 조건 */
+    if (state.hasWind) {
+      results.push({ status: 'ng', title: '강풍 — 작업 금지', detail: '평균풍속 10m/s 이상 강풍 시 고소작업 전면 금지. 안전담당자 승인 없이 작업 불가.' });
+      overallVerdict = 'ng';
+    }
+    if (state.hasRain) {
+      results.push({ status: 'warn', title: '우천·강설 — 주의', detail: '우천·강설 시 미끄럼 사고 위험. 가능하면 작업 중단 또는 방호시설(지붕·발판 커버) 설치 후 진행.' });
+      if (overallVerdict === 'ok') overallVerdict = 'warn';
+    }
+    if (state.isNight) {
+      results.push({ status: 'warn', title: '야간 작업 — 조명 확보 필요', detail: '야간 작업 시 작업면 조도 150lux 이상 확보 필요(상세 작업 300lux). 이동형 조명등 또는 고정 투광등 설치 필수.' });
+      if (overallVerdict === 'ok') overallVerdict = 'warn';
+    }
+
+    /* 안전난간 (공통: 2m 이상) */
+    if (h >= 2) {
+      results.push({ status: 'ok', title: '안전난간 — 설치 필수 (높이 ' + fmt1(h) + 'm)', detail: '작업 높이 2m 이상이므로 안전난간(높이 90~120cm) 및 중간대 설치 의무. 개구부 덮개 또는 난간 설치 확인.' });
+    } else {
+      results.push({ status: 'ok', title: '안전난간 — 높이 ' + fmt1(h) + 'm (2m 미만)', detail: '높이 2m 미만으로 안전난간 의무 대상은 아니나, 추락 방지를 위해 안전대 착용 권장.' });
+    }
+
+    /* 유형별 계산 */
+    if (t === 'scaffold-m') {
+      var bw = e.boardWidth || 0;
+      var bsw = e.baseWidth || 0;
+      var ratio = bsw > 0 ? h / (bsw / 100) : null;
+
+      if (ratio !== null) {
+        var ratioStatus = ratio <= 4.0 ? 'ok' : 'ng';
+        if (ratioStatus === 'ng' && overallVerdict !== 'ng') overallVerdict = 'ng';
+        results.push({
+          status: ratioStatus,
+          title: '안정성 비율 = ' + fmt2(ratio) + ' (허용 ≤ 4.0)',
+          detail: '작업높이(' + fmt1(h) + 'm) ÷ 비계폭(' + fmt1(bsw/100) + 'm) = ' + fmt2(ratio) + '. ' + (ratioStatus === 'ok' ? '기준 이내.' : '기준 초과. 비계 밑면 폭 확대 또는 작업 높이 재검토 필요.')
+        });
+      } else {
+        results.push({ status: 'warn', title: '안정성 비율 — 비계 폭 미입력', detail: '비계 밑면 최소 폭을 입력해야 안정성 비율을 계산할 수 있습니다.' });
+        if (overallVerdict === 'ok') overallVerdict = 'warn';
+      }
+
+      var bwStatus = bw >= 40 ? 'ok' : 'ng';
+      if (bwStatus === 'ng' && overallVerdict !== 'ng') overallVerdict = 'ng';
+      results.push({
+        status: bwStatus,
+        title: '발판 폭 ' + bw + 'cm (기준 ≥ 40cm)',
+        detail: bwStatus === 'ok' ? '발판 폭 기준 충족.' : '발판 폭 기준 미달. 40cm 이상으로 교체 또는 보강 필요.'
+      });
+
+      if (state.hasWind) {
+        results.push({ status: 'ng', title: '강풍 — 이동식 비계 사용 금지', detail: '이동식 비계는 강풍 시 전도 위험이 매우 높습니다. 즉시 작업 중단 및 비계 고정 조치 필요.' });
+        overallVerdict = 'ng';
+      }
+
+    } else if (t === 'gondola') {
+      var swl = e.swl || 0;
+      var allowable = swl * 0.5;
+      var loadRatio = allowable > 0 ? load / allowable : null;
+
+      if (loadRatio !== null) {
+        var lrStatus = loadRatio <= 0.9 ? 'ok' : 'ng';
+        if (lrStatus === 'ng' && overallVerdict !== 'ng') overallVerdict = 'ng';
+        results.push({
+          status: lrStatus,
+          title: '하중비율 = ' + fmt2(loadRatio) + ' (허용 ≤ 0.9)',
+          detail: '총하중(' + load + 'kg) ÷ 허용하중(SWL×0.5=' + fmt1(allowable) + 'kg) = ' + fmt2(loadRatio) + '. ' + (lrStatus === 'ok' ? '안전 범위 이내.' : '하중 초과. 작업자 수 또는 자재 하중 감소 필요.')
+        });
+        results.push({
+          status: lrStatus === 'ok' ? 'ok' : 'ng',
+          title: '안전계수 = ' + fmt2(swl / load) + ' (권장 ≥ 2.2)',
+          detail: 'SWL(' + swl + 'kg) ÷ 총하중(' + load + 'kg) = ' + fmt2(swl / load) + '. 달비계 안전계수는 10 이상 권장.'
+        });
+      } else {
+        results.push({ status: 'warn', title: '하중비율 — SWL 미입력', detail: '와이어 로프 SWL을 입력해야 하중비율을 계산할 수 있습니다.' });
+        if (overallVerdict === 'ok') overallVerdict = 'warn';
+      }
+
+    } else if (t === 'boom-lift') {
+      var rl = e.ratedLoad || 0;
+      var lrBoom = rl > 0 ? load / rl : null;
+
+      if (lrBoom !== null) {
+        var lrBoomStatus = lrBoom <= 0.9 ? 'ok' : 'ng';
+        if (lrBoomStatus === 'ng' && overallVerdict !== 'ng') overallVerdict = 'ng';
+        results.push({
+          status: lrBoomStatus,
+          title: '하중비율 = ' + fmt2(lrBoom) + ' (허용 ≤ 0.9)',
+          detail: '총하중(' + load + 'kg) ÷ 정격하중(' + rl + 'kg) = ' + fmt2(lrBoom) + '. ' + (lrBoomStatus === 'ok' ? '안전 범위 이내.' : '정격하중 초과. 작업 하중 재검토 필요.')
+        });
+      } else {
+        results.push({ status: 'warn', title: '하중비율 — 정격하중 미입력', detail: '장비 정격하중을 입력해야 하중비율을 계산할 수 있습니다.' });
+        if (overallVerdict === 'ok') overallVerdict = 'warn';
+      }
+
+      if (state.hasWind) {
+        results.push({ status: 'ng', title: '강풍 — 고소작업대 사용 금지', detail: '풍속 10m/s 이상에서 고소작업대 사용 금지(제조사 기준 대부분 8~10m/s 이하). 즉시 하강 후 작업 중단.' });
+        overallVerdict = 'ng';
+      }
+      if (state.isNight) {
+        results.push({ status: 'warn', title: '야간 — 추가 조명 필수', detail: '야간 고소작업대 작업 시 장비 조명 외 지상 투광조명 추가 설치 필요.' });
+        if (overallVerdict === 'ok') overallVerdict = 'warn';
+      }
+
+    } else if (t === 'ladder-m') {
+      var angle = e.angle || 0;
+      var angleOk = angle >= 70 && angle <= 80;
+      var angleStatus = angleOk ? 'ok' : 'ng';
+      if (!angleOk && overallVerdict !== 'ng') overallVerdict = 'ng';
+      results.push({
+        status: angleStatus,
+        title: '설치각도 ' + fmt1(angle) + '° (기준 75°±5°, 70°~80°)',
+        detail: angleStatus === 'ok'
+          ? '설치각도가 안전 범위(70°~80°) 이내입니다.'
+          : '설치각도가 기준 범위 밖입니다. 75° ±5° 범위로 재설치 필요. 너무 세우면 뒤로 넘어짐, 너무 눕히면 미끄러짐 위험.'
+      });
+
+      var extOk = e.extension === 'yes';
+      results.push({
+        status: extOk ? 'ok' : 'ng',
+        title: '상단 돌출 — ' + (extOk ? '60cm 이상 확보' : '60cm 미달'),
+        detail: extOk ? '사다리 상단이 벽 상단에서 60cm 이상 돌출되어 안전하게 잡고 오를 수 있습니다.' : '상단 돌출 60cm 미만. 발판을 이용한 승하강 시 추락 위험. 긴 사다리로 교체 필요.'
+      });
+      if (!extOk && overallVerdict !== 'ng') overallVerdict = 'ng';
+
+      if (h >= 3.5) {
+        results.push({ status: 'warn', title: '높이 ' + fmt1(h) + 'm — 중간 안전조치 필요', detail: '높이 3.5m 이상에서 이동식 사다리 작업 시 중간 발판 또는 안전대 연결 고리 설치 권장.' });
+        if (overallVerdict === 'ok') overallVerdict = 'warn';
+      }
+
+    } else if (t === 'ladder-f') {
+      var ll = e.ladderLen || 0;
+      var lw = e.ladderWidth || 0;
+      var rs = e.rungSpacing || 0;
+
+      var lwStatus = lw >= 30 ? 'ok' : 'ng';
+      if (lwStatus === 'ng' && overallVerdict !== 'ng') overallVerdict = 'ng';
+      results.push({
+        status: lwStatus,
+        title: '사다리 폭 ' + lw + 'cm (기준 ≥ 30cm)',
+        detail: lwStatus === 'ok' ? '사다리 폭 기준(30cm 이상) 충족.' : '사다리 폭이 기준 미달(30cm 미만). 규격 사다리로 교체 필요.'
+      });
+
+      var rsOk = rs >= 25 && rs <= 35;
+      results.push({
+        status: rsOk ? 'ok' : 'ng',
+        title: '발판 간격 ' + rs + 'cm (기준 25~35cm)',
+        detail: rsOk ? '발판 간격이 기준(25~35cm) 이내입니다.' : '발판 간격이 기준(25~35cm) 밖입니다. 규격품으로 교체 필요.'
+      });
+      if (!rsOk && overallVerdict !== 'ng') overallVerdict = 'ng';
+
+      var extFOk = e.extension === 'yes';
+      results.push({
+        status: extFOk ? 'ok' : 'ng',
+        title: '상단 돌출 — ' + (extFOk ? '60cm 이상 확보' : '60cm 미달'),
+        detail: extFOk ? '상단 60cm 이상 돌출 확인. 안전하게 승하강 가능합니다.' : '상단 돌출 60cm 미만. 추락 위험. 사다리 연장 또는 핸드레일 설치 필요.'
+      });
+      if (!extFOk && overallVerdict !== 'ng') overallVerdict = 'ng';
+    }
+  }
+
+  /* ================================================
+     Step 3: 판정 렌더링
+  ================================================ */
+  function renderStep3() {
+    var vMap = { ok: '적합', warn: '조건부 적합', ng: '부적합' };
+    var html = '';
+
+    /* 종합 판정 배너 */
+    html += '<div class="verdict-banner ' + overallVerdict + '">';
+    html += '<div class="verdict-icon">';
+    if (overallVerdict === 'ok')   html += '<svg><use href="#s-check-circle"/></svg>';
+    if (overallVerdict === 'warn') html += '<svg><use href="#s-warn"/></svg>';
+    if (overallVerdict === 'ng')   html += '<svg><use href="#s-x-circle"/></svg>';
+    html += '</div>';
+    html += '<div class="verdict-text">';
+    html += '<div class="verdict-label">종합 판정</div>';
+    html += '<div class="verdict-title">' + vMap[overallVerdict] + '</div>';
+    html += '</div></div>';
+
+    /* 항목별 결과 */
+    html += '<div class="card">';
+    html += '<div class="card-label">항목별 판정</div>';
+    html += '<div class="judge-list">';
+    for (var i = 0; i < results.length; i++) {
+      var r = results[i];
+      html += '<div class="judge-item">';
+      html += '<div class="judge-badge ' + r.status + '">';
+      if (r.status === 'ok')   html += '<svg><use href="#s-check-circle"/></svg>';
+      if (r.status === 'warn') html += '<svg><use href="#s-warn"/></svg>';
+      if (r.status === 'ng')   html += '<svg><use href="#s-x-circle"/></svg>';
+      html += '</div>';
+      html += '<div class="judge-content">';
+      html += '<div class="judge-title">' + r.title + '</div>';
+      html += '<div class="judge-detail">' + r.detail + '</div>';
+      html += '</div></div>';
+    }
+    html += '</div></div>';
+
+    document.getElementById('step3Content').innerHTML = html;
+  }
+
+  /* ================================================
+     Step 4: 결과 렌더링
+  ================================================ */
+  function renderStep4() {
+    var t = state.workType;
+    var e = state.extraData;
+    var h = state.height || 0;
+    var load = state.totalLoad || 0;
+    var vMap = { ok: '적합', warn: '조건부 적합', ng: '부적합' };
+    var typeNames = {
+      'scaffold-m': '이동식 비계',
+      'gondola': '달비계·곤돌라',
+      'boom-lift': '고소작업대',
+      'ladder-m': '이동식 사다리',
+      'ladder-f': '고정식 사다리'
+    };
+    var iconId = {
+      'scaffold-m': 's-scaffold-m',
+      'gondola': 's-gondola',
+      'boom-lift': 's-boom-lift',
+      'ladder-m': 's-ladder-m',
+      'ladder-f': 's-ladder-f'
+    };
+
+    var html = '';
+
+    /* 히어로 카드 */
+    html += '<div class="hero-card ' + overallVerdict + '">';
+    html += '<div class="hero-top">';
+    html += '<div>';
+    html += '<div class="hero-verdict-label">종합 판정</div>';
+    html += '<div class="hero-verdict-title">' + vMap[overallVerdict] + '</div>';
+    html += '</div>';
+    html += '<div class="hero-icon"><svg><use href="#' + iconId[t] + '"/></svg></div>';
+    html += '</div>';
+    html += '<div class="hero-divider"></div>';
+    html += '<div class="hero-stats">';
+    html += '<div><div class="hero-stat-label">작업 높이</div><div class="hero-stat-val">' + fmt1(h) + '<small> m</small></div></div>';
+    html += '<div><div class="hero-stat-label">총 하중</div><div class="hero-stat-val">' + load + '<small> kg</small></div></div>';
+
+    /* 유형별 핵심 수치 */
+    if (t === 'scaffold-m' && e.baseWidth > 0) {
+      var ratio = h / (e.baseWidth / 100);
+      html += '<div><div class="hero-stat-label">안정성 비율</div><div class="hero-stat-val">' + fmt2(ratio) + '<small> (≤4.0)</small></div></div>';
+      html += '<div><div class="hero-stat-label">발판 폭</div><div class="hero-stat-val">' + e.boardWidth + '<small> cm</small></div></div>';
+    }
+    if (t === 'gondola' && e.swl > 0) {
+      var lrG = load / (e.swl * 0.5);
+      html += '<div><div class="hero-stat-label">하중비율</div><div class="hero-stat-val">' + fmt2(lrG) + '<small> (≤0.9)</small></div></div>';
+      html += '<div><div class="hero-stat-label">SWL</div><div class="hero-stat-val">' + e.swl + '<small> kg</small></div></div>';
+    }
+    if (t === 'boom-lift' && e.ratedLoad > 0) {
+      var lrB = load / e.ratedLoad;
+      html += '<div><div class="hero-stat-label">하중비율</div><div class="hero-stat-val">' + fmt2(lrB) + '<small> (≤0.9)</small></div></div>';
+      html += '<div><div class="hero-stat-label">정격하중</div><div class="hero-stat-val">' + e.ratedLoad + '<small> kg</small></div></div>';
+    }
+    if (t === 'ladder-m') {
+      html += '<div><div class="hero-stat-label">설치각도</div><div class="hero-stat-val">' + fmt1(e.angle || 0) + '<small>°</small></div></div>';
+    }
+    if (t === 'ladder-f') {
+      html += '<div><div class="hero-stat-label">사다리 폭</div><div class="hero-stat-val">' + (e.ladderWidth || '—') + '<small> cm</small></div></div>';
+    }
+
+    html += '</div></div>';
+
+    /* 요약 테이블 */
+    html += '<div class="card">';
+    html += '<div class="card-label">입력 요약</div>';
+    html += '<table class="summary-table">';
+    html += '<tr><td>작업 유형</td><td>' + (typeNames[t] || t) + '</td></tr>';
+    html += '<tr><td>작업 높이</td><td>' + fmt1(h) + ' m</td></tr>';
+    html += '<tr><td>작업자 수</td><td>' + state.workers + ' 명</td></tr>';
+    html += '<tr><td>총 하중</td><td>' + load + ' kg</td></tr>';
+    html += '<tr><td>지반 상태</td><td>' + state.groundState + '</td></tr>';
+    html += '<tr><td>강풍 여부</td><td>' + (state.hasWind ? '예' : '아니오') + '</td></tr>';
+    html += '<tr><td>우천 여부</td><td>' + (state.hasRain ? '예' : '아니오') + '</td></tr>';
+    html += '<tr><td>야간 여부</td><td>' + (state.isNight ? '예' : '아니오') + '</td></tr>';
+    if (t === 'scaffold-m') {
+      html += '<tr><td>발판 폭</td><td>' + (e.boardWidth || '—') + ' cm</td></tr>';
+      html += '<tr><td>비계 밑면 폭</td><td>' + (e.baseWidth || '—') + ' cm</td></tr>';
+    } else if (t === 'gondola') {
+      html += '<tr><td>와이어 SWL</td><td>' + (e.swl || '—') + ' kg</td></tr>';
+    } else if (t === 'boom-lift') {
+      html += '<tr><td>정격하중</td><td>' + (e.ratedLoad || '—') + ' kg</td></tr>';
+    } else if (t === 'ladder-m') {
+      html += '<tr><td>설치각도</td><td>' + (e.angle ? fmt1(e.angle) + '°' : '—') + '</td></tr>';
+      html += '<tr><td>상단 돌출</td><td>' + (e.extension === 'yes' ? '60cm 이상' : '미달') + '</td></tr>';
+    } else if (t === 'ladder-f') {
+      html += '<tr><td>사다리 길이</td><td>' + (e.ladderLen || '—') + ' m</td></tr>';
+      html += '<tr><td>사다리 폭</td><td>' + (e.ladderWidth || '—') + ' cm</td></tr>';
+      html += '<tr><td>발판 간격</td><td>' + (e.rungSpacing || '—') + ' cm</td></tr>';
+      html += '<tr><td>상단 돌출</td><td>' + (e.extension === 'yes' ? '60cm 이상' : '미달') + '</td></tr>';
+    }
+    html += '</table></div>';
+
+    /* 현장 조치사항 체크리스트 */
+    html += '<div class="card">';
+    html += '<div class="card-label">현장 조치사항 체크리스트</div>';
+    html += '<div class="checklist">';
+    var checks = getChecklistItems(t);
+    for (var i = 0; i < checks.length; i++) {
+      html += '<div class="check-item">';
+      html += '<div class="check-box" onclick="toggleCheck(this)"><svg><use href="#s-checkmark"/></svg></div>';
+      html += '<div class="check-text">' + checks[i] + '</div>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+
+    /* 법령 근거 */
+    html += '<details class="law-details" style="margin-bottom:12px;">';
+    html += '<summary class="law-summary">관련 법령 근거<svg><use href="#s-chevron-down"/></svg></summary>';
+    html += '<div class="law-body"><div class="law-list">';
+    var laws = getLawItems(t);
+    for (var i = 0; i < laws.length; i++) {
+      html += '<div class="law-item"><span class="law-num">' + laws[i].num + '</span> — ' + laws[i].desc + '</div>';
+    }
+    html += '</div></div></details>';
+
+    document.getElementById('step4Content').innerHTML = html;
+  }
+
+  /* ── 체크리스트 항목 ── */
+  function getChecklistItems(t) {
+    var common = [
+      '<strong>작업 전 위험성 평가</strong> 실시 및 작업자 TBM(Tool Box Meeting) 완료',
+      '<strong>개인보호구 착용</strong> 확인 — 안전모·안전대·안전화·장갑',
+      '<strong>작업 반경 내 출입 통제구역</strong> 설정 및 안내표지 게시',
+      '<strong>관리감독자 상시 배치</strong> 또는 연락 체계 확보'
+    ];
+    var extra = [];
+    if (t === 'scaffold-m') {
+      extra = [
+        '<strong>비계 조립·해체 작업자</strong> 자격 보유 여부 확인 (비계작업 특별교육 이수)',
+        '<strong>비계 수직도·수평도</strong> 확인, 잠금장치 및 바퀴 브레이크 체결',
+        '<strong>발판 틈새</strong> 3cm 이하 확인, 발판 겹침 20cm 이상',
+        '<strong>안전난간(높이 2m 이상)</strong> 90~120cm 설치, 중간대 포함',
+        '<strong>작업 중 이동 금지</strong> — 이동 전 작업자 하강 후 이동'
+      ];
+    } else if (t === 'gondola') {
+      extra = [
+        '<strong>와이어 로프 손상·마모</strong> 사전 점검 (소선 단선 10% 이하, 지름 감소 7% 이하)',
+        '<strong>현수장치·결착부</strong> 고정 상태 및 안전계수 확인',
+        '<strong>안전대 부착설비(구명줄)</strong> 별도 설치 및 안전대 체결',
+        '<strong>조작자·감시자</strong> 각 1인 이상 배치',
+        '<strong>강풍 시 즉각 하강</strong> 절차 숙지 및 비상 연락망 구축'
+      ];
+    } else if (t === 'boom-lift') {
+      extra = [
+        '<strong>장비 점검기록</strong> 확인 및 일일 점검 실시',
+        '<strong>탑승자 안전대</strong> 바스켓 내 구명줄 연결 확인',
+        '<strong>아웃트리거(받침대)</strong> 완전 전개 및 잠금 확인',
+        '<strong>작업 반경 내 장애물</strong>(전선·구조물) 사전 확인',
+        '<strong>운전자 자격</strong> (건설기계 조종사 면허 또는 특별교육 이수) 확인'
+      ];
+    } else if (t === 'ladder-m') {
+      extra = [
+        '<strong>사다리 하단 미끄럼 방지</strong> 고무패드 또는 파지구 설치 확인',
+        '<strong>사다리 상단 고정</strong> (벽·구조물에 묶거나 별도 고정)',
+        '<strong>3점 지지</strong>(두 발·한 손 또는 두 손·한 발) 원칙 준수',
+        '<strong>무거운 자재 운반 금지</strong> — 별도 자재 인양 방법 사용',
+        '<strong>사다리 위에서 작업 금지</strong> — 발판·작업대 사용 권장'
+      ];
+    } else if (t === 'ladder-f') {
+      extra = [
+        '<strong>발판·지지대 부식·손상</strong> 사전 점검',
+        '<strong>상단 핸드레일(안전 파지봉)</strong> 60cm 이상 돌출 확인',
+        '<strong>발판 간격 25~35cm</strong> 준수 여부 확인',
+        '<strong>사다리 폭 30cm 이상</strong> 확인',
+        '<strong>설치 벽면과의 고정 상태</strong> (볼트·앵커) 점검'
+      ];
+    }
+    return common.concat(extra);
+  }
+
+  /* ── 법령 근거 ── */
+  function getLawItems(t) {
+    var common = [
+      { num: '규칙 제37조', desc: '추락에 의한 위험 방지 — 높이 2m 이상 작업 시 안전난간·작업발판 설치 의무' },
+      { num: '규칙 제42조', desc: '안전대 부착설비 설치 — 추락 방지용 구명줄 또는 안전대 고리 설치' }
+    ];
+    var extra = [];
+    if (t === 'scaffold-m') {
+      extra = [
+        { num: '규칙 제67조', desc: '비계의 구조 — 충분한 강도·안정성 확보 기준' },
+        { num: '규칙 제68조', desc: '이동식 비계 작업 발판 폭 40cm 이상, 높이 4배 이내 사용 기준' },
+        { num: '규칙 제69조', desc: '이동식 비계 안전난간 설치 기준 (2m 이상 시 필수)' }
+      ];
+    } else if (t === 'gondola') {
+      extra = [
+        { num: '규칙 제66조', desc: '달비계의 구조 — 폭 40cm 이상, 와이어로프 안전계수 10 이상' },
+        { num: '규칙 제63조', desc: '비계의 재료 — 변형·손상·부식이 없는 자재 사용' }
+      ];
+    } else if (t === 'boom-lift') {
+      extra = [
+        { num: '규칙 제86조', desc: '고소작업대 안전조치 — 정격하중 초과 탑승 금지, 이동 시 작업자 하강' },
+        { num: '규칙 제87조', desc: '고소작업대 작업계획서 수립 — 작업 내용·범위·장비 명시' }
+      ];
+    } else if (t === 'ladder-m' || t === 'ladder-f') {
+      extra = [
+        { num: '규칙 제24조', desc: '사다리식 통로 등의 구조 — 발판 간격 25~35cm, 폭 30cm 이상' },
+        { num: '규칙 제25조', desc: '사다리 상단 60cm 이상 돌출 및 미끄럼 방지 조치' },
+        { num: '규칙 제26조', desc: '이동식 사다리 구조 기준 — 각도 75°±5°, 지지 고정 조치' }
+      ];
+    }
+    return common.concat(extra);
+  }
+
+  /* ── 체크리스트 토글 ── */
+  function toggleCheck(box) {
+    box.classList.toggle('checked');
+  }
+
+  /* ================================================
+     숫자 포맷
+  ================================================ */
+  function fmt1(n) {
+    if (n === null || isNaN(n)) return '—';
+    return parseFloat(n.toFixed(1)).toString();
+  }
+  function fmt2(n) {
+    if (n === null || isNaN(n)) return '—';
+    return parseFloat(n.toFixed(2)).toString();
+  }
+
+  /* ================================================
+     초기화
+  ================================================ */
+  updateProg();
+  /* 기본값: 지반 '견고' 이미 toggle-btn.on으로 HTML에 반영됨 */
+</script>
+</body>
+</html>

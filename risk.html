@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>위험성 평가 · 무사이</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    :root {
+      --p:#2C5282; --p-dk:#1E3A5F; --steel:#7B9EE0;
+      --bg:#F5F5F7; --bg-card:#FFFFFF;
+      --border:rgba(0,0,0,0.1); --border-s:rgba(0,0,0,0.06);
+      --text:#1D1D1F; --text-s:#3C3C43; --text-m:#6E6E73; --text-l:#86868B;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+    .page-wrap{display:flex;min-height:100vh}
+
+    /* 사이드바 */
+    .sidebar{width:220px;min-width:220px;background:var(--p-dk);padding:28px 0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;overflow-y:auto}
+    .sidebar-brand{padding:0 24px 22px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:14px}
+    .sidebar-brand a{font-size:20px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:-0.5px}
+    .sidebar-brand a em{color:var(--steel);font-style:normal}
+    .sidebar-brand .tool-name{font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;letter-spacing:0.05em}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:11px 24px;cursor:pointer;color:rgba(255,255,255,0.55);font-size:13.5px;font-weight:500;letter-spacing:-0.2px;border-left:3px solid transparent;transition:all 0.15s;user-select:none}
+    .nav-item:hover{color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.05)}
+    .nav-item.active{color:#fff;border-left-color:var(--steel);background:rgba(255,255,255,0.08)}
+    .nav-item.done{color:rgba(255,255,255,0.65)}
+    .nav-num{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+    .nav-item.active .nav-num{background:var(--steel);color:#fff}
+    .nav-item.done .nav-num{background:rgba(255,255,255,0.28)}
+    .sidebar-footer{margin-top:auto;padding:16px 24px;font-size:11px;color:rgba(255,255,255,0.3)}
+
+    /* 컨텐츠 */
+    .content{flex:1;padding:36px 40px 64px;max-width:960px}
+    .step{display:none}
+    .step.active{display:block}
+    .step-header{margin-bottom:26px}
+    .step-header h2{font-size:24px;font-weight:700;letter-spacing:-0.6px}
+    .step-header p{font-size:13.5px;color:var(--text-m);margin-top:5px;letter-spacing:-0.1px}
+
+    /* 카드 */
+    .card{background:var(--bg-card);border:0.5px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:16px}
+    .card-title{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:16px;letter-spacing:-0.2px}
+
+    /* 폼 */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+    .form-grid.g3{grid-template-columns:1fr 1fr 1fr}
+    .fg{display:flex;flex-direction:column;gap:5px}
+    .fg.full{grid-column:1/-1}
+    label{font-size:11.5px;font-weight:600;color:var(--text-m);letter-spacing:0.03em;text-transform:uppercase}
+    input[type=text],input[type=date],select,textarea{border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:14px;font-family:'Pretendard',sans-serif;color:var(--text);background:#fff;outline:none;transition:border-color 0.15s;width:100%}
+    input[type=text]:focus,input[type=date]:focus,select:focus,textarea:focus{border-color:var(--p)}
+    textarea{resize:vertical;min-height:68px}
+
+    /* 평가방법 선택 */
+    .method-group{display:flex;gap:12px;flex-wrap:wrap}
+    .method-btn{flex:1;min-width:140px;border:1.5px solid var(--border);border-radius:11px;padding:14px 16px;cursor:pointer;background:#fff;text-align:left;transition:all 0.15s}
+    .method-btn:hover{border-color:var(--p)}
+    .method-btn.selected{border-color:var(--p);background:rgba(44,82,130,0.04)}
+    .method-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
+    .method-desc{font-size:11.5px;color:var(--text-m);margin-top:4px;line-height:1.45}
+
+    /* 빠른입력 */
+    .quick-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(44,82,130,0.05);border-radius:10px;margin-bottom:14px;flex-wrap:wrap}
+    .quick-bar label{text-transform:none;font-size:12px;white-space:nowrap}
+    .quick-bar select{border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:13px;background:#fff;width:auto}
+    .btn-quick{background:var(--p);color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'Pretendard',sans-serif}
+    .btn-quick:hover{background:var(--p-dk)}
+
+    /* 위험요인 테이블 */
+    .tbl-wrap{overflow-x:auto;margin-top:4px}
+    .risk-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+    .risk-tbl th{background:var(--p-dk);color:#fff;padding:9px 8px;text-align:center;font-size:10.5px;font-weight:600;white-space:nowrap;letter-spacing:0.03em}
+    .risk-tbl td{border:0.5px solid var(--border);padding:6px 7px;vertical-align:middle}
+    .risk-tbl tr:nth-child(even) td{background:rgba(0,0,0,0.012)}
+    .risk-tbl input,.risk-tbl select{border:none;background:transparent;width:100%;font-size:12.5px;padding:2px 4px;border-bottom:1px solid transparent;border-radius:0;font-family:'Pretendard',sans-serif}
+    .risk-tbl input:focus,.risk-tbl select:focus{outline:none;border-bottom-color:var(--p)}
+    .risk-badge{display:inline-block;padding:3px 7px;border-radius:5px;font-size:11px;font-weight:700;white-space:nowrap;text-align:center}
+    .rl{background:#d4edda;color:#155724}
+    .rm{background:#fff3cd;color:#856404}
+    .rh{background:#ffe0cc;color:#7d3c00}
+    .rv{background:#f8d7da;color:#721c24}
+    .btn-del{background:none;border:none;color:#dc3545;cursor:pointer;font-size:15px;line-height:1;padding:3px 5px;border-radius:4px}
+    .btn-del:hover{background:#fff0f0}
+
+    /* 위험분포 요약 */
+    .risk-summary{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .risk-sum-item{flex:1;min-width:80px;border-radius:10px;padding:10px 14px;text-align:center}
+    .risk-sum-item .rs-score{font-size:22px;font-weight:800}
+    .risk-sum-item .rs-label{font-size:11px;font-weight:600;margin-top:2px}
+
+    /* 감소대책 카드 */
+    .measure-card{background:var(--bg-card);border:0.5px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:12px}
+    .measure-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+    .m-num{width:26px;height:26px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:2px}
+    .m-info{flex:1}
+    .m-step{font-size:11px;color:var(--text-m);margin-bottom:2px}
+    .m-hazard{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-0.2px}
+    .m-body{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start}
+    .after-wrap{display:flex;flex-direction:column;gap:8px}
+    .after-label{font-size:11px;font-weight:600;color:var(--text-m);text-transform:uppercase;letter-spacing:0.04em}
+    .after-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .after-grid select{border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:12.5px;width:100%}
+    .after-score{text-align:center;padding:9px 10px;border-radius:8px;font-size:14px;font-weight:800;margin-top:4px}
+    .after-score small{display:block;font-size:10px;font-weight:600;margin-top:1px}
+
+    /* 버튼 */
+    .btn-primary{background:var(--p);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:-0.2px;font-family:'Pretendard',sans-serif}
+    .btn-primary:hover{background:var(--p-dk)}
+    .btn-secondary{background:rgba(0,0,0,0.06);color:var(--text);border:none;border-radius:10px;padding:11px 22px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:-0.2px;font-family:'Pretendard',sans-serif}
+    .btn-secondary:hover{background:rgba(0,0,0,0.1)}
+    .btn-add-row{background:none;border:1.5px dashed var(--border);border-radius:9px;padding:9px 18px;font-size:13px;color:var(--text-m);cursor:pointer;width:100%;margin-top:10px;font-family:'Pretendard',sans-serif}
+    .btn-add-row:hover{border-color:var(--p);color:var(--p)}
+    .btn-danger{background:none;border:1px solid #dc3545;color:#dc3545;border-radius:10px;padding:11px 22px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Pretendard',sans-serif}
+    .btn-danger:hover{background:#fff5f5}
+    .nav-btns{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+
+    /* 인쇄 미리보기 */
+    .preview-toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--p-dk);color:#fff;border-radius:14px 14px 0 0}
+    .preview-toolbar span{font-size:13px;font-weight:600}
+    .preview-toolbar-btns{display:flex;gap:8px}
+    .btn-print{background:var(--steel);color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Pretendard',sans-serif}
+    .btn-print:hover{background:#6389c8}
+    .print-doc{padding:30px 32px;background:#fff;border:0.5px solid var(--border);border-top:none;border-radius:0 0 14px 14px}
+    .print-title{text-align:center;margin-bottom:22px}
+    .print-title h1{font-size:21px;font-weight:800;letter-spacing:-0.4px}
+    .print-method-badge{display:inline-block;background:var(--p);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:6px}
+    .print-meta{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:12px}
+    .print-meta td{border:0.5px solid #bbb;padding:6px 10px}
+    .print-meta td:nth-child(odd){background:#eef2f7;font-weight:700;width:70px;color:var(--p-dk)}
+    .print-risk-tbl{width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:18px}
+    .print-risk-tbl th{background:var(--p-dk);color:#fff;padding:7px 5px;text-align:center;font-size:9.5px;font-weight:700;border:0.5px solid var(--p)}
+    .print-risk-tbl td{border:0.5px solid #ccc;padding:5px 6px;vertical-align:top}
+    .print-risk-tbl tr:nth-child(even) td{background:#fafafa}
+    .print-sign{display:flex;gap:14px;margin-top:22px}
+    .sign-box{flex:1;border:0.5px solid #999;border-radius:6px;padding:10px 12px;text-align:center}
+    .sign-title{font-size:11px;font-weight:700;color:var(--text-m);margin-bottom:22px}
+    .sign-line{border-top:0.5px solid #ccc;padding-top:5px;font-size:10px;color:var(--text-l)}
+    .legend-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .legend-item{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-s)}
+    .legend-dot{width:11px;height:11px;border-radius:3px}
+
+    /* 저장 토스트 */
+    .save-toast{position:fixed;bottom:24px;right:24px;background:var(--p-dk);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:999}
+    .save-toast.show{opacity:1}
+
+    /* 반응형 */
+    @media(max-width:768px){
+      .sidebar{display:none}
+      .content{padding:20px 16px 40px}
+      .form-grid{grid-template-columns:1fr}
+      .form-grid.g3{grid-template-columns:1fr}
+      .m-body{grid-template-columns:1fr}
+    }
+
+    /* 인쇄 */
+    @media print{
+      .sidebar,.step-header p,.quick-bar,.btn-add-row,.nav-btns,
+      .preview-toolbar,.btn-del,.risk-summary,.legend-row{display:none!important}
+      body{background:#fff}
+      .page-wrap{display:block}
+      .content{padding:0;max-width:100%}
+      .step{display:none!important}
+      .print-only{display:block!important}
+      .print-doc{padding:8mm 10mm;border:none}
+      .print-risk-tbl{font-size:9px}
+      .risk-badge{padding:2px 5px;font-size:9px}
+    }
+    .print-only{display:none}
+  </style>
+</head>
+<body>
+
+<svg aria-hidden="true" style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </symbol>
+</svg>
+
+<div class="page-wrap">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <a href="index.html">무사<em>이</em></a>
+      <div class="tool-name">위험성 평가</div>
+    </div>
+    <div class="nav-item active" onclick="gotoStep(1)"><div class="nav-num">1</div>기본정보</div>
+    <div class="nav-item" onclick="gotoStep(2)"><div class="nav-num">2</div>위험요인 파악</div>
+    <div class="nav-item" onclick="gotoStep(3)"><div class="nav-num">3</div>감소대책</div>
+    <div class="nav-item" onclick="gotoStep(4)"><div class="nav-num">4</div>미리보기 · 출력</div>
+    <div class="sidebar-footer">KOSHA GUIDE P-180<br>고용노동부 위험성평가 지침</div>
+  </aside>
+
+  <main class="content">
+
+    <!-- ══ STEP 1 기본정보 ══ -->
+    <div id="step1" class="step active">
+      <div class="step-header">
+        <h2>기본정보</h2>
+        <p>사업장·공사·작업 정보와 평가 방법을 입력합니다.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">사업장 / 작업 정보</div>
+        <div class="form-grid">
+          <div class="fg"><label>사업장명</label><input type="text" id="info_company" placeholder="예) ○○건설(주)"></div>
+          <div class="fg"><label>공사명 / 작업명</label><input type="text" id="info_project" placeholder="예) △△아파트 신축공사 – 철근콘크리트 타설"></div>
+          <div class="fg"><label>작업 위치</label><input type="text" id="info_location" placeholder="예) 지하 2층 D구역"></div>
+          <div class="fg"><label>평가일</label><input type="date" id="info_date"></div>
+          <div class="fg"><label>평가팀장</label><input type="text" id="info_leader" placeholder="성명 / 직위"></div>
+          <div class="fg"><label>참여자</label><input type="text" id="info_members" placeholder="홍길동 안전관리자, 김○○ 현장반장 …"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">평가 방법 선택</div>
+        <div class="method-group">
+          <button class="method-btn selected" data-method="KRAS" onclick="selectMethod('KRAS')">
+            <div class="method-name">KRAS</div>
+            <div class="method-desc">Korean Risk Assessment Sheet — 위험성 평가표. 유해위험요인별 가능성×중대성 행렬로 위험수준 산정.</div>
+          </button>
+          <button class="method-btn" data-method="JSA" onclick="selectMethod('JSA')">
+            <div class="method-name">JSA</div>
+            <div class="method-desc">Job Safety Analysis — 작업안전분석. 작업단계를 세분화해 각 단계의 위험요소와 대책을 분석.</div>
+          </button>
+        </div>
+        <div style="margin-top:14px;padding:12px 14px;background:rgba(44,82,130,0.05);border-radius:9px;font-size:12.5px;color:var(--text-m);line-height:1.6;">
+          위험성 수준 = <strong>가능성(1~4)</strong> × <strong>중대성(1~4)</strong> &nbsp;|&nbsp;
+          <span class="risk-badge rl">1~3 낮음</span>&nbsp;
+          <span class="risk-badge rm">4~6 보통</span>&nbsp;
+          <span class="risk-badge rh">8~9 높음</span>&nbsp;
+          <span class="risk-badge rv">12~16 매우높음</span>
+        </div>
+      </div>
+
+      <div class="nav-btns">
+        <button class="btn-primary" onclick="saveInfoAndGo(2)">다음 — 위험요인 파악</button>
+        <button class="btn-danger" onclick="resetAll()">초기화</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 2 위험요인 ══ -->
+    <div id="step2" class="step">
+      <div class="step-header">
+        <h2>위험요인 파악</h2>
+        <p>작업단계별 유해위험요인을 입력하고 현재 위험성(가능성 × 중대성)을 추정합니다.</p>
+      </div>
+
+      <div class="card">
+        <div class="quick-bar">
+          <label>빠른 입력</label>
+          <select id="presetSelect">
+            <option value="">— 작업 유형 선택 —</option>
+            <option value="crane">이동식 크레인</option>
+            <option value="excavation">굴착 · 토공</option>
+            <option value="electrical">전기 작업</option>
+            <option value="scaffold">비계 · 고소작업</option>
+            <option value="confined">밀폐공간</option>
+            <option value="welding">용접 · 용단</option>
+          </select>
+          <button class="btn-quick" onclick="insertPreset(document.getElementById('presetSelect').value)">불러오기</button>
+          <span style="font-size:11.5px;color:var(--text-l);margin-left:4px">선택 시 해당 작업 유형의 대표 위험요인 6개가 자동 추가됩니다.</span>
+        </div>
+
+        <div class="tbl-wrap">
+          <table class="risk-tbl">
+            <thead>
+              <tr>
+                <th style="width:28px">No.</th>
+                <th style="min-width:80px">작업단계</th>
+                <th style="min-width:180px">유해위험요인</th>
+                <th style="width:80px">위험유형</th>
+                <th style="width:90px">가능성</th>
+                <th style="width:90px">중대성</th>
+                <th style="width:72px">위험성</th>
+                <th style="width:36px"></th>
+              </tr>
+            </thead>
+            <tbody id="riskTbody"></tbody>
+          </table>
+        </div>
+        <button class="btn-add-row" onclick="addRow()">+ 위험요인 행 추가</button>
+
+        <div id="riskSummary" class="risk-summary" style="display:none"></div>
+        <div class="legend-row">
+          <div class="legend-item"><div class="legend-dot rl"></div>낮음 (1~3) · 일상적 관리</div>
+          <div class="legend-item"><div class="legend-dot rm"></div>보통 (4~6) · 주의 필요</div>
+          <div class="legend-item"><div class="legend-dot rh"></div>높음 (8~9) · 개선 필요</div>
+          <div class="legend-item"><div class="legend-dot rv"></div>매우높음 (12~16) · 즉시 개선</div>
+        </div>
+      </div>
+
+      <div class="nav-btns">
+        <button class="btn-secondary" onclick="gotoStep(1)">이전</button>
+        <button class="btn-primary" onclick="gotoStep(3)">다음 — 감소대책</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 3 감소대책 ══ -->
+    <div id="step3" class="step">
+      <div class="step-header">
+        <h2>감소대책 수립</h2>
+        <p>각 위험요인의 감소대책을 입력하고, 개선 후 잔류위험성을 추정합니다.</p>
+      </div>
+      <div id="measuresWrap"></div>
+      <div class="nav-btns">
+        <button class="btn-secondary" onclick="gotoStep(2)">이전</button>
+        <button class="btn-primary" onclick="gotoStep(4)">다음 — 미리보기 · 출력</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 4 출력 ══ -->
+    <div id="step4" class="step">
+      <div class="step-header">
+        <h2>미리보기 · 출력</h2>
+        <p>완성된 위험성 평가표를 확인하고 인쇄하세요.</p>
+      </div>
+
+      <div class="preview-toolbar">
+        <span>위험성 평가표 미리보기</span>
+        <div class="preview-toolbar-btns">
+          <button class="btn-print" onclick="window.print()">인쇄 / PDF 저장</button>
+        </div>
+      </div>
+      <div class="print-doc" id="printDoc"></div>
+
+      <div class="nav-btns">
+        <button class="btn-secondary" onclick="gotoStep(3)">이전</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="saveToast" class="save-toast">저장됨</div>
+
+<!-- 인쇄 전용 영역 (print CSS로 표시) -->
+<div class="print-only" id="printOnly"></div>
+
+<script>
+var STORE_KEY = 'musai_risk_v1';
+var currentStep = 1;
+var rowIdCnt = 0;
+
+var store = {
+  info: { company:'', project:'', location:'', date:'', leader:'', members:'', method:'KRAS' },
+  rows: []
+};
+
+var TYPE_LABELS = { mech:'기계적', elec:'전기적', chem:'화학적', phys:'물리적', bio:'생물학적', human:'인간공학' };
+
+var PROB_LABELS = { 1:'1-거의없음', 2:'2-가끔', 3:'3-종종', 4:'4-빈번' };
+var SEV_LABELS  = { 1:'1-경미', 2:'2-경상', 3:'3-중상', 4:'4-사망' };
+
+var PRESETS = {
+  crane: [
+    { step:'장비 설치', hazard:'아우트리거 미전개 / 지반 침하로 인한 전도', type:'mech', prob:2, sev:4 },
+    { step:'인양 작업', hazard:'정격하중 초과(과부하) 인양', type:'mech', prob:2, sev:4 },
+    { step:'인양 작업', hazard:'슬링벨트 훅 이탈 · 파단', type:'mech', prob:2, sev:3 },
+    { step:'인양 작업', hazard:'선회 반경 내 작업자 협착 · 충돌', type:'mech', prob:3, sev:3 },
+    { step:'줄걸이', hazard:'달기기구 각도 60° 초과', type:'mech', prob:3, sev:2 },
+    { step:'신호 체계', hazard:'신호수 부재 또는 신호 불명확', type:'human', prob:3, sev:3 }
+  ],
+  excavation: [
+    { step:'굴착 작업', hazard:'굴착면 붕괴 · 낙반', type:'phys', prob:2, sev:4 },
+    { step:'굴착 작업', hazard:'굴착기 전도(경사지·연약지반)', type:'mech', prob:2, sev:4 },
+    { step:'토사 반출', hazard:'덤프트럭 후진 시 작업자 충돌', type:'mech', prob:3, sev:3 },
+    { step:'굴착면 정리', hazard:'1.5m 이상 굴착면 추락', type:'phys', prob:2, sev:3 },
+    { step:'흙막이 설치', hazard:'토압에 의한 지보공 붕괴', type:'mech', prob:2, sev:4 },
+    { step:'배수 작업', hazard:'집중호우 시 법면 붕괴', type:'phys', prob:2, sev:3 }
+  ],
+  electrical: [
+    { step:'정전 확인', hazard:'잔류전하에 의한 감전', type:'elec', prob:2, sev:4 },
+    { step:'차단기 조작', hazard:'LOTO 미이행으로 인한 불시 기동', type:'elec', prob:2, sev:4 },
+    { step:'배선 작업', hazard:'충전전로 근접 감전', type:'elec', prob:3, sev:4 },
+    { step:'패널 작업', hazard:'아크 섬광에 의한 화상', type:'elec', prob:2, sev:3 },
+    { step:'전선 포설', hazard:'날카로운 전선관 모서리 찰과상', type:'mech', prob:3, sev:1 },
+    { step:'복전', hazard:'복전 순서 오류로 인한 오작동', type:'elec', prob:2, sev:3 }
+  ],
+  scaffold: [
+    { step:'비계 조립', hazard:'고소 작업 중 추락(2m 이상)', type:'phys', prob:2, sev:4 },
+    { step:'자재 인양', hazard:'자재 낙하로 인한 하부 작업자 부상', type:'phys', prob:3, sev:3 },
+    { step:'비계 사용', hazard:'비계 발판 이탈 · 파손', type:'mech', prob:2, sev:4 },
+    { step:'비계 해체', hazard:'벽 연결재 조기 해체로 인한 전도', type:'mech', prob:2, sev:4 },
+    { step:'안전시설', hazard:'안전망 · 안전난간 미설치', type:'human', prob:2, sev:4 },
+    { step:'개인보호구', hazard:'안전대 미체결 · 체결 불량', type:'human', prob:3, sev:4 }
+  ],
+  confined: [
+    { step:'진입 전', hazard:'산소 결핍(18% 미만)으로 인한 질식', type:'chem', prob:2, sev:4 },
+    { step:'진입 전', hazard:'유해가스(H₂S·CO) 중독', type:'chem', prob:2, sev:4 },
+    { step:'작업 중', hazard:'환기 중단으로 인한 산소농도 저하', type:'chem', prob:2, sev:4 },
+    { step:'진입', hazard:'감시인 부재 상태의 단독 진입', type:'human', prob:3, sev:4 },
+    { step:'비상 대피', hazard:'출입구 협소로 인한 대피 지연', type:'phys', prob:2, sev:4 },
+    { step:'장비 사용', hazard:'전기 스파크에 의한 폭발·화재', type:'elec', prob:1, sev:4 }
+  ],
+  welding: [
+    { step:'준비', hazard:'가연성 물질 인근 화재·폭발', type:'chem', prob:2, sev:4 },
+    { step:'용접 작업', hazard:'용접 흄·분진 흡입', type:'chem', prob:3, sev:2 },
+    { step:'용접 작업', hazard:'아크광·자외선에 의한 눈·피부 손상', type:'phys', prob:3, sev:2 },
+    { step:'용접 작업', hazard:'스패터에 의한 화상', type:'phys', prob:3, sev:2 },
+    { step:'고압가스', hazard:'산소·LPG 호스 누기·역화', type:'chem', prob:2, sev:4 },
+    { step:'마무리', hazard:'용접 후 잔열에 의한 화재', type:'chem', prob:2, sev:3 }
+  ]
+};
+
+/* ── 위험성 계산 ── */
+function calcRisk(p, s) { return p * s; }
+function riskLevel(sc) {
+  if (sc <= 3)  return '낮음';
+  if (sc <= 6)  return '보통';
+  if (sc <= 9)  return '높음';
+  return '매우높음';
+}
+function riskClass(sc) {
+  if (sc <= 3)  return 'rl';
+  if (sc <= 6)  return 'rm';
+  if (sc <= 9)  return 'rh';
+  return 'rv';
+}
+
+/* ── 저장 / 로드 ── */
+function save() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+  showToast();
+}
+function load() {
+  var raw = localStorage.getItem(STORE_KEY);
+  if (!raw) return;
+  try {
+    var p = JSON.parse(raw);
+    if (p.info) store.info = p.info;
+    if (p.rows) {
+      store.rows = p.rows;
+      if (store.rows.length) {
+        rowIdCnt = Math.max.apply(null, store.rows.map(function(r){ return r.id; }));
+      }
+    }
+  } catch(e) {}
+}
+function showToast() {
+  var t = document.getElementById('saveToast');
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 1700);
+}
+
+/* ── 스텝 이동 ── */
+function gotoStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.step').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('step' + n).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(el, i){
+    el.classList.remove('active','done');
+    if (i + 1 === n) el.classList.add('active');
+    else if (i + 1 < n) el.classList.add('done');
+  });
+  if (n === 3) renderMeasures();
+  if (n === 4) renderPrint();
+  window.scrollTo(0, 0);
+}
+function saveInfoAndGo(n) {
+  saveInfo();
+  gotoStep(n);
+}
+
+/* ── 기본정보 ── */
+function fillInfo() {
+  var fields = ['company','project','location','date','leader','members'];
+  for (var i = 0; i < fields.length; i++) {
+    var el = document.getElementById('info_' + fields[i]);
+    if (el) el.value = store.info[fields[i]] || '';
+  }
+  document.querySelectorAll('.method-btn').forEach(function(btn){
+    btn.classList.toggle('selected', btn.dataset.method === store.info.method);
+  });
+}
+function saveInfo() {
+  var fields = ['company','project','location','date','leader','members'];
+  for (var i = 0; i < fields.length; i++) {
+    var el = document.getElementById('info_' + fields[i]);
+    if (el) store.info[fields[i]] = el.value;
+  }
+  save();
+}
+function selectMethod(m) {
+  store.info.method = m;
+  document.querySelectorAll('.method-btn').forEach(function(btn){
+    btn.classList.toggle('selected', btn.dataset.method === m);
+  });
+  save();
+}
+
+/* ── 위험요인 행 ── */
+function addRow() {
+  rowIdCnt++;
+  store.rows.push({ id:rowIdCnt, step:'', hazard:'', type:'mech', prob:2, sev:2,
+    measure:'', probAfter:1, sevAfter:1, owner:'', dueDate:'' });
+  renderRows();
+  save();
+}
+function removeRow(id) {
+  store.rows = store.rows.filter(function(r){ return r.id !== id; });
+  renderRows();
+  save();
+}
+function getRow(id) {
+  for (var i = 0; i < store.rows.length; i++) { if (store.rows[i].id === id) return store.rows[i]; }
+  return null;
+}
+function updateField(id, field, value) {
+  var r = getRow(id);
+  if (r) { r[field] = value; save(); }
+}
+function updateNum(id, field, value) {
+  var r = getRow(id);
+  if (r) { r[field] = parseInt(value, 10); renderRows(); save(); }
+}
+function updateNumMeasure(id, field, value) {
+  var r = getRow(id);
+  if (r) { r[field] = parseInt(value, 10); refreshAfterScore(id); save(); }
+}
+
+function renderRows() {
+  var tbody = document.getElementById('riskTbody');
+  if (!tbody) return;
+  if (store.rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-l);font-size:13px;">위험요인이 없습니다. 행을 추가하거나 빠른 입력을 사용하세요.</td></tr>';
+    updateSummary();
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < store.rows.length; i++) {
+    var r = store.rows[i];
+    var sc = calcRisk(r.prob, r.sev);
+    var cls = riskClass(sc);
+    var lv = riskLevel(sc);
+    html += '<tr data-id="' + r.id + '">';
+    html += '<td style="text-align:center;color:var(--text-l);font-size:11px">' + (i+1) + '</td>';
+    html += '<td><input type="text" value="' + esc(r.step) + '" onchange="updateField(' + r.id + ',\'step\',this.value)" placeholder="작업단계"></td>';
+    html += '<td><input type="text" value="' + esc(r.hazard) + '" onchange="updateField(' + r.id + ',\'hazard\',this.value)" placeholder="유해위험요인 기재"></td>';
+    html += '<td><select onchange="updateField(' + r.id + ',\'type\',this.value)">';
+    for (var k in TYPE_LABELS) {
+      html += '<option value="' + k + '"' + (r.type === k ? ' selected' : '') + '>' + TYPE_LABELS[k] + '</option>';
+    }
+    html += '</select></td>';
+    html += '<td><select onchange="updateNum(' + r.id + ',\'prob\',this.value)">';
+    for (var p = 1; p <= 4; p++) {
+      html += '<option value="' + p + '"' + (r.prob === p ? ' selected' : '') + '>' + PROB_LABELS[p] + '</option>';
+    }
+    html += '</select></td>';
+    html += '<td><select onchange="updateNum(' + r.id + ',\'sev\',this.value)">';
+    for (var s = 1; s <= 4; s++) {
+      html += '<option value="' + s + '"' + (r.sev === s ? ' selected' : '') + '>' + SEV_LABELS[s] + '</option>';
+    }
+    html += '</select></td>';
+    html += '<td style="text-align:center"><span class="risk-badge ' + cls + '">' + sc + '<br><small style="font-size:9.5px">' + lv + '</small></span></td>';
+    html += '<td style="text-align:center"><button class="btn-del" onclick="removeRow(' + r.id + ')">✕</button></td>';
+    html += '</tr>';
+  }
+  tbody.innerHTML = html;
+  updateSummary();
+}
+
+function updateSummary() {
+  var wrap = document.getElementById('riskSummary');
+  if (!wrap) return;
+  if (store.rows.length === 0) { wrap.style.display = 'none'; return; }
+  var counts = { rl:0, rm:0, rh:0, rv:0 };
+  for (var i = 0; i < store.rows.length; i++) {
+    counts[riskClass(calcRisk(store.rows[i].prob, store.rows[i].sev))]++;
+  }
+  wrap.style.display = 'flex';
+  wrap.innerHTML =
+    '<div class="risk-sum-item rl"><div class="rs-score">' + counts.rl + '</div><div class="rs-label">낮음</div></div>' +
+    '<div class="risk-sum-item rm"><div class="rs-score">' + counts.rm + '</div><div class="rs-label">보통</div></div>' +
+    '<div class="risk-sum-item rh"><div class="rs-score">' + counts.rh + '</div><div class="rs-label">높음</div></div>' +
+    '<div class="risk-sum-item rv"><div class="rs-score">' + counts.rv + '</div><div class="rs-label">매우높음</div></div>';
+}
+
+/* ── 빠른 입력 ── */
+function insertPreset(type) {
+  if (!type || !PRESETS[type]) return;
+  var list = PRESETS[type];
+  for (var i = 0; i < list.length; i++) {
+    rowIdCnt++;
+    var pr = list[i];
+    store.rows.push({ id:rowIdCnt, step:pr.step, hazard:pr.hazard, type:pr.type,
+      prob:pr.prob, sev:pr.sev, measure:'', probAfter:1, sevAfter:1, owner:'', dueDate:'' });
+  }
+  renderRows();
+  save();
+  document.getElementById('presetSelect').value = '';
+}
+
+/* ── 감소대책 ── */
+function renderMeasures() {
+  var wrap = document.getElementById('measuresWrap');
+  if (!wrap) return;
+  if (store.rows.length === 0) {
+    wrap.innerHTML = '<div class="card" style="text-align:center;padding:32px;color:var(--text-l);font-size:13.5px;">2단계에서 위험요인을 먼저 입력해 주세요.</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < store.rows.length; i++) {
+    var r = store.rows[i];
+    var scB = calcRisk(r.prob, r.sev);
+    var scA = calcRisk(r.probAfter, r.sevAfter);
+    var clsB = riskClass(scB);
+    var clsA = riskClass(scA);
+    html += '<div class="measure-card" id="mc_' + r.id + '">';
+    html += '<div class="measure-head">';
+    html += '<div class="m-num">' + (i+1) + '</div>';
+    html += '<div class="m-info">';
+    html += '<div class="m-step">' + (esc(r.step)||'—') + ' &nbsp;·&nbsp; ' + (TYPE_LABELS[r.type]||r.type) + '</div>';
+    html += '<div class="m-hazard">' + (esc(r.hazard)||'위험요인 미입력') + '</div>';
+    html += '</div>';
+    html += '<span class="risk-badge ' + clsB + '" style="margin-left:auto;flex-shrink:0">' + scB + ' ' + riskLevel(scB) + '</span>';
+    html += '</div>';
+    html += '<div class="m-body">';
+    /* 감소대책 + 담당자/일정 */
+    html += '<div>';
+    html += '<div class="fg" style="margin-bottom:10px"><label>감소대책</label>';
+    html += '<textarea onchange="updateField(' + r.id + ',\'measure\',this.value)" placeholder="기술적·관리적·교육적 대책을 기재하세요.">' + esc(r.measure) + '</textarea>';
+    html += '</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+    html += '<div class="fg"><label>담당자</label><input type="text" value="' + esc(r.owner) + '" onchange="updateField(' + r.id + ',\'owner\',this.value)" placeholder="성명"></div>';
+    html += '<div class="fg"><label>완료예정일</label><input type="date" value="' + esc(r.dueDate) + '" onchange="updateField(' + r.id + ',\'dueDate\',this.value)"></div>';
+    html += '</div></div>';
+    /* 개선 후 위험성 */
+    html += '<div class="after-wrap">';
+    html += '<div class="after-label">개선 후 위험성</div>';
+    html += '<div class="after-grid">';
+    html += '<div class="fg"><label>가능성</label><select onchange="updateNumMeasure(' + r.id + ',\'probAfter\',this.value)">';
+    for (var p = 1; p <= 4; p++) {
+      html += '<option value="' + p + '"' + (r.probAfter === p ? ' selected' : '') + '>' + p + '</option>';
+    }
+    html += '</select></div>';
+    html += '<div class="fg"><label>중대성</label><select onchange="updateNumMeasure(' + r.id + ',\'sevAfter\',this.value)">';
+    for (var s = 1; s <= 4; s++) {
+      html += '<option value="' + s + '"' + (r.sevAfter === s ? ' selected' : '') + '>' + s + '</option>';
+    }
+    html += '</select></div>';
+    html += '</div>';
+    html += '<div class="after-score ' + clsA + '" id="as_' + r.id + '">' + scA + '<small>' + riskLevel(scA) + '</small></div>';
+    html += '</div>';
+    html += '</div></div>';
+  }
+  wrap.innerHTML = html;
+}
+
+function refreshAfterScore(id) {
+  var r = getRow(id);
+  if (!r) return;
+  var sc = calcRisk(r.probAfter, r.sevAfter);
+  var el = document.getElementById('as_' + id);
+  if (el) {
+    el.className = 'after-score ' + riskClass(sc);
+    el.innerHTML = sc + '<small>' + riskLevel(sc) + '</small>';
+  }
+}
+
+/* ── 인쇄 렌더링 ── */
+function renderPrint() {
+  var doc = document.getElementById('printDoc');
+  if (!doc) return;
+  var info = store.info;
+  var html = '';
+  html += '<div class="print-title"><h1>위험성 평가표</h1>';
+  html += '<div class="print-method-badge">' + (info.method === 'JSA' ? 'JSA — Job Safety Analysis' : 'KRAS — 위험성 평가') + '</div></div>';
+  html += '<table class="print-meta">';
+  html += '<tr><td>사업장명</td><td>' + esc(info.company) + '</td><td>공사 / 작업명</td><td>' + esc(info.project) + '</td></tr>';
+  html += '<tr><td>작업위치</td><td>' + esc(info.location) + '</td><td>평가일</td><td>' + esc(info.date) + '</td></tr>';
+  html += '<tr><td>평가팀장</td><td>' + esc(info.leader) + '</td><td>참여자</td><td>' + esc(info.members) + '</td></tr>';
+  html += '</table>';
+  if (store.rows.length === 0) {
+    html += '<div style="text-align:center;padding:32px;color:var(--text-l)">위험요인이 없습니다.</div>';
+  } else {
+    html += '<table class="print-risk-tbl">';
+    html += '<thead><tr>';
+    html += '<th style="width:22px">No.</th><th style="width:70px">작업단계</th><th>유해위험요인</th>';
+    html += '<th style="width:50px">위험유형</th><th style="width:22px">가</th><th style="width:22px">중</th>';
+    html += '<th style="width:46px">위험성</th><th>감소대책</th>';
+    html += '<th style="width:22px">가</th><th style="width:22px">중</th>';
+    html += '<th style="width:46px">잔류위험</th><th style="width:46px">담당자</th><th style="width:54px">완료예정</th>';
+    html += '</tr></thead><tbody>';
+    for (var i = 0; i < store.rows.length; i++) {
+      var r = store.rows[i];
+      var scB = calcRisk(r.prob, r.sev);
+      var scA = calcRisk(r.probAfter, r.sevAfter);
+      html += '<tr>';
+      html += '<td style="text-align:center">' + (i+1) + '</td>';
+      html += '<td>' + esc(r.step) + '</td>';
+      html += '<td>' + esc(r.hazard) + '</td>';
+      html += '<td style="text-align:center">' + (TYPE_LABELS[r.type]||r.type) + '</td>';
+      html += '<td style="text-align:center">' + r.prob + '</td>';
+      html += '<td style="text-align:center">' + r.sev + '</td>';
+      html += '<td style="text-align:center"><span class="risk-badge ' + riskClass(scB) + '">' + scB + '</span></td>';
+      html += '<td>' + esc(r.measure) + '</td>';
+      html += '<td style="text-align:center">' + r.probAfter + '</td>';
+      html += '<td style="text-align:center">' + r.sevAfter + '</td>';
+      html += '<td style="text-align:center"><span class="risk-badge ' + riskClass(scA) + '">' + scA + '</span></td>';
+      html += '<td>' + esc(r.owner) + '</td>';
+      html += '<td>' + esc(r.dueDate) + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+  }
+  html += '<div class="print-sign">';
+  html += '<div class="sign-box"><div class="sign-title">평가팀장</div><div class="sign-line">' + esc(info.leader||'') + '</div></div>';
+  html += '<div class="sign-box"><div class="sign-title">검 토 자</div><div class="sign-line">&nbsp;</div></div>';
+  html += '<div class="sign-box"><div class="sign-title">승 인 자</div><div class="sign-line">&nbsp;</div></div>';
+  html += '</div>';
+  doc.innerHTML = html;
+}
+
+/* ── XSS 방지 ── */
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── 초기화 ── */
+function resetAll() {
+  if (!confirm('모든 입력 데이터를 초기화하시겠습니까?')) return;
+  localStorage.removeItem(STORE_KEY);
+  store = { info:{ company:'', project:'', location:'', date:'', leader:'', members:'', method:'KRAS' }, rows:[] };
+  rowIdCnt = 0;
+  fillInfo();
+  renderRows();
+  gotoStep(1);
+}
+
+/* ── 초기 로드 ── */
+window.onload = function() {
+  load();
+  fillInfo();
+  renderRows();
+};
+</script>
+</body>
+</html>

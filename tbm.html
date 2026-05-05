@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#2C5282">
+  <meta name="description" content="무사이(Musai) — TBM 체크리스트. 현장 작업 전 안전 점검">
+  <title>TBM 체크리스트 · 무사이</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    /* ============================================================
+       tbm.html — TBM 체크리스트 (무사이 건설 안전 플랫폼)
+       ============================================================ */
+    :root {
+      --p:       #2C5282;
+      --p-dk:    #1E3A5F;
+      --steel:   #7B9EE0;
+      --bg:      #F5F5F7;
+      --bg-card: #FFFFFF;
+      --text:    #1D1D1F;
+      --text-s:  #3C3C43;
+      --text-m:  #6E6E73;
+      --text-l:  #86868B;
+      --border:  rgba(0,0,0,0.1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── 헤더 바 ── */
+    .top-bar {
+      background: var(--p);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 12px;
+    }
+    .top-bar-left, .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .top-bar-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      flex: 1;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .btn-ghost {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.25); }
+    .btn-ghost svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* ── 본문 컨테이너 ── */
+    .page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 24px 16px 100px;
+    }
+
+    /* ── 카드 ── */
+    .card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .section-badge {
+      background: var(--p);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── 폼 기본 ── */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .form-row.full { grid-template-columns: 1fr; }
+    .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+    @media (max-width: 520px) {
+      .form-row, .form-row.three { grid-template-columns: 1fr; }
+    }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-m);
+      letter-spacing: 0.2px;
+    }
+    .form-input, .form-textarea {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--text);
+      background: #FAFAFA;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus, .form-textarea:focus {
+      border-color: var(--p);
+      background: #fff;
+    }
+    .form-textarea { resize: vertical; line-height: 1.55; }
+
+    /* ── 작업 유형 그리드 ── */
+    .work-type-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    @media (min-width: 480px) {
+      .work-type-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (min-width: 640px) {
+      .work-type-grid { grid-template-columns: repeat(7, 1fr); }
+    }
+    .work-type-btn {
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: #FAFAFA;
+      color: var(--text-s);
+      padding: 12px 6px 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.15s;
+      line-height: 1.3;
+      text-align: center;
+    }
+    .work-type-btn svg { width: 22px; height: 22px; }
+    .work-type-btn:hover {
+      border-color: var(--steel);
+      background: #EEF3FC;
+      color: var(--p);
+    }
+    .work-type-btn.active {
+      background: var(--p);
+      border-color: var(--p);
+      color: #fff;
+    }
+    .work-type-btn.active svg { stroke: #fff; }
+
+    /* ── 체크박스 목록 ── */
+    .check-list { display: flex; flex-direction: column; gap: 0; }
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .check-item:last-child { border-bottom: none; }
+    .check-item:hover { background: rgba(44,82,130,0.03); border-radius: 8px; }
+    .check-item input[type="checkbox"] { display: none; }
+    .check-box {
+      width: 20px;
+      height: 20px;
+      border: 1.5px solid var(--border);
+      border-radius: 5px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      background: #fff;
+    }
+    .check-item.checked .check-box {
+      background: var(--p);
+      border-color: var(--p);
+    }
+    .check-item.checked .check-box svg { display: block; }
+    .check-box svg { display: none; width: 12px; height: 12px; stroke: #fff; stroke-width: 2.5; }
+    .check-text {
+      font-size: 14px;
+      color: var(--text-s);
+      line-height: 1.5;
+      flex: 1;
+      user-select: none;
+    }
+    .check-item.checked .check-text { color: var(--text-m); text-decoration: line-through; }
+
+    /* ── 필수 배지 ── */
+    .badge-req {
+      font-size: 10px;
+      font-weight: 700;
+      background: #FEE2E2;
+      color: #DC2626;
+      border-radius: 20px;
+      padding: 2px 7px;
+      margin-left: 6px;
+      white-space: nowrap;
+      vertical-align: middle;
+      display: none;
+    }
+    .badge-req.show { display: inline; }
+
+    /* ── 섹션 D 항목 ── */
+    .danger-list { display: flex; flex-direction: column; gap: 0; }
+    .danger-empty {
+      text-align: center;
+      color: var(--text-l);
+      font-size: 14px;
+      padding: 24px 0;
+    }
+    .danger-empty svg { width: 32px; height: 32px; margin: 0 auto 10px; display: block; opacity: 0.4; }
+
+    /* ── 참석자 명단 ── */
+    .attendee-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 400px) { .attendee-grid { grid-template-columns: 1fr; } }
+    .attendee-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .attendee-num {
+      width: 24px;
+      height: 24px;
+      background: var(--bg);
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-m);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── 하단 버튼 바 ── */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(245,245,247,0.92);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      z-index: 100;
+    }
+    .btn-reset {
+      flex: 1;
+      max-width: 180px;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 13px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-s);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-reset:hover { border-color: var(--p); color: var(--p); }
+    .btn-print {
+      flex: 2;
+      max-width: 280px;
+      background: var(--p);
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+    .btn-print:hover { background: var(--p-dk); }
+    .btn-print svg { width: 18px; height: 18px; }
+
+    /* ── 인쇄 스타일 ── */
+    @media print {
+      body { background: #fff; }
+      .top-bar, .bottom-bar { display: none !important; }
+      .page { max-width: 100%; padding: 0; }
+      .card {
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        margin-bottom: 12px;
+        padding: 14px;
+      }
+      .work-type-btn { display: none; }
+      .work-type-btn.active {
+        display: flex;
+        background: #eee;
+        color: #000;
+        border: 1px solid #999;
+      }
+      .print-header {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        padding: 16px 0 12px;
+        border-bottom: 2px solid #2C5282;
+        margin-bottom: 16px;
+      }
+      .print-brand {
+        font-size: 20px;
+        font-weight: 800;
+        color: #2C5282;
+        letter-spacing: -0.5px;
+      }
+      .print-doc-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #444;
+        margin-top: 3px;
+      }
+      .print-meta {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .print-meta-item {
+        font-size: 12px;
+        color: #333;
+      }
+      .print-meta-item strong { display: block; font-size: 11px; color: #888; }
+      .check-box {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid #555;
+        border-radius: 3px;
+        background: #fff;
+      }
+      .check-item.checked .check-box {
+        background: #2C5282;
+        border-color: #2C5282;
+      }
+      .check-item.checked .check-box svg { display: block; }
+      .check-item.checked .check-text {
+        color: #333;
+        text-decoration: none;
+      }
+      .form-input, .form-textarea {
+        background: #fff;
+        border: 1px solid #ccc;
+      }
+      a { text-decoration: none; color: inherit; }
+    }
+
+    .print-header { display: none; }
+    .print-meta { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     SVG SPRITE
+     ════════════════════════════════════ -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+
+  <!-- s-crane: 이동식 크레인 -->
+  <symbol id="s-crane" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="13" width="6" height="5" rx="1"/>
+    <line x1="6" y1="13" x2="6" y2="3"/>
+    <line x1="6" y1="3" x2="17" y2="7"/>
+    <line x1="17" y1="7" x2="17" y2="10"/>
+    <line x1="17" y1="10" x2="14" y2="10"/>
+    <line x1="14" y1="10" x2="14" y2="13"/>
+    <line x1="6" y1="7" x2="14" y2="7"/>
+    <circle cx="4.5" cy="18" r="1"/>
+    <circle cx="7.5" cy="18" r="1"/>
+  </symbol>
+
+  <!-- s-excavate: 굴착·토공 (삽) -->
+  <symbol id="s-excavate" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 3 L13.5 5.5 L8 11 L5.5 8.5 Z"/>
+    <line x1="5.5" y1="8.5" x2="3" y2="13"/>
+    <path d="M3 13 Q2 16 5 15 Q8 14 13.5 5.5"/>
+    <line x1="13" y1="14" x2="17" y2="14"/>
+    <line x1="13" y1="17" x2="17" y2="17"/>
+    <line x1="11" y1="16" x2="13" y2="16"/>
+  </symbol>
+
+  <!-- s-scaffold: 비계·고소 (사다리) -->
+  <symbol id="s-scaffold" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="5" y1="2" x2="5" y2="18"/>
+    <line x1="15" y1="2" x2="15" y2="18"/>
+    <line x1="5" y1="5" x2="15" y2="5"/>
+    <line x1="5" y1="9" x2="15" y2="9"/>
+    <line x1="5" y1="13" x2="15" y2="13"/>
+    <line x1="5" y1="17" x2="15" y2="17"/>
+    <rect x="3" y="1" width="4" height="2" rx="1"/>
+    <rect x="13" y="1" width="4" height="2" rx="1"/>
+  </symbol>
+
+  <!-- s-electric: 전기 (번개) -->
+  <symbol id="s-electric" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="12,2 7,11 11,11 8,18 15,8 10,8"/>
+  </symbol>
+
+  <!-- s-weld: 용접·용단 (불꽃) -->
+  <symbol id="s-weld" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 16 Q7 12 8 8 Q9 5 10 4 Q11 5 12 8 Q13 12 10 16Z"/>
+    <path d="M10 16 Q6 14 5 11 Q5 9 6 8"/>
+    <path d="M10 16 Q14 14 15 11 Q15 9 14 8"/>
+    <line x1="3" y1="17" x2="17" y2="17"/>
+    <line x1="2" y1="19" x2="18" y2="19"/>
+  </symbol>
+
+  <!-- s-confined: 밀폐공간 (원통/구멍) -->
+  <symbol id="s-confined" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="10" cy="7" rx="7" ry="3"/>
+    <line x1="3" y1="7" x2="3" y2="13"/>
+    <line x1="17" y1="7" x2="17" y2="13"/>
+    <ellipse cx="10" cy="13" rx="7" ry="3"/>
+    <ellipse cx="10" cy="13" rx="3" ry="1.2"/>
+    <line x1="10" y1="11.8" x2="10" y2="8.5"/>
+  </symbol>
+
+  <!-- s-general: 일반작업 (사람 실루엣) -->
+  <symbol id="s-general" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="10" cy="5" r="2.5"/>
+    <path d="M5 18 L6.5 12 L10 14 L13.5 12 L15 18"/>
+    <line x1="10" y1="14" x2="10" y2="10"/>
+    <line x1="10" y1="10" x2="6.5" y2="12"/>
+    <line x1="10" y1="10" x2="13.5" y2="12"/>
+  </symbol>
+
+  <!-- s-print: 프린터 -->
+  <symbol id="s-print" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 7 V3 H15 V7"/>
+    <rect x="2" y="7" width="16" height="8" rx="2"/>
+    <path d="M5 11 H15 V18 H5 Z"/>
+    <line x1="8" y1="14" x2="12" y2="14"/>
+    <line x1="8" y1="16" x2="12" y2="16"/>
+    <circle cx="5.5" cy="10" r="0.8" fill="currentColor"/>
+  </symbol>
+
+  <!-- s-check: 체크마크 -->
+  <symbol id="s-check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="4,10 8,14 16,6"/>
+  </symbol>
+
+  <!-- s-warning: 경고 -->
+  <symbol id="s-warning" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 2 L18 17 H2 Z"/>
+    <line x1="10" y1="8" x2="10" y2="12"/>
+    <circle cx="10" cy="14.5" r="0.8" fill="currentColor" stroke="none"/>
+  </symbol>
+
+</svg>
+
+<!-- ════════════════════════════════════
+     인쇄용 헤더 (화면에서는 숨김)
+     ════════════════════════════════════ -->
+<div class="print-header" id="printHeader">
+  <div class="print-brand">무사이(Musai) · 오늘도 무사히, 현장을 지킵니다</div>
+  <div class="print-doc-title">TBM 체크리스트 (Tool Box Meeting)</div>
+</div>
+<div class="print-meta" id="printMeta">
+  <div class="print-meta-item"><strong>작성일</strong><span id="pm-date">—</span></div>
+  <div class="print-meta-item"><strong>현장명</strong><span id="pm-site">—</span></div>
+  <div class="print-meta-item"><strong>TBM 진행자</strong><span id="pm-leader">—</span></div>
+  <div class="print-meta-item"><strong>참석 인원</strong><span id="pm-count">—</span></div>
+</div>
+
+<!-- ════════════════════════════════════
+     헤더 바
+     ════════════════════════════════════ -->
+<header class="top-bar">
+  <div class="top-bar-left">
+    <a href="index.html" style="text-decoration:none">
+      <button class="btn-ghost" type="button">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13,4 7,10 13,16"/></svg>
+        홈으로
+      </button>
+    </a>
+  </div>
+  <div class="top-bar-title">TBM 체크리스트</div>
+  <div class="top-bar-right">
+    <button class="btn-ghost" type="button" onclick="doPrint()">
+      <svg><use href="#s-print"/></svg>
+      인쇄
+    </button>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════
+     본문
+     ════════════════════════════════════ -->
+<main class="page">
+
+  <!-- ── 기본정보 카드 ── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="section-badge">기본</span>
+      기본 정보
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="f-date">날짜</label>
+        <input class="form-input" type="date" id="f-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f-count">참석 인원</label>
+        <input class="form-input" type="number" id="f-count" placeholder="명" min="1">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="f-site">현장명</label>
+        <input class="form-input" type="text" id="f-site" placeholder="현장명 입력">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f-leader">TBM 진행자</label>
+        <input class="form-input" type="text" id="f-leader" placeholder="성명">
+      </div>
+    </div>
+    <div class="form-row full">
+      <div class="form-group">
+        <label class="form-label" for="f-work">오늘 주요 작업 내용</label>
+        <textarea class="form-textarea" id="f-work" rows="2" placeholder="오늘 수행할 주요 작업 내용을 간략히 기재하세요."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 작업 유형 선택 ── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="section-badge">유형</span>
+      오늘의 작업 유형 선택
+    </div>
+    <div class="work-type-grid" id="workTypeGrid">
+      <button class="work-type-btn" type="button" data-type="crane" onclick="selectWorkType(this)">
+        <svg><use href="#s-crane"/></svg>이동식<br>크레인
+      </button>
+      <button class="work-type-btn" type="button" data-type="excavate" onclick="selectWorkType(this)">
+        <svg><use href="#s-excavate"/></svg>굴착·토공
+      </button>
+      <button class="work-type-btn" type="button" data-type="scaffold" onclick="selectWorkType(this)">
+        <svg><use href="#s-scaffold"/></svg>비계·고소
+      </button>
+      <button class="work-type-btn" type="button" data-type="electric" onclick="selectWorkType(this)">
+        <svg><use href="#s-electric"/></svg>전기작업
+      </button>
+      <button class="work-type-btn" type="button" data-type="weld" onclick="selectWorkType(this)">
+        <svg><use href="#s-weld"/></svg>용접·용단
+      </button>
+      <button class="work-type-btn" type="button" data-type="confined" onclick="selectWorkType(this)">
+        <svg><use href="#s-confined"/></svg>밀폐공간
+      </button>
+      <button class="work-type-btn" type="button" data-type="general" onclick="selectWorkType(this)">
+        <svg><use href="#s-general"/></svg>일반작업
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 섹션 A: 기상·환경 ── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="section-badge">A</span>
+      기상·환경 점검
+    </div>
+    <div class="check-list">
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">강풍(초속 10m 이상) 고소작업 중단 기준 공유 완료</div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">우천·우설 시 작업 중단 기준 공유 완료</div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">고온(35°C 이상) / 한랭(–10°C 이하) 주의사항 공유</div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">야간작업 시 조명(최소 75럭스) 확보 여부 확인</div>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── 섹션 B: 장비·시설 점검 ── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="section-badge">B</span>
+      장비·시설 점검
+    </div>
+    <div class="check-list">
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">작업 장비 일상점검 실시 및 이상 없음 확인</div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">작업 구역 출입통제 표지판 설치 확인</div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">위험 구역 차단 시설(라바콘·안전줄 등) 설치 확인</div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">응급구조 장비(소화기·구급함) 위치 확인</div>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── 섹션 C: 개인보호구 ── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="section-badge">C</span>
+      개인보호구 착용 확인
+    </div>
+    <div class="check-list">
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">안전모</div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">안전화</div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">안전조끼·형광조끼</div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)" data-req="scaffold">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">안전대 체결·구명줄 연결<span class="badge-req" id="req-harness">이 작업 필수</span></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)" data-req="electric">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">절연장갑·절연화<span class="badge-req" id="req-insulate">이 작업 필수</span></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)" data-req="weld">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">용접면·차광안경<span class="badge-req" id="req-weldmask">이 작업 필수</span></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)" data-req="confined">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">방독마스크 또는 공기호흡기<span class="badge-req" id="req-mask">이 작업 필수</span></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this)">
+        <input type="checkbox">
+        <div class="check-box"><svg><use href="#s-check"/></svg></div>
+        <div class="check-text">귀마개 (소음 작업 시)</div>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── 섹션 D: 오늘의 주요 위험요소 ── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="section-badge">D</span>
+      오늘의 주요 위험요소
+    </div>
+    <div id="dangerSection">
+      <div class="danger-empty">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 10px;width:32px;height:32px;opacity:0.4"><path d="M10 2 L18 17 H2 Z"/><line x1="10" y1="8" x2="10" y2="12"/><circle cx="10" cy="14.5" r="0.8" fill="currentColor" stroke="none"/></svg>
+        위 작업 유형을 선택하면 해당 위험요소 체크리스트가 표시됩니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 섹션 E: 특별 주의사항 ── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="section-badge">E</span>
+      특별 주의사항 / 오늘 특별 지시사항
+    </div>
+    <div class="form-row full">
+      <div class="form-group">
+        <textarea class="form-textarea" id="f-special" rows="4" placeholder="오늘 특별히 주의해야 할 사항, 안전 지시사항을 기재하세요."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 섹션 F: 참석자 명단 ── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="section-badge">F</span>
+      참석자 명단
+    </div>
+    <div class="attendee-grid" id="attendeeGrid">
+      <!-- JS로 생성 -->
+    </div>
+  </div>
+
+</main>
+
+<!-- ── 하단 버튼 바 ── -->
+<div class="bottom-bar">
+  <button class="btn-reset" type="button" onclick="doReset()">처음부터 다시</button>
+  <button class="btn-print" type="button" onclick="doPrint()">
+    <svg><use href="#s-print"/></svg>
+    인쇄 / PDF 저장
+  </button>
+</div>
+
+<script>
+/* ============================================================
+   TBM 체크리스트 JS
+   규칙: var만 사용 (const/let 금지)
+   ============================================================ */
+
+/* ── 위험요소 데이터 ── */
+var DANGER_DATA = {
+  crane: [
+    '인양 전 중량 확인 및 정격하중 이내 작업 확인',
+    '슬링·줄걸이 상태 점검 완료',
+    '아웃트리거 완전 전개 및 지반 안전 확인',
+    '작업반경 내 출입통제 실시',
+    '신호수 배치 및 신호방법 통일',
+    '인양 시 유도로프 사용 숙지'
+  ],
+  excavate: [
+    '지하매설물(가스·전기·통신) 위치 사전 확인',
+    '굴착면 기울기 기준(1:0.5~1:1.5) 준수',
+    '굴착 주변 중장비 하중 금지',
+    '굴착 내부 환기 실시 여부 확인',
+    '흙막이 연결핀 및 버팀재 점검',
+    '용출수·지하수 배수 상태 확인'
+  ],
+  scaffold: [
+    '비계 설치 연결핀·브레이스 점검 완료',
+    '발판 고정 상태 및 폭 40cm 이상 확인',
+    '안전난간(90~120cm) 설치 상태 확인',
+    '안전대 체결 및 구명줄 연결 확인',
+    '낙하물 방지망 또는 수직보호망 점검',
+    '고소작업대 안전장치(과부하·안전핀) 확인'
+  ],
+  electric: [
+    '정전 완료 및 잠금·표지(LOTO) 실시 확인',
+    '검전기로 무전압 상태 확인',
+    '잔류전하 접지 실시 여부 확인',
+    '절연보호구(장갑·화·복) 착용 확인',
+    '충전전로 접근한계거리 이상 이격 확인',
+    '감전 응급처치 방법 공지 완료'
+  ],
+  weld: [
+    '용접 부위 주변 가연성 물질 제거 완료',
+    '불티비산방지포 및 소화기 비치',
+    '환기 상태 확인(밀폐공간 특히 주의)',
+    '용접면·차광안경 착용 확인',
+    '가스호스·밸브 누출 여부 확인',
+    '화재감시자 배치 및 작업 후 30분 감시 지정'
+  ],
+  confined: [
+    '작업 전 산소(18% 이상) 및 유해가스 농도 측정',
+    '환기팬 가동 및 환기량(환기계산서 기준) 확인',
+    '구조 절차·구명로프 준비 완료',
+    '2인 1조 작업 원칙 확인',
+    '외부 감시인(입출입 기록) 배치',
+    '방독마스크 또는 공기호흡기 지급 확인'
+  ],
+  general: [
+    '작업 구역 출입통제 및 표지판 설치',
+    '통로 폭 최소 60cm 이상 확보',
+    '작업 전 공구·장비 이상 여부 점검',
+    '자재 적재 높이 및 쌓기 방법 준수',
+    '중량물(25kg 이상) 2인 이상 협력 취급',
+    '작업 종료 후 잔재물 정리 및 가스·전기 차단 확인'
+  ]
+};
+
+/* ── PPE 필수 매핑 ── */
+var PPE_REQ = {
+  scaffold:  ['req-harness'],
+  electric:  ['req-insulate'],
+  weld:      ['req-weldmask'],
+  confined:  ['req-mask'],
+  crane:     [],
+  excavate:  [],
+  general:   []
+};
+
+var currentType = null;
+
+/* ── 초기화 (window.onload) ── */
+window.onload = function() {
+  /* 오늘 날짜 자동 설정 */
+  var today = new Date();
+  var y = today.getFullYear();
+  var m = ('0' + (today.getMonth() + 1)).slice(-2);
+  var d = ('0' + today.getDate()).slice(-2);
+  document.getElementById('f-date').value = y + '-' + m + '-' + d;
+
+  /* 참석자 명단 생성 */
+  buildAttendeeList(6);
+};
+
+/* ── 참석자 명단 빌드 ── */
+function buildAttendeeList(count) {
+  var grid = document.getElementById('attendeeGrid');
+  grid.innerHTML = '';
+  for (var i = 1; i <= count; i++) {
+    var row = document.createElement('div');
+    row.className = 'attendee-row';
+    row.innerHTML =
+      '<div class="attendee-num">' + i + '</div>' +
+      '<input class="form-input attendee-name" type="text" placeholder="성명" style="flex:1">';
+    grid.appendChild(row);
+  }
+}
+
+/* ── 체크박스 토글 ── */
+function toggleCheck(el) {
+  if (el.tagName.toLowerCase() === 'label') {
+    /* 클릭 이벤트가 이미 checkbox를 토글하므로, 상태 sync만 */
+    setTimeout(function() {
+      var cb = el.querySelector('input[type="checkbox"]');
+      if (cb.checked) {
+        el.classList.add('checked');
+      } else {
+        el.classList.remove('checked');
+      }
+    }, 0);
+  }
+}
+
+/* ── 작업 유형 선택 ── */
+function selectWorkType(btn) {
+  var type = btn.getAttribute('data-type');
+
+  /* 이미 선택된 유형 다시 누르면 해제 */
+  if (currentType === type) {
+    btn.classList.remove('active');
+    currentType = null;
+    renderDangerEmpty();
+    updatePpeBadges(null);
+    return;
+  }
+
+  currentType = type;
+
+  /* 버튼 강조 */
+  var allBtns = document.querySelectorAll('.work-type-btn');
+  for (var i = 0; i < allBtns.length; i++) {
+    allBtns[i].classList.remove('active');
+  }
+  btn.classList.add('active');
+
+  /* 섹션 D 업데이트 */
+  renderDangerList(type);
+
+  /* 섹션 C 배지 업데이트 */
+  updatePpeBadges(type);
+}
+
+/* ── 섹션 D: 위험요소 목록 렌더 ── */
+function renderDangerList(type) {
+  var section = document.getElementById('dangerSection');
+  var items = DANGER_DATA[type];
+  if (!items) { renderDangerEmpty(); return; }
+
+  var html = '<div class="danger-list check-list">';
+  for (var i = 0; i < items.length; i++) {
+    html +=
+      '<label class="check-item" onclick="toggleCheck(this)">' +
+        '<input type="checkbox">' +
+        '<div class="check-box">' +
+          '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+            '<polyline points="4,10 8,14 16,6"/>' +
+          '</svg>' +
+        '</div>' +
+        '<div class="check-text">' + items[i] + '</div>' +
+      '</label>';
+  }
+  html += '</div>';
+  section.innerHTML = html;
+}
+
+function renderDangerEmpty() {
+  document.getElementById('dangerSection').innerHTML =
+    '<div class="danger-empty">' +
+      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 10px;width:32px;height:32px;opacity:0.4"><path d="M10 2 L18 17 H2 Z"/><line x1="10" y1="8" x2="10" y2="12"/><circle cx="10" cy="14.5" r="0.8" fill="currentColor" stroke="none"/></svg>' +
+      '위 작업 유형을 선택하면 해당 위험요소 체크리스트가 표시됩니다.' +
+    '</div>';
+}
+
+/* ── 섹션 C: PPE 필수 배지 업데이트 ── */
+function updatePpeBadges(type) {
+  /* 모든 배지 초기화 */
+  var allBadges = document.querySelectorAll('.badge-req');
+  for (var i = 0; i < allBadges.length; i++) {
+    allBadges[i].classList.remove('show');
+  }
+  if (!type) return;
+
+  var reqIds = PPE_REQ[type];
+  if (!reqIds) return;
+  for (var j = 0; j < reqIds.length; j++) {
+    var el = document.getElementById(reqIds[j]);
+    if (el) el.classList.add('show');
+  }
+}
+
+/* ── 인쇄 ── */
+function doPrint() {
+  /* 인쇄 메타 업데이트 */
+  var dateEl = document.getElementById('f-date');
+  var siteEl = document.getElementById('f-site');
+  var leaderEl = document.getElementById('f-leader');
+  var countEl = document.getElementById('f-count');
+
+  document.getElementById('pm-date').textContent   = dateEl.value   || '—';
+  document.getElementById('pm-site').textContent   = siteEl.value   || '—';
+  document.getElementById('pm-leader').textContent = leaderEl.value || '—';
+  document.getElementById('pm-count').textContent  = countEl.value ? countEl.value + '명' : '—';
+
+  window.print();
+}
+
+/* ── 초기화 ── */
+function doReset() {
+  /* 체크박스 해제 */
+  var cbs = document.querySelectorAll('input[type="checkbox"]');
+  for (var i = 0; i < cbs.length; i++) {
+    cbs[i].checked = false;
+  }
+  var items = document.querySelectorAll('.check-item');
+  for (var j = 0; j < items.length; j++) {
+    items[j].classList.remove('checked');
+  }
+
+  /* 텍스트 필드 초기화 */
+  document.getElementById('f-site').value    = '';
+  document.getElementById('f-leader').value  = '';
+  document.getElementById('f-count').value   = '';
+  document.getElementById('f-work').value    = '';
+  document.getElementById('f-special').value = '';
+
+  /* 참석자 명단 초기화 */
+  var names = document.querySelectorAll('.attendee-name');
+  for (var k = 0; k < names.length; k++) {
+    names[k].value = '';
+  }
+
+  /* 작업 유형 초기화 */
+  currentType = null;
+  var allBtns = document.querySelectorAll('.work-type-btn');
+  for (var l = 0; l < allBtns.length; l++) {
+    allBtns[l].classList.remove('active');
+  }
+
+  /* 섹션 D / PPE 배지 초기화 */
+  renderDangerEmpty();
+  updatePpeBadges(null);
+
+  /* 오늘 날짜 재설정 */
+  var today = new Date();
+  var y = today.getFullYear();
+  var m = ('0' + (today.getMonth() + 1)).slice(-2);
+  var d = ('0' + today.getDate()).slice(-2);
+  document.getElementById('f-date').value = y + '-' + m + '-' + d;
+}
+</script>
+</body>
+</html>

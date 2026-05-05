@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2C5282">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="무사이(Musai) — 현장 양중 안전성 검토 도구">
+  <title>무사이 · 양중 안전성 검토</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="style.css">
+  <!-- Apple 라이트 테마 오버라이드 — style.css는 건드리지 않고 여기서 재정의 -->
+  <style>
+    /* ───────── 1. 팔레트 재정의 (스틸블루 + 애플 연회색) ───────── */
+    :root {
+      --accent:  #7B9EE0;
+      --bg-body: #F5F5F7;
+      --bg-app:  #F5F5F7;
+      --border:  rgba(0,0,0,0.08);
+    }
+
+    /* ───────── 2. 앱 컨테이너 — 그림자 제거, 흰 외곽 ───────── */
+    body { background: #F5F5F7 !important; }
+    .app { background: #F5F5F7 !important; box-shadow: none !important; }
+    @media (min-width: 432px) {
+      .app {
+        background: #FFFFFF !important;
+        box-shadow: none !important;
+        border: 0.5px solid rgba(0,0,0,0.08) !important;
+        border-radius: 18px;
+      }
+    }
+
+    /* ───────── 3. 상단바 — 흰 배경 + 0.5px 하단 border ───────── */
+    .topbar {
+      background: #FFFFFF !important;
+      border-bottom: 0.5px solid rgba(0,0,0,0.1);
+      padding-top: env(safe-area-inset-top,0);
+    }
+    .topbar-logo { color: #1E3148 !important; }
+    .topbar-logo em { color: #7B9EE0 !important; }
+    .topbar-sub { color: rgba(0,0,0,0.45) !important; }
+    .topbar-badge {
+      background: rgba(0,0,0,0.05) !important;
+      color: rgba(0,0,0,0.5) !important;
+    }
+    .btn-back {
+      background: rgba(0,0,0,0.05) !important;
+      color: #1E3148 !important;
+    }
+    .prog { background: rgba(0,0,0,0.06) !important; }
+    .prog-fill { background: #2C5282 !important; }
+
+    /* ───────── 4. 모든 카드 — 흰 배경 + 0.5px border, 그림자 제거 ───────── */
+    .sc, .mode-card, .lb, .big-wrap, .mp-card, .rc, .mp-plan-item, .lp-card,
+    .gear-btn, .viz-box, .design-load, .custom-box, .angle-calc-box, .dbody {
+      background: #FFFFFF !important;
+      border: 0.5px solid rgba(0,0,0,0.1) !important;
+      box-shadow: none !important;
+    }
+
+    /* 선택된 카드 — 얇은 네이비 보더만 (배경 연파랑) */
+    .sc.on, .mode-card.on, .lb.on, .gear-btn.on {
+      background: #F0F4FA !important;
+      border-color: #2C5282 !important;
+      color: #2C5282 !important;
+    }
+    .sc.on .sc-name, .sc.on .sc-sub, .sc.on .sc-val { color: #2C5282 !important; }
+
+    /* K카드 (네이비 블록) — 유지하되 앰버 강조만 스틸블루로 */
+    .kcard {
+      background: #2C5282 !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    .kcard-pct { color: #7B9EE0 !important; }
+
+    /* ───────── 5. 큰 숫자들 — font-weight 300 (애플 라이트 웨이트) ───────── */
+    .big-inp, .angle-num, .kcard-val, .ib-value, .rc-val, .lb-n, .vs-pct,
+    .lp-pct, .dl-value, .dv, .calc-result { font-weight: 300 !important; }
+    .big-inp { letter-spacing: -1px !important; }
+    .angle-num { letter-spacing: -2px !important; }
+
+    /* ───────── 6. 입력 컨트롤 — 0.5px border ───────── */
+    .num-inp, .csel, .mp-ta {
+      border: 0.5px solid rgba(0,0,0,0.15) !important;
+      background: #FFFFFF !important;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+    .num-inp:focus, .csel:focus, .mp-ta:focus {
+      border-color: #2C5282 !important;
+    }
+    .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .calc-grid > div { min-width: 0; }
+    .calc-grid .num-inp { width: 100%; }
+    .big-wrap { border-width: 0.5px !important; }
+    .big-wrap:focus-within { border-color: #2C5282 !important; }
+
+    /* 세그먼트/단위 토글 — 배경 살짝 연하게 */
+    .seg, .unit-toggle { background: rgba(0,0,0,0.04) !important; }
+    .seg-b.on { background: #FFFFFF !important; box-shadow: 0 1px 2px rgba(0,0,0,0.06) !important; color: #2C5282 !important; }
+
+    /* ───────── 7. 앰버 포인트 제거 → 스틸블루 또는 제거 ───────── */
+    /* 법조문 인용 (plan 미리보기에서 쓰이지만 lifting에는 영향 없음) */
+    .mp-law-quote { border-left: 3px solid #7B9EE0 !important; background: #F5F5F7 !important; }
+    .mp-doc-brand em { color: #7B9EE0 !important; }
+
+    /* ───────── 8. 버튼 — 네이비 유지, 보조 버튼만 정리 ───────── */
+    .btn-n { background: #2C5282 !important; box-shadow: none !important; }
+    .btn-p, .btn-reset {
+      background: #FFFFFF !important;
+      border: 0.5px solid rgba(0,0,0,0.15) !important;
+      color: #1E3148 !important;
+    }
+    .calc-btn { background: #2C5282 !important; }
+
+    /* ───────── 9. 상태 스트립·verdict — 색상 톤 유지하되 그림자 제거 ───────── */
+    .vs, .verdict {
+      box-shadow: none !important;
+      border-width: 0.5px !important;
+    }
+
+    /* ───────── 10. 기타 정리 — 알림 박스 경계 0.5px ───────── */
+    .info-box, .warn-box, .err-box {
+      border-width: 0.5px !important;
+    }
+    .dtog {
+      background: rgba(0,0,0,0.03) !important;
+      border: 0.5px solid rgba(0,0,0,0.08) !important;
+    }
+  </style>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <button class="btn-back" id="btn-back" onclick="if(typeof S!=='undefined'&&S.step===1){location.href='index.html'}else{prev()}" title="이전 / 홈">←</button>
+      <span class="topbar-logo">무사<em>이</em><span class="topbar-sub" id="top-title"></span></span>
+      <span class="topbar-badge" id="top-step">1 / 6</span>
+    </div>
+    <div class="prog"><div class="prog-fill" id="prog" style="width:16.7%"></div></div>
+  </div>
+  <div class="content" id="app"></div>
+</div>
+<script>
+
+const SF_SLING = 5;
+const EFF_MAP = {socket:1.0,lock_24:0.95,lock_26:0.925,splice_6:0.9,splice_9:0.88,splice_12:0.86,splice_18:0.82,clip:0.75};
+const WIRE  = [{l:'φ9mm',swl:750},{l:'φ10mm',swl:900},{l:'φ12mm',swl:1350},{l:'φ14mm',swl:1800},{l:'φ16mm',swl:2400},{l:'φ18mm',swl:3000},{l:'φ22mm',swl:4500},{l:'φ26mm',swl:6000},{l:'직접 입력',swl:-1},{l:'파단하중(BL)으로 계산',swl:-2}];
+const BELT  = [{l:'1t급',swl:1000},{l:'2t급',swl:2000},{l:'3t급',swl:3000},{l:'5t급',swl:5000},{l:'8t급',swl:8000},{l:'10t급',swl:10000},{l:'직접 입력',swl:-1}];
+const CHAIN = [{l:'G80 φ7mm',swl:1120},{l:'G80 φ8mm',swl:1500},{l:'G80 φ10mm',swl:2360},{l:'G80 φ13mm',swl:3980},{l:'G80 φ16mm',swl:6300},{l:'G80 φ19mm',swl:8600},{l:'직접 입력',swl:-1}];
+const STEPS_ARR = ['','인양하중 설정','줄걸이 방식','각도 입력','슬링 검토','달기기구','종합 결과'];
+
+/* ── 상태: 내부값 항상 kg ── */
+let S = {
+  step:1, unitT:true,
+  weight:5000, dynK:1.2,
+  mode:0, lines:2,
+  alpha:60, chokeAngle:120,
+  sType:'chain', sWLL:3980, sSelVal:3980,
+  sCust:false, sCustBL:false,
+  wireBL:10000, wireEff:1.0, wireSF:SF_SLING, wireEffType:'socket',
+  hookLoad:10000,
+  upShUse:false, upShType:'shackle', upShSWL:4750,
+  loShUse:true,  loShType:'shackle', loShSWL:2000,
+  detailOpen:{s4:false, s6:false},
+};
+
+/* ── 표시 헬퍼: 내부값(kg) → 표시용 ── */
+const fmt = {
+  val:  kg => !isFinite(kg)||kg<0 ? '—' : S.unitT ? (kg/1000).toFixed(2)+'t' : Math.round(kg).toLocaleString()+'kg',
+  pct:  r  => (!isFinite(r)||r<=0) ? '—' : Math.round(r*100)+'%',
+  inp:  kg => (!kg||kg<=0) ? '' : S.unitT ? parseFloat((kg/1000).toFixed(3)) : Math.round(kg),
+  toKg: v  => { const n=parseFloat(v)||0; return S.unitT ? n*1000 : n; },
+  unit: ()  => S.unitT ? 't' : 'kg',
+  swlLabel: o => {
+    if(o.swl<0) return o.l;
+    const s = S.unitT ? (o.swl/1000).toFixed(2)+'t' : o.swl.toLocaleString()+'kg';
+    return o.l+' — SWL '+s;
+  },
+};
+
+const getSO = () => S.sType==='wire'?WIRE:S.sType==='belt'?BELT:CHAIN;
+
+/* ── 계산 엔진: 항상 kg 기준 ── */
+function chokeCapFactor(angleDeg) {
+  if (angleDeg > 120) return 1.00;
+  if (angleDeg >= 90)  return 0.86;
+  if (angleDeg >= 60)  return 0.74;
+  if (angleDeg >= 30)  return 0.62;
+  return 0.49;
+}
+
+function calcKM() {
+  const betaDeg=S.alpha/2, betaRad=betaDeg*Math.PI/180;
+  let K=1.0,effN=1,invalid=false;
+  const M=S.mode===1?2.0:S.mode===2?0.8:1.0;
+  if(S.lines===1){effN=1;K=1.0;}
+  else if(S.lines===2){
+    effN=2;
+    if(betaDeg>60){invalid=true;}
+    else{K=1/Math.cos(betaRad);}
+  } else {
+    effN=3;
+    if(betaDeg>60){invalid=true;}
+    else{K=1/Math.cos(betaRad);}
+  }
+  return {K,M,effN,invalid,betaDeg};
+}
+
+function calc() {
+  const W=S.weight*S.dynK;
+  const {K,M,effN,invalid}=calcKM();
+  let sWLL=S.sWLL;
+  if(S.sType==='wire'&&S.sCustBL) sWLL=(S.wireBL*S.wireEff)/S.wireSF;
+  const capFactor=S.mode===2?chokeCapFactor(S.chokeAngle):1.0;
+  const effectiveSWL=sWLL*capFactor;
+  const totalCap=invalid?0:(effectiveSWL*effN*M)/K;
+  const Ts=invalid?Infinity:(W*K)/(effN*M);
+  const sr=(totalCap>0&&sWLL>0)?W/totalCap:Infinity;
+  const hr=S.hookLoad>0?W/S.hookLoad:Infinity;
+  const ur=(S.upShUse&&S.upShSWL>0)?W/S.upShSWL:0;
+  const lr=(S.loShUse&&S.loShSWL>0&&isFinite(Ts))?Ts/S.loShSWL:(S.loShUse&&S.loShSWL<=0?Infinity:0);
+  const st=r=>(!isFinite(r)||r>1)?'ng':r>0.85?'warn':'ok';
+  return {W,K,M,effN,sWLL,effectiveSWL,capFactor,totalCap,Ts,sr,hr,ur,lr,invalid,
+    sS:invalid?'ng':sWLL<=0?'ng':st(sr),
+    hS:S.hookLoad<=0?'ng':st(hr),
+    uS:S.upShUse?(S.upShSWL<=0?'ng':st(ur)):'na',
+    lS:S.loShUse?(S.loShSWL<=0?'ng':st(lr)):'na'};
+}
+
+/* ── 핸들러: 값 저장 후 render 또는 부분 업데이트 ── */
+window.setUnit  = t => { S.unitT=t; render(); };
+window.setWeight= v => {
+  S.weight=fmt.toKg(v);
+  const dp=document.getElementById('dp'); if(dp) dp.textContent=fmt.val(S.weight*S.dynK);
+  const ds=document.getElementById('dp-sub'); if(ds) ds.textContent=(fmt.inp(S.weight)||0)+fmt.unit()+' × '+S.dynK;
+};
+window.setDynK  = k => {
+  const iw=document.getElementById('iw'); if(iw) S.weight=fmt.toKg(iw.value);
+  S.dynK=k; render();
+};
+window.setMode  = m => { S.mode=m; render(); };
+window.setLines = l => { S.lines=l; render(); };
+
+window.setAlpha = val => {
+  S.alpha=parseInt(val);
+  const {K,M,invalid,betaDeg}=calcKM();
+  const ac=betaDeg>45?'#f59e0b':'#1E4D8C';
+  const upd=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const sty=(id,p,v)=>{const e=document.getElementById(id);if(e)e.style[p]=v;};
+  sty('adsp','color',ac); upd('adsp',S.alpha+'°');
+  upd('adsub','β(수직선과의 각도) = '+betaDeg+'°');
+  upd('kv',invalid?'사용불가':K.toFixed(3));
+  upd('mv','M = '+(invalid?'NG':M.toFixed(1)));
+  upd('kpct',invalid?'NG':'+'+Math.round(K*100-100)+'%');
+  upd('ib-alpha',S.alpha+'°'); upd('ib-beta',betaDeg+'°');
+  const svg=document.getElementById('asvg');
+  if(svg) svg.innerHTML=buildAngleSVG(S.alpha,S.lines);
+  updateS4();
+};
+
+window.setChokeAngle = val => {
+  S.chokeAngle=parseInt(val);
+  const cap=chokeCapFactor(S.chokeAngle),pct=Math.round(cap*100);
+  const col=S.chokeAngle<60?'#ef4444':S.chokeAngle<120?'#f59e0b':'#1E4D8C';
+  const upd=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const sty=(id,p,v)=>{const e=document.getElementById(id);if(e)e.style[p]=v;};
+  sty('choke-disp','color',col); upd('choke-disp',S.chokeAngle+'°');
+  sty('choke-cap','color',col);  upd('choke-cap',pct+'%');
+  sty('ib-choke-cap','color',col); upd('ib-choke-cap',pct+'%');
+  upd('ib-choke-angle',S.chokeAngle+'°');
+  updateS4();
+};
+
+window.calcAngleFromLen = () => {
+  const L=parseFloat(document.getElementById('sl-L').value)||0;
+  const D=parseFloat(document.getElementById('sl-D').value)||0;
+  const res=document.getElementById('angle-calc-result');
+  if(!L||!D||D/2>L){res.style.color='#ef4444';res.textContent='L ≥ D÷2 이어야 합니다';return;}
+  const beta=Math.asin((D/2)/L)*180/Math.PI;
+  S.alpha=Math.min(Math.round(beta*2),120);
+  res.style.color='#1E4D8C';
+  res.textContent='α = '+S.alpha+'° (β = '+Math.round(beta)+'°) — 슬라이더에 반영됐습니다';
+  const sl=document.getElementById('alpha-slider'); if(sl) sl.value=S.alpha;
+  window.setAlpha(S.alpha);
+};
+
+window.setSlingType   = t => { S.sType=t;S.sCust=false;S.sCustBL=false;const o=getSO()[0];S.sSelVal=o.swl;S.sWLL=o.swl>0?o.swl:0;render(); };
+window.setSlingDDL    = v => {
+  S.sSelVal=parseInt(v);S.sCust=false;S.sCustBL=false;
+  if(S.sSelVal===-1){S.sCust=true;S.sWLL=0;}
+  else if(S.sSelVal===-2){S.sCustBL=true;S.sWLL=0;}
+  else{S.sWLL=S.sSelVal;}
+  render();
+};
+window.setSlingCustom = v => { S.sWLL=fmt.toKg(v); updateS4(); };
+window.setWireBL      = v => { S.wireBL=fmt.toKg(v); updateS4(); };
+window.setWireEff     = v => { S.wireEffType=v;S.wireEff=EFF_MAP[v]||1.0; updateS4(); };
+window.setWireSF      = v => { S.wireSF=Math.max(1,parseFloat(v)||SF_SLING); updateS4(); };
+window.setHookLoad    = v => { S.hookLoad=fmt.toKg(v); };
+window.toggleGear     = (p,c) => { S[p+'ShUse']=c; render(); };
+window.setGearType    = (p,t) => { S[p+'ShType']=t; render(); };
+window.setGearSWL     = (p,v) => { S[p+'ShSWL']=fmt.toKg(v); updateS5(p); };
+window.toggleDetail   = k => {
+  S.detailOpen[k]=!S.detailOpen[k];
+  const b=document.getElementById('detail-'+k); if(b) b.style.display=S.detailOpen[k]?'block':'none';
+  const t=document.getElementById('dtog-'+k); if(t) t.querySelector('.darr').textContent=S.detailOpen[k]?'▲':'▼';
+};
+
+/* ── 부분 업데이트 ── */
+function updateS4() { const e=document.getElementById('s4-result'); if(e) e.innerHTML=renderS4Result(); }
+function updateS5(p) { const e=document.getElementById('s5-result-'+p); if(e) e.innerHTML=renderGearResult(p); }
+
+/* ── 결과 HTML ── */
+function renderS4Result() {
+  const c=calc();
+  const ico={ok:icoSVG('ok',22),warn:icoSVG('warn',22),ng:icoSVG('ng',22)};
+  const msg={ok:'슬링 사용 가능',warn:'여유 부족 — 재검토 권고',ng:'허용하중 초과 — 규격 변경 필요'};
+  const sub={ok:'설계 인양하중이 종합 허용하중 이내입니다',warn:'85% 이상 사용 중, 재검토를 권고합니다',ng:c.sWLL<=0?'SWL을 입력하세요':'슬링을 더 두꺼운 규격으로 교체하세요'};
+  const sf=isFinite(c.totalCap/c.W)&&c.W>0?(c.totalCap/c.W).toFixed(2)+'배':'—';
+  const chokeNote=S.mode===2?`<div style="background:#fef9c3;border-radius:8px;padding:8px 10px;margin-top:4px;font-size:11px;color:#854d0e;">조임각 ${S.chokeAngle}° → SWL ${fmt.val(c.sWLL)} × ${Math.round(c.capFactor*100)}% = <strong>${fmt.val(c.effectiveSWL)}</strong> 실제 허용</div>`:'';
+  return `
+  <div class="rc">
+    <div class="rc-section">
+      <div class="rc-section-label">${S.lines}줄 ${['수직','바스켓','초크'][S.mode]} 걸이 — 전체 하중 비교</div>
+      <div class="rc-row">
+        <div class="rc-lbl"><b>설계 인양하중 (W)</b>실제로 들어올려야 할 하중</div>
+        <div class="rc-val" style="color:#ef4444;">${fmt.val(c.W)}</div>
+      </div>
+      <div class="rc-row">
+        <div class="rc-lbl"><b>종합 허용하중</b>${S.lines}줄 합산 최대 인양 가능</div>
+        <div class="rc-val" style="color:#22c55e;">${fmt.val(c.totalCap)}</div>
+      </div>
+    </div>
+    <div class="rc-section">
+      <div class="rc-section-label">줄 1가닥 비교</div>
+      <div class="rc-row">
+        <div class="rc-lbl"><b>줄 1가닥에 걸리는 힘</b>이 줄이 버텨야 하는 하중</div>
+        <div class="rc-val" style="color:#ef4444;">${fmt.val(c.Ts)}<small>줄당 장력</small></div>
+      </div>
+      <div class="rc-row">
+        <div class="rc-lbl"><b>줄 1가닥 허용하중</b>${S.mode===2?'조임각 적용 후':'선택한 슬링 SWL'}</div>
+        <div class="rc-val" style="color:#22c55e;">${fmt.val(c.effectiveSWL)}<small>유효 SWL</small></div>
+      </div>
+    </div>
+    ${chokeNote}
+  </div>
+  <div class="vs ${c.sS}">
+    <div class="vs-ico">${ico[c.sS]}</div>
+    <div class="vs-body"><div class="vs-main">${msg[c.sS]}</div><div class="vs-sub">${sub[c.sS]}</div></div>
+    <div class="vs-pct">${fmt.pct(c.sr)}</div>
+  </div>
+  <button class="dtog" id="dtog-s4" onclick="toggleDetail('s4')">
+    📐 KOSHA 계산 근거 보기 <span class="darr">${S.detailOpen.s4?'▲':'▼'}</span>
+  </button>
+  <div class="dbody" id="detail-s4" style="display:${S.detailOpen.s4?'block':'none'}">
+    <div class="dr"><span class="dk">설계 인양하중 (W)</span><span class="dv">${fmt.val(S.weight)} × ${S.dynK} = ${fmt.val(c.W)}</span></div>
+    <div class="dr"><span class="dk">K(각도계수) = 1/cos(β)</span><span class="dv">${c.invalid?'사용불가':c.K.toFixed(3)}</span></div>
+    <div class="dr"><span class="dk">유효 줄 수 / 모드계수 M</span><span class="dv">${c.effN}줄 / ${c.M.toFixed(1)}</span></div>
+    ${S.mode===2?`<div class="dr"><span class="dk">조임각 / 정격용량계수</span><span class="dv">${S.chokeAngle}° / ${Math.round(c.capFactor*100)}%</span></div>`:''}
+    <div class="dr"><span class="dk">Ts(줄당 장력)</span><span class="dv">${fmt.val(c.Ts)}</span></div>
+    <div class="dr"><span class="dk">유효 SWL (1가닥)</span><span class="dv">${fmt.val(c.effectiveSWL)}</span></div>
+    <div class="dr"><span class="dk">종합 허용하중</span><span class="dv">${fmt.val(c.totalCap)}</span></div>
+    <div class="dr"><span class="dk">사용률</span><span class="dv">${fmt.pct(c.sr)}</span></div>
+    <div class="dr"><span class="dk">안전율 (종합허용 ÷ W)</span><span class="dv">${sf}</span></div>
+    <div class="dref">📌 KOSHA GUIDE B-M-12-2025 / G-133-2020 / G-134-2023<br>산업안전보건기준에 관한 규칙 제163조·제164조</div>
+  </div>`;
+}
+
+function renderGearResult(prefix) {
+  const c=calc(), use=S[prefix+'ShUse'], swl=S[prefix+'ShSWL'], load=prefix==='up'?c.W:c.Ts;
+  if(!use) return '<div style="font-size:12px;color:#94a3b8;padding:6px 0;">미사용</div>';
+  if(swl<=0) return '<div class="err-box" style="margin:0;padding:8px 12px;">SWL을 입력하세요</div>';
+  if(!isFinite(load)) return '<div class="err-box" style="margin:0;padding:8px 12px;">슬링 각도 초과 — 검토 불가</div>';
+  const r=load/swl, st=r>1?'ng':r>0.85?'warn':'ok';
+  return `<div class="vs ${st}" style="margin-bottom:0;">
+    <div class="vs-ico">${icoSVG(st,22)}</div>
+    <div class="vs-body"><div class="vs-main">${fmt.val(load)} 작용 / ${fmt.val(swl)} 허용</div>
+    <div class="vs-sub">${prefix==='up'?'전체 하중 기준':'줄당 장력 기준'}</div></div>
+    <div class="vs-pct">${fmt.pct(r)}</div>
+  </div>`;
+}
+
+/* ── SVG helpers ── */
+function icoSVG(st, sz) {
+  sz = sz || 22;
+  if (st === 'ok')   return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="21" fill="#22C55E"/><path d="M13 24.5 L21 32.5 L35 15.5" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  if (st === 'warn') return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 48 48" fill="none"><path d="M24 5 L44 41 H4 Z" fill="#F59E0B"/><line x1="24" y1="18" x2="24" y2="30" stroke="#fff" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="36" r="2.5" fill="#fff"/></svg>';
+  return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="21" fill="#EF4444"/><path d="M15 15 L33 33 M33 15 L15 33" stroke="#fff" stroke-width="4.5" stroke-linecap="round"/></svg>';
+}
+function getModeIcon(mode) {
+  const col = '#1a3a5c';
+  let s = `<svg width="54" height="54" viewBox="0 0 54 54">`;
+  if (mode === 0) {
+    s += `<ellipse cx="27" cy="9"  rx="5" ry="6" fill="none" stroke="${col}" stroke-width="2.2"/>`;
+    s += `<line x1="27" y1="15" x2="27" y2="40" stroke="${col}" stroke-width="2.2" stroke-linecap="round"/>`;
+    s += `<ellipse cx="27" cy="46" rx="5" ry="6" fill="none" stroke="${col}" stroke-width="2.2"/>`;
+  } else if (mode === 1) {
+    s += `<ellipse cx="16" cy="9" rx="5" ry="6" fill="none" stroke="${col}" stroke-width="2.2"/>`;
+    s += `<ellipse cx="38" cy="9" rx="5" ry="6" fill="none" stroke="${col}" stroke-width="2.2"/>`;
+    s += `<line x1="16" y1="15" x2="16" y2="36" stroke="${col}" stroke-width="2.2" stroke-linecap="round"/>`;
+    s += `<path d="M 16 36 Q 27 50 38 36" fill="none" stroke="${col}" stroke-width="2.2" stroke-linecap="round"/>`;
+    s += `<line x1="38" y1="36" x2="38" y2="15" stroke="${col}" stroke-width="2.2" stroke-linecap="round"/>`;
+  } else {
+    s += `<ellipse cx="27" cy="8" rx="5" ry="6" fill="none" stroke="${col}" stroke-width="2.2"/>`;
+    s += `<line x1="27" y1="14" x2="27" y2="29" stroke="${col}" stroke-width="2.2" stroke-linecap="round"/>`;
+    s += `<path d="M 27 29 Q 40 33 38 42 Q 36 51 27 50 Q 18 51 16 42 Q 14 33 27 29 Z" fill="none" stroke="${col}" stroke-width="2.2"/>`;
+    s += `<line x1="21" y1="29" x2="11" y2="29" stroke="${col}" stroke-width="1.8" stroke-linecap="round"/>`;
+    s += `<path d="M 14 26 L 11 29 L 14 32" fill="none" stroke="${col}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+  s += `</svg>`;
+  return s;
+}
+function buildAngleSVG(alpha, lines) {
+  const VW=280, VH=178, cx=VW/2, hookY=24, L=80;
+  const betaRad = (alpha/2) * Math.PI / 180;
+  const sp   = L * Math.sin(betaRad);
+  const drop = L * Math.cos(betaRad);
+  const lx=cx-sp, rx=cx+sp, ly=hookY+drop;
+  const bW = Math.max(rx-lx+36, 80);
+  const bx = cx - bW/2;
+  const betaDeg = alpha/2;
+  const isWarn = betaDeg > 45;
+  const sCol = isWarn ? '#f59e0b' : '#1a3a5c';
+  const sw = 2.6;
+
+  // 라벨 배경 박스 그리는 헬퍼
+  const labelBox = (x, y, txt, col, anchor='middle') => {
+    const w = txt.length * 8 + 12, h = 18, rx2 = 5;
+    const bx2 = anchor==='middle' ? x-w/2 : anchor==='start' ? x-2 : x-w+2;
+    return `<rect x="${bx2}" y="${y-13}" width="${w}" height="${h}" rx="${rx2}" fill="${col}" opacity="0.9"/>
+      <text x="${x}" y="${y}" font-size="12" fill="#fff" font-weight="800" font-family="monospace" text-anchor="${anchor}">${txt}</text>`;
+  };
+
+  let s = `<svg width="100%" viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg">`;
+
+  // 우측 상단 α 배지
+  const badgeCol = alpha >= 120 ? '#ef4444' : '#1a3a5c';
+  s += `<rect x="175" y="6" width="98" height="44" rx="8" fill="${badgeCol}"/>`;
+  s += `<text x="224" y="21" text-anchor="middle" font-size="9.5" fill="rgba(255,255,255,0.65)">두 줄 사이 각도</text>`;
+  s += `<text x="224" y="40" text-anchor="middle" font-size="17" fill="#fff" font-weight="800" font-family="monospace">α = ${alpha}°</text>`;
+
+  const hx = cx, hy = hookY + 8; // 훅 = 부채꼴 중심 (고정)
+
+  // ── 수직 기준선 ──
+  s += `<line x1="${hx}" y1="${hy}" x2="${hx}" y2="${ly}" stroke="#ef4444" stroke-width="1.4" stroke-dasharray="5 4" opacity="0.6"/>`;
+
+  // ── α 호: 왼쪽슬링(-β)→오른쪽슬링(+β), 화물 방향으로 볼록 ──
+  // sweep=0(반시계): 왼쪽→오른쪽 반시계 → 아래(화물)로 볼록
+  const arA = 28;
+  if (alpha > 0 && lines >= 2) {
+    const aSx = hx - arA * Math.sin(betaRad),   aSy = hy + arA * Math.cos(betaRad);
+    const aEx = hx + arA * Math.sin(betaRad),   aEy = hy + arA * Math.cos(betaRad);
+    s += `<path d="M ${aSx} ${aSy} A ${arA} ${arA} 0 0 0 ${aEx} ${aEy}"
+      stroke="#1a3a5c" stroke-width="2" fill="rgba(26,58,92,0.07)"/>`;
+    s += labelBox(hx, hy + arA * Math.cos(betaRad) + 16, 'α', '#1a3a5c', 'middle');
+  }
+
+  // ── 슬링 선 ──
+  if (lines <= 1) {
+    s += `<line x1="${cx}" y1="${hookY+8}" x2="${cx}" y2="${ly}" stroke="${sCol}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  } else if (lines === 2) {
+    s += `<line x1="${cx}" y1="${hookY+8}" x2="${lx}" y2="${ly}" stroke="${sCol}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${hookY+8}" x2="${rx}" y2="${ly}" stroke="${sCol}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  } else if (lines === 3) {
+    // 평면도 개념: 뒷줄 1개를 좌측으로 12px 오프셋한 점선
+    const off = 12;
+    s += `<line x1="${cx-off}" y1="${hookY+8}" x2="${lx-off}" y2="${ly}"
+      stroke="${sCol}" stroke-width="1.6" stroke-dasharray="5 3" opacity="0.45" stroke-linecap="round"/>`;
+    // 앞줄 2개
+    s += `<line x1="${cx}" y1="${hookY+8}" x2="${lx}" y2="${ly}" stroke="${sCol}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${hookY+8}" x2="${rx}" y2="${ly}" stroke="${sCol}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  } else {
+    // 4줄: 뒷줄 2개 점선 (좌우 오프셋), 앞줄 2개 실선
+    const off = 10;
+    s += `<line x1="${cx-off}" y1="${hookY+8}" x2="${lx-off}" y2="${ly}"
+      stroke="${sCol}" stroke-width="1.6" stroke-dasharray="5 3" opacity="0.45" stroke-linecap="round"/>`;
+    s += `<line x1="${cx+off}" y1="${hookY+8}" x2="${rx+off}" y2="${ly}"
+      stroke="${sCol}" stroke-width="1.6" stroke-dasharray="5 3" opacity="0.45" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${hookY+8}" x2="${lx}" y2="${ly}" stroke="${sCol}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${hookY+8}" x2="${rx}" y2="${ly}" stroke="${sCol}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  }
+
+  // ── 화물 박스 ──
+  const boxCol = alpha >= 120 ? '#fca5a5' : '#c8d6e5';
+  const boxStroke = alpha >= 120 ? '#ef4444' : '#1a3a5c';
+  s += `<rect x="${bx}" y="${ly}" width="${bW}" height="26" rx="5" fill="${boxCol}" stroke="${boxStroke}" stroke-width="1.5"/>`;
+  s += `<text x="${cx}" y="${ly+17}" text-anchor="middle" font-size="11" font-weight="700" fill="${boxStroke}">화물</text>`;
+
+  // ── 훅 ──
+  s += `<circle cx="${cx}" cy="${hookY}" r="7" fill="#1a3a5c"/>`;
+  s += `<text x="${cx}" y="${hookY-12}" text-anchor="middle" font-size="10" fill="#1a3a5c" font-weight="700">훅</text>`;
+
+  // ── 범례 제거 — β 정보는 그림 외부 info bar로 이동 ──
+  s += `</svg>`;
+  return s;
+}
+/* ── 페이지 렌더러 ── */
+function s1() {
+  const opts=[{l:'정적',d:'수동·천천히',k:1.0},{l:'일반',d:'크레인 작업',k:1.2},{l:'충격',d:'급격·충격',k:1.5}];
+  return `
+  <div class="q-title">화물이 얼마나<br>무거운가요?</div>
+  <div class="q-sub">화물의 실제 중량을 입력하세요</div>
+  <div class="q-hint">화물 무게에 동하중계수를 곱한 값이 실제 설계 인양하중이 됩니다</div>
+  <div class="unit-row">
+    <span class="unit-label">단위 선택</span>
+    <div class="unit-toggle">
+      <button class="unit-btn ${S.unitT?'on':''}" onclick="setUnit(true)">톤 (t)</button>
+      <button class="unit-btn ${!S.unitT?'on':''}" onclick="setUnit(false)">kg</button>
+    </div>
+  </div>
+  <div class="big-wrap">
+    <input type="number" class="big-inp" id="iw" value="${fmt.inp(S.weight)||''}" inputmode="decimal" placeholder="0" oninput="setWeight(this.value)">
+    <span class="big-unit">${fmt.unit()}</span>
+  </div>
+  <div class="sec-label">작업 유형 — 동하중계수</div>
+  <div class="q-hint">동하중계수 (화물을 들어올릴 때 발생하는 충격·진동을 안전에 반영하는 계수 — 빠르게 들수록 커집니다)</div>
+  <div class="g3">
+    ${opts.map(d=>`<div class="sc ${S.dynK===d.k?'on':''}" onclick="setDynK(${d.k})">
+      <span class="sc-name">${d.l}</span><span class="sc-sub">${d.d}</span><span class="sc-val">× ${d.k}</span>
+    </div>`).join('')}
+  </div>
+  <div class="design-load">
+    <div class="dl-label">설계 인양하중</div>
+    <div class="dl-value" id="dp">${fmt.val(S.weight*S.dynK)}</div>
+    <div class="dl-sub" id="dp-sub">${fmt.inp(S.weight)||0}${fmt.unit()} × ${S.dynK} (동하중계수)</div>
+  </div>
+  <div class="nav"><button class="btn-n" onclick="next()">다음 단계 →</button></div>`;
+}
+
+function s2() {
+  const lineBtns=[1,2,3,4].map(n=>`<div class="lb ${S.lines===n?'on':''}" onclick="setLines(${n})">
+    <div class="lb-n">${n}</div><div class="lb-t">줄</div></div>`).join('');
+  const modes=[
+    {name:'수직 걸이',sub:'곧게 매달기',desc:'화물을 곧게 매다는 가장 기본적인 방식'},
+    {name:'바스켓 걸이',sub:'U자 감싸기',desc:'슬링으로 화물을 U자로 감싸는 방식, 허용하중 증가'},
+    {name:'초크 걸이',sub:'조여 매달기',desc:'슬링으로 화물을 조여 매는 방식, 조임각에 따라 허용하중 감소'}
+  ];
+  const mCards=modes.map((m,i)=>`<div class="mode-card ${S.mode===i?'on':''}" onclick="setMode(${i})">
+    <svg width="100%" height="52" viewBox="0 0 54 54" style="display:block;margin:0 auto;">${getModeIcon(i)}</svg>
+    <span class="mode-card-name">${m.name}</span><span class="mode-card-sub">${m.sub}</span>
+    <span class="mode-card-desc">${m.desc}</span>
+  </div>`).join('');
+  return `
+  <div class="q-title">어떻게 걸 건가요?</div>
+  <div class="q-sub">줄 수와 줄걸이 방식을 선택하세요</div>
+  <div class="q-hint">줄이 많을수록, 각도가 작을수록 더 많은 하중을 들 수 있습니다</div>
+  <div class="sec-label">줄 수</div>
+  <div class="line-row">${lineBtns}</div>
+  ${S.lines>=3?`<div class="warn-box">⚠️ <strong>${S.lines}줄 — 유효 줄 수 3줄로 산정</strong><br>KOSHA 기준: 하중 불균형으로 3줄 이상은 3줄로 산정합니다.</div>`:''}
+  <div class="sec-label">줄걸이 방식</div>
+  <div class="mode-grid">${mCards}</div>
+  <div class="info-box">💡 <strong>${modes[S.mode].name}</strong> — ${modes[S.mode].desc}${S.mode===2?'<br>조임각 입력은 다음 단계에서 진행합니다.':''}</div>
+  <div class="nav"><button class="btn-p" onclick="prev()">이전</button><button class="btn-n" onclick="next()">다음 →</button></div>`;
+}
+
+function s3() {
+  if(S.lines===1&&S.mode!==2) return `
+  <div class="q-title">1줄 걸이</div>
+  <div class="q-sub">각도 없음 — 하중계수 1.0 적용</div>
+  <div class="q-hint">슬링이 벌어질수록 줄이 버텨야 할 힘이 커집니다</div>
+  <div class="vs ok" style="margin-bottom:16px;">
+    <div class="vs-ico">${icoSVG('ok',22)}</div>
+    <div class="vs-body"><div class="vs-main">K = 1.000</div><div class="vs-sub">수직 1줄 — 하중 그대로 적용</div></div>
+  </div>
+  <div class="nav"><button class="btn-p" onclick="prev()">이전</button><button class="btn-n" onclick="next()">다음 →</button></div>`;
+
+  if(S.mode===2) {
+    const cap=chokeCapFactor(S.chokeAngle),capPct=Math.round(cap*100);
+    const capCol=S.chokeAngle<60?'#ef4444':S.chokeAngle<120?'#f59e0b':'#1E4D8C';
+    const {K,M,invalid,betaDeg}=calcKM();
+    const isMulti=S.lines>=2;
+    const alphaSection=isMulti?`
+    <div class="sec-label">① 두 줄 사이 각도 (α)</div>
+    <div class="angle-display">
+      <div class="angle-num" id="adsp" style="color:${betaDeg>45?'#f59e0b':'#1E4D8C'}">${S.alpha}°</div>
+      <div class="angle-sub" id="adsub">β(수직선과의 각도) = ${betaDeg}°</div>
+    </div>
+    <input type="range" id="alpha-slider" min="0" max="120" step="10" value="${S.alpha}" oninput="setAlpha(this.value)">
+    <div class="slider-marks"><span>0°</span><span>60°</span><span>90°</span><span class="lim">120° 한계</span></div>
+    <div class="kcard" style="margin-bottom:14px;">
+      <div class="kcard-l">
+        <div class="kcard-lbl">K(각도계수) = 1/cos(β)<br><span id="mv" style="font-size:10px;opacity:.7;">M = ${invalid?'NG':M.toFixed(1)}</span></div>
+        <div class="kcard-val" id="kv">${invalid?'사용불가':K.toFixed(3)}</div>
+      </div>
+      <div class="kcard-r"><div class="kcard-sub">줄당 장력 증가</div><div class="kcard-pct" id="kpct">${invalid?'NG':'+'+Math.round(K*100-100)+'%'}</div></div>
+    </div>
+    <div class="viz-box" style="margin-bottom:14px;">
+      <div id="asvg">${buildAngleSVG(S.alpha,S.lines)}</div>
+      <div class="info-bar">
+        <div class="ib-cell"><div class="ib-label" style="color:#1E4D8C;">α — 두 줄 사이 각도</div>
+          <div class="ib-value" style="color:#1E4D8C;" id="ib-alpha">${S.alpha}°</div></div>
+        <div class="ib-cell" style="border-left:1px solid #e2e8f0;">
+          <div class="ib-label" style="color:#ef4444;">β(수직선과의 각도)</div>
+          <div class="ib-value" style="color:#ef4444;" id="ib-beta">${betaDeg}°</div>
+          <div class="ib-sub">= α ÷ 2 / 하중계수 기준각</div>
+        </div>
+      </div>
+      <div style="background:#fef9c3;border-top:1px solid #fde047;padding:8px 12px;font-size:11px;color:#854d0e;">
+        ※ 빨간 점선 = 수직 기준선 / β 60° 초과 사용 금지
+      </div>
+    </div>`
+    :`<div class="vs ok" style="margin-bottom:14px;"><div class="vs-ico">${icoSVG('ok',22)}</div>
+      <div class="vs-body"><div class="vs-main">1줄 초크 — K=1.0</div><div class="vs-sub">각도계수 없음, 조임각만 검토합니다</div></div></div>`;
+    return `
+    <div class="q-title">초크 걸이<br>각도를 확인하세요</div>
+    <div class="q-sub">조임각에 따라 슬링의 실제 허용하중이 달라집니다</div>
+    <div class="q-hint">슬링이 벌어질수록 줄이 버텨야 할 힘이 커집니다</div>
+    ${alphaSection}
+    <div class="sec-label">${isMulti?'② ':''}조임각 (Angle of Choke)</div>
+    <div class="angle-display">
+      <div class="angle-num" id="choke-disp" style="color:${capCol}">${S.chokeAngle}°</div>
+      <div class="angle-sub">정격용량 <strong id="choke-cap" style="color:${capCol};font-size:16px;">${capPct}%</strong></div>
+    </div>
+    <input type="range" min="0" max="180" step="10" value="${S.chokeAngle}" oninput="setChokeAngle(this.value)">
+    <div class="slider-marks"><span>0°</span><span>60°</span><span style="color:#1E4D8C;font-weight:700;">120° 권장</span><span>180°</span></div>
+    ${S.chokeAngle<60?`<div class="err-box">🚫 <strong>조임각 60° 미만</strong> — 더 긴 슬링으로 다시 결속하세요.</div>`:''}
+    ${S.chokeAngle>=60&&S.chokeAngle<120?`<div class="warn-box">⚠️ <strong>조임각 120° 미만</strong> — 정격용량 감소가 계산에 반영됩니다.</div>`:''}
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;">
+        <div style="padding:12px;border-right:1px solid #e2e8f0;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:8px;text-align:center;">참고 — G-133-2020</div>
+          <img src="data:image/png;base64,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" style="width:100%;max-width:130px;border-radius:8px;" alt="조임각 참고도"/>
+        </div>
+        <div style="padding:12px;">
+          <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:8px;">조임각별 정격용량</div>
+          <div style="font-size:11px;color:#475569;line-height:2.1;">
+            <span style="color:#22c55e;font-weight:700;">120° 초과</span> → 100%<br>
+            90°~120° → 87%<br>60°~89° → 74%<br>
+            30°~59° → 62%<br>0°~29° → 49%
+          </div>
+        </div>
+      </div>
+      <div class="info-bar">
+        <div class="ib-cell"><div class="ib-label" style="color:#1E4D8C;">조임각</div>
+          <div class="ib-value" style="color:#1E4D8C;" id="ib-choke-angle">${S.chokeAngle}°</div></div>
+        <div class="ib-cell" style="border-left:1px solid #e2e8f0;">
+          <div class="ib-label" style="color:${capCol};">정격용량계수</div>
+          <div class="ib-value" style="color:${capCol};" id="ib-choke-cap">${capPct}%</div></div>
+      </div>
+    </div>
+    <div class="nav"><button class="btn-p" onclick="prev()">이전</button><button class="btn-n" onclick="next()">다음 →</button></div>`;
+  }
+
+  // 수직·바스켓 다줄
+  if(S.alpha>120) S.alpha=120;
+  const {K,M,invalid,betaDeg}=calcKM();
+  const ac=betaDeg>45?'#f59e0b':'#1E4D8C';
+  return `
+  <div class="q-title">두 줄 사이 각도는<br>얼마인가요?</div>
+  <div class="q-sub">슬링 두 줄이 벌어진 각도(α)를 선택하세요</div>
+  <div class="q-hint">슬링이 벌어질수록 줄이 버텨야 할 힘이 커집니다</div>
+  <div class="info-box">💡 <strong>β(수직선과의 각도)</strong> = α ÷ 2<br>K(각도계수) = 1/cos(β) — KOSHA B-M-12-2025</div>
+  <div class="angle-display">
+    <div class="angle-num" id="adsp" style="color:${ac}">${S.alpha}°</div>
+    <div class="angle-sub" id="adsub">β = ${betaDeg}° (수직선과의 각도)</div>
+  </div>
+  <input type="range" id="alpha-slider" min="0" max="120" step="10" value="${S.alpha}" oninput="setAlpha(this.value)">
+  <div class="slider-marks"><span>0°</span><span>60°</span><span>90°</span><span class="lim">120° 한계</span></div>
+  <div class="kcard">
+    <div class="kcard-l">
+      <div class="kcard-lbl">K(각도계수) = 1/cos(β)<br><span id="mv" style="font-size:10px;opacity:.7;">M = ${invalid?'NG':M.toFixed(1)}</span></div>
+      <div class="kcard-val" id="kv">${invalid?'사용불가':K.toFixed(3)}</div>
+    </div>
+    <div class="kcard-r"><div class="kcard-sub">줄당 장력 증가</div><div class="kcard-pct" id="kpct">${invalid?'NG':'+'+Math.round(K*100-100)+'%'}</div></div>
+  </div>
+  <div class="viz-box">
+    <div id="asvg">${buildAngleSVG(S.alpha,S.lines)}</div>
+    <div class="info-bar">
+      <div class="ib-cell"><div class="ib-label" style="color:#1E4D8C;">α — 두 줄 사이 각도</div>
+        <div class="ib-value" style="color:#1E4D8C;" id="ib-alpha">${S.alpha}°</div>
+        <div class="ib-sub">슬라이더로 입력한 값</div></div>
+      <div class="ib-cell" style="border-left:1px solid #e2e8f0;">
+        <div class="ib-label" style="color:#ef4444;">β — 수직선과의 각도</div>
+        <div class="ib-value" style="color:#ef4444;" id="ib-beta">${betaDeg}°</div>
+        <div class="ib-sub">= α ÷ 2 / 하중계수 기준각</div></div>
+    </div>
+    <div style="background:#fef9c3;border-top:1px solid #fde047;padding:8px 12px;font-size:11px;color:#854d0e;">
+      ※ 빨간 점선 = 수직 기준선 / β 60° 초과(α 120° 초과) 사용 금지
+    </div>
+  </div>
+  <div class="angle-calc-box">
+    <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">📏 각도를 모를 때 — 줄 길이로 계산하기</div>
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">슬링 길이(L)와 걸이 간격(D)으로 각도를 자동 계산합니다</div>
+    <div class="calc-grid">
+      <div><div class="calc-field-label">슬링 길이 L (m)</div>
+        <input type="number" class="num-inp" id="sl-L" placeholder="예: 3.0" inputmode="decimal" style="padding:10px 12px;font-size:14px;"></div>
+      <div><div class="calc-field-label">걸이 간격 D (m)</div>
+        <input type="number" class="num-inp" id="sl-D" placeholder="예: 2.0" inputmode="decimal" style="padding:10px 12px;font-size:14px;"></div>
+    </div>
+    <button class="calc-btn" onclick="calcAngleFromLen()">각도 계산하기</button>
+    <div class="calc-result" id="angle-calc-result"></div>
+  </div>
+  <div class="nav"><button class="btn-p" onclick="prev()">이전</button><button class="btn-n" onclick="next()">다음 →</button></div>`;
+}
+
+function s4() {
+  const opts=getSO();
+  return `
+  <div class="q-title">슬링 규격을<br>선택하세요</div>
+  <div class="q-sub">수직 1줄 기준 안전작업하중(SWL)을 선택하세요</div>
+  <div class="q-hint">슬링 태그에 적힌 SWL(안전작업하중)을 확인하세요</div>
+  <div class="info-box">💡 <strong>슬링 규격을 모르신다면?</strong> 슬링에 부착된 태그(라벨)를 확인하세요. SWL(안전작업하중) 또는 WLL(최대허용하중)이 표기되어 있습니다. 태그가 없거나 훼손된 경우 해당 슬링은 사용하지 마세요.</div>
+  <div class="seg">
+    ${[['wire','와이어로프'],['belt','벨트슬링'],['chain','체인슬링']].map(([t,l])=>
+      `<button class="seg-b ${S.sType===t?'on':''}" onclick="setSlingType('${t}')">${l}</button>`).join('')}
+  </div>
+  <select class="csel" onchange="setSlingDDL(this.value)">
+    ${opts.map(o=>`<option value="${o.swl}" ${S.sSelVal===o.swl?'selected':''}>${fmt.swlLabel(o)}</option>`).join('')}
+  </select>
+  ${S.sCust?`<div class="custom-box">
+    <div class="sec-label" style="margin-top:0;margin-bottom:8px;">SWL 직접 입력</div>
+    <div class="inp-row">
+      <input type="number" class="num-inp" placeholder="안전작업하중" value="${fmt.inp(S.sWLL)||''}" inputmode="decimal" oninput="setSlingCustom(this.value)">
+      <span class="inp-unit">${fmt.unit()}</span>
+    </div>
+    <div style="font-size:11px;color:#64748b;">제조사 인증서 기준 SWL (수직 1줄 기준)</div>
+  </div>`:''}
+  ${S.sCustBL?`<div class="custom-box">
+    <div class="sec-label" style="margin-top:0;margin-bottom:8px;">BL(파단하중) 기반 산출</div>
+    <div class="inp-row">
+      <input type="number" class="num-inp" placeholder="파단하중" value="${fmt.inp(S.wireBL)||''}" oninput="setWireBL(this.value)">
+      <span class="inp-unit">${fmt.unit()}</span>
+    </div>
+    <div class="sec-label" style="margin-top:10px;">단말가공법 (이음효율)</div>
+    <select class="csel" style="margin-bottom:8px;" onchange="setWireEff(this.value)">
+      <option value="socket"    ${S.wireEffType==='socket'   ?'selected':''}>소켓 — 100%</option>
+      <option value="lock_24"   ${S.wireEffType==='lock_24'  ?'selected':''}>팀블 24mm — 95%</option>
+      <option value="lock_26"   ${S.wireEffType==='lock_26'  ?'selected':''}>팀블 26mm — 92.5%</option>
+      <option value="splice_6"  ${S.wireEffType==='splice_6' ?'selected':''}>꼬아잇기 6mm — 90%</option>
+      <option value="splice_9"  ${S.wireEffType==='splice_9' ?'selected':''}>꼬아잇기 9mm — 88%</option>
+      <option value="splice_12" ${S.wireEffType==='splice_12'?'selected':''}>꼬아잇기 12mm — 86%</option>
+      <option value="splice_18" ${S.wireEffType==='splice_18'?'selected':''}>꼬아잇기 18mm — 82%</option>
+      <option value="clip"      ${S.wireEffType==='clip'     ?'selected':''}>클립·웨지 — 75%</option>
+    </select>
+    <div class="sec-label" style="margin-top:4px;">안전율</div>
+    <div class="inp-row" style="margin-bottom:0;">
+      <input type="number" class="num-inp" value="${S.wireSF}" min="1" oninput="setWireSF(this.value)">
+      <span class="inp-unit">배</span>
+    </div>
+  </div>`:''}
+  <div id="s4-result">${renderS4Result()}</div>
+  <div class="nav"><button class="btn-p" onclick="prev()">이전</button><button class="btn-n" onclick="next()">다음 →</button></div>`;
+}
+
+function gearSection(prefix, title, note) {
+  const use=S[prefix+'ShUse'], type=S[prefix+'ShType'], swl=S[prefix+'ShSWL'];
+  const gears=[
+    {t:'shackle',icon:'<svg width="24" height="24" viewBox="0 0 48 48" fill="none"><path d="M15 26 L15 36 Q15 45 24 45 Q33 45 33 36 L33 26" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="10" y1="26" x2="38" y2="26" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="38" cy="26" r="5.5" fill="currentColor"/><line x1="36" y1="26" x2="40" y2="26" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="38" y1="24" x2="38" y2="28" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>',name:'샤클'},
+    {t:'lug',icon:'<svg width="24" height="24" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="13" r="6.5" fill="none" stroke="currentColor" stroke-width="3.5"/><path d="M17 18 L13 40 L35 40 L31 18" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/><line x1="24" y1="19" x2="24" y2="40" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity="0.45"/></svg>',name:'인양러그'},
+    {t:'other',icon:'<svg width="24" height="24" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="5 3"/><circle cx="15" cy="24" r="3" fill="currentColor"/><circle cx="24" cy="24" r="3" fill="currentColor"/><circle cx="33" cy="24" r="3" fill="currentColor"/></svg>',name:'기타'}
+  ];
+  const shackleRef=type==='shackle'?`
+    <div style="background:#f0f9ff;border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+      <div style="font-size:10px;font-weight:700;color:#0369a1;margin-bottom:6px;">📌 샤클 표준 SWL 참고 (G80 기준)</div>
+      <div style="font-size:11px;color:#0c4a6e;line-height:2;">
+        1/2" → <strong>2.0t</strong> | 5/8" → <strong>3.25t</strong><br>
+        3/4" → <strong>4.75t</strong> | 7/8" → <strong>6.5t</strong><br>
+        1" → <strong>8.5t</strong> | 1-1/4" → <strong>12.0t</strong>
+      </div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:4px;">※ 제조사·등급별 상이 — 반드시 제품 표시값 확인</div>
+    </div>`:'';
+  const lugNote=type==='lug'?`<div class="info-box" style="margin-bottom:10px;font-size:11px;">💡 <strong>인양러그</strong> — 구조검토 완료 후 검토서의 허용하중을 입력하세요.<br><span style="color:#ef4444;font-weight:700;">구조검토 없이 사용 금지</span></div>`:'';
+  const otherNote=type==='other'?`<div class="info-box" style="margin-bottom:10px;font-size:11px;">💡 <strong>기타 달기기구</strong> — 제조사 인증서 또는 구조검토서의 허용하중을 입력하세요.</div>`:'';
+  return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:12px;">
+    <div class="tog-row" style="padding-top:0;${use?'margin-bottom:12px;':''}">
+      <div><div class="tog-label">${title}</div><div class="tog-sub">${note}</div></div>
+      <label class="tog-sw"><input type="checkbox" ${use?'checked':''} onchange="toggleGear('${prefix}',this.checked)"><div class="tog-track"></div></label>
+    </div>
+    ${use?`
+    <div class="gear-grid">
+      ${gears.map(g=>`<div class="gear-btn ${type===g.t?'on':''}" onclick="setGearType('${prefix}','${g.t}')">
+        <span class="gear-icon">${g.icon}</span>${g.name}</div>`).join('')}
+    </div>
+    ${shackleRef}${lugNote}${otherNote}
+    <div class="inp-row">
+      <input type="number" class="num-inp" placeholder="SWL 입력" value="${fmt.inp(swl)||''}" inputmode="decimal" oninput="setGearSWL('${prefix}',this.value)">
+      <span class="inp-unit">${fmt.unit()}</span>
+    </div>
+    <div id="s5-result-${prefix}">${renderGearResult(prefix)}</div>`:''}
+  </div>`;
+}
+
+function s5() {
+  return `
+  <div class="q-title">달기기구를<br>확인하세요</div>
+  <div class="q-sub">크레인 정격하중과 달기기구의 안전작업하중을 입력하세요</div>
+  <div class="q-hint">크레인 운전석 또는 붐 차트에서 현재 반경의 정격하중을 확인하세요</div>
+  <div class="sec-label">크레인 정격하중 (현재 작업반경 기준)</div>
+  <div class="inp-row">
+    <input type="number" class="num-inp" value="${fmt.inp(S.hookLoad)||''}" inputmode="decimal" placeholder="0" oninput="setHookLoad(this.value)">
+    <span class="inp-unit">${fmt.unit()}</span>
+  </div>
+  ${S.hookLoad<=0?`<div class="err-box" style="margin-top:-4px;">🚫 <strong>크레인 정격하중을 입력하세요</strong> — 현재 작업반경 기준 정격하중을 크레인 사양서에서 확인하세요.</div>`:''}
+  ${gearSection('up','상부 달기기구','크레인 훅과 슬링 사이 — 기본 OFF')}
+  ${gearSection('lo','하부 달기기구','슬링과 화물 연결부 — 기본 ON')}
+  <div class="info-box" style="font-size:11px;">
+    💡 <strong>달기기구 안전계수 기준 (산업안전보건기준 제163조)</strong><br>
+    샤클·훅 독립형: <strong>3 이상</strong> / 기타 달기기구: <strong>4 이상</strong>
+  </div>
+  <div class="nav"><button class="btn-p" onclick="prev()">이전</button><button class="btn-n" onclick="next()">종합 결과 →</button></div>`;
+}
+
+function s6() {
+  const c=calc();
+  const items=[{n:'크레인 정격하중',load:c.W,swl:S.hookLoad,r:c.hr,s:c.hS,sub:'작용 '+fmt.val(c.W)+' / 정격 '+fmt.val(S.hookLoad)}];
+  if(S.upShUse&&S.upShSWL>0) items.push({n:'상부 달기기구',load:c.W,swl:S.upShSWL,r:c.ur,s:c.uS,sub:fmt.val(c.W)+' / SWL '+fmt.val(S.upShSWL)});
+  items.push({n:'슬링 ×'+c.effN+'가닥',load:c.Ts,swl:c.effectiveSWL,r:c.sr,s:c.sS,sub:'줄당 '+fmt.val(c.Ts)+' / 허용 '+fmt.val(c.effectiveSWL)});
+  if(S.loShUse&&S.loShSWL>0) items.push({n:'하부 달기기구',load:c.Ts,swl:S.loShSWL,r:c.lr,s:c.lS,sub:'줄당 '+fmt.val(c.Ts)+' / SWL '+fmt.val(S.loShSWL)});
+  const hasNg=items.some(i=>i.s==='ng'), hasWarn=items.some(i=>i.s==='warn');
+  const ov=hasNg?'ng':hasWarn?'warn':'ok';
+  const ico={ok:icoSVG('ok',56),warn:icoSVG('warn',56),ng:icoSVG('ng',56)};
+  const ovMsg={
+    ok:{main:'모든 부재 이상 없음',note:'작업 진행 가능'},
+    warn:{main:'경계 부재 존재',note:'관리감독자 확인 후 진행'},
+    ng:{main:'허용하중 초과',note:'즉시 작업 중단'}
+  };
+  const sf=isFinite(c.totalCap/c.W)&&c.W>0?(c.totalCap/c.W).toFixed(2)+'배':'—';
+  return `
+  <div class="q-hint" style="margin-bottom:12px;">하중 전달 경로의 모든 부재가 OK여야 작업 가능합니다</div>
+  <div class="verdict ${ov}">
+    <span class="v-ico">${ico[ov]}</span>
+    <div class="v-txt">${ovMsg[ov].main}</div>
+    <div class="v-note">${ovMsg[ov].note}</div>
+  </div>
+  <div class="sec-label">하중 전달 경로 검토</div>
+  <div class="lp-card">
+    ${items.map(it=>`<div class="lp-item">
+      <div class="lp-dot ${it.s}"></div><div class="lp-name">${it.n}</div>
+      <div class="lp-sub">${it.sub}</div>
+      <div class="lp-pct ${it.s}">${fmt.pct(it.r)}</div>
+    </div>`).join('')}
+  </div>
+  <button class="dtog" id="dtog-s6" onclick="toggleDetail('s6')">
+    📋 KOSHA 전체 계산 근거 보기 <span class="darr">${S.detailOpen.s6?'▲':'▼'}</span>
+  </button>
+  <div class="dbody" id="detail-s6" style="display:${S.detailOpen.s6?'block':'none'}">
+    <div class="dr"><span class="dk">화물중량 × 동하중계수</span><span class="dv">${fmt.val(S.weight)} × ${S.dynK} = ${fmt.val(c.W)}</span></div>
+    <div class="dr"><span class="dk">줄 수 / 걸이방식</span><span class="dv">${c.effN}줄 / ${['수직','바스켓','초크'][S.mode]}</span></div>
+    <div class="dr"><span class="dk">K(각도계수)</span><span class="dv">${c.invalid?'사용불가':c.K.toFixed(3)}</span></div>
+    <div class="dr"><span class="dk">모드계수 M</span><span class="dv">${c.M.toFixed(1)}</span></div>
+    ${S.mode===2?`<div class="dr"><span class="dk">조임각 / 정격용량계수</span><span class="dv">${S.chokeAngle}° / ${Math.round(c.capFactor*100)}%</span></div>`:''}
+    <div class="dr"><span class="dk">슬링 SWL (1가닥)</span><span class="dv">${fmt.val(c.sWLL)}</span></div>
+    <div class="dr"><span class="dk">유효 SWL (조임각 적용)</span><span class="dv">${fmt.val(c.effectiveSWL)}</span></div>
+    <div class="dr"><span class="dk">Ts(줄당 장력)</span><span class="dv">${fmt.val(c.Ts)}</span></div>
+    <div class="dr"><span class="dk">종합 허용하중</span><span class="dv">${fmt.val(c.totalCap)}</span></div>
+    <div class="dr"><span class="dk">사용률</span><span class="dv">${fmt.pct(c.sr)}</span></div>
+    <div class="dr"><span class="dk">안전율 (종합허용 ÷ W)</span><span class="dv">${sf}</span></div>
+    <div class="dref">📌 KOSHA GUIDE B-M-12-2025 / G-133-2020 / G-134-2023 기준<br>산업안전보건기준에 관한 규칙 제163조·제164조 적용</div>
+  </div>
+  <button class="btn-reset" onclick="S.step=1;render()">🔄 처음부터 다시 검토하기</button>
+  <button class="btn-reset" style="margin-top:8px;background:#2C5282!important;color:#fff!important;border-color:#2C5282!important;" onclick="location.href='index.html'">🏠 홈으로 돌아가기</button>`;
+}
+
+const FNS=[null,s1,s2,s3,s4,s5,s6];
+window.next=()=>{if(S.step<6)S.step++;render();};
+window.prev=()=>{if(S.step>1)S.step--;render();};
+
+function render(){
+  document.getElementById('top-step').textContent=S.step+' / 6';
+  document.getElementById('top-title').textContent=STEPS_ARR[S.step]||'';
+  document.getElementById('prog').style.width=Math.round(S.step/6*100)+'%';
+  document.getElementById('btn-back').style.opacity=S.step>1?'1':'0.25';
+  document.getElementById('app').innerHTML=FNS[S.step]();
+  document.getElementById('app').scrollTop=0;
+  lucide.createIcons();
+  /* step 6 도달 시 작업계획서로 결과 전달 */
+  if (S.step === 6) {
+    try {
+      var c = calc(S);
+      var _v = (c.sS==='ng'||c.hS==='ng') ? 'ng' : (c.sS==='warn'||c.hS==='warn') ? 'warn' : 'ok';
+      var _sf = (isFinite(c.totalCap/c.W)&&c.W>0) ? (c.totalCap/c.W).toFixed(2) : null;
+      localStorage.setItem('musai_lifting_last', JSON.stringify({
+        verdict:      _v,
+        result:       {ok:'이상없음',warn:'주의',ng:'부적합'}[_v],
+        W:            c.W,
+        lines:        c.effN,
+        modeLabel:    ['수직','바스켓','초크'][S.mode]||'',
+        sTypeLabel:   {wire:'와이어로프',belt:'섬유벨트',chain:'체인'}[S.sType]||S.sType,
+        alpha:        S.alpha,
+        sWLL:         c.sWLL,
+        effectiveSWL: c.effectiveSWL,
+        Ts:           c.Ts,
+        totalCap:     c.totalCap,
+        ratio:        isFinite(c.sr) ? Math.round(c.sr*100) : null,
+        sf:           _sf,
+        timestamp:    new Date().toLocaleDateString('ko-KR')
+      }));
+    } catch(e) {}
+  }
+}
+render();
+</script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

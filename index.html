@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#F5F5F7">
+  <meta name="description" content="무사이(Musai) — 현장 안전 플랫폼. 양중 검토 · 작업계획서 자동 생성">
+  <title>무사이 · Musai · 현장 안전 플랫폼</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    /* ============================================================
+       index.html — 무사이 메인 허브 (애플 스타일 라이트 테마)
+       style.css는 도담이(lifting.html) 전용이므로 건드리지 않음.
+       허브 전용 스타일은 이 파일에 인라인 보관.
+       ============================================================ */
+    :root {
+      --p:        #2C5282;  /* 네이비 (CTA / 강조) */
+      --p-dk:     #1E3A5F;
+      --steel:    #7B9EE0;  /* 스틸블루 (로고 "이") */
+      --bg:       #F5F5F7;  /* 애플 연회색 */
+      --bg-card:  #FFFFFF;
+      --border:   rgba(0,0,0,0.1);
+      --border-s: rgba(0,0,0,0.06);
+      --text:     #1D1D1F;
+      --text-s:   #3C3C43;
+      --text-m:   #6E6E73;
+      --text-l:   #86868B;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Pretendard', -apple-system, 'SF Pro Display', 'Apple SD Gothic Neo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 20px 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .hub { width: 100%; max-width: 1080px; }
+
+    /* ── 헤더 ── */
+    .hub-header { text-align: center; padding: 30px 0 46px; }
+    .hub-logo {
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: -1.8px;
+      line-height: 1;
+      color: var(--text);
+    }
+    .hub-logo em {
+      color: var(--steel);
+      font-style: normal;
+    }
+    .hub-tagline {
+      font-size: 17px;
+      color: var(--text-s);
+      margin-top: 14px;
+      letter-spacing: -0.3px;
+      font-weight: 400;
+    }
+    .hub-sub {
+      font-size: 12px;
+      color: var(--text-l);
+      margin-top: 6px;
+      letter-spacing: 0.02em;
+      font-family: 'SF Mono', 'Menlo', monospace;
+    }
+
+    /* ── 카드 그리드 ── */
+    .tool-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 0 0 40px;
+    }
+    @media (min-width: 640px)  { .tool-grid { grid-template-columns: 1fr 1fr; gap: 18px; } }
+    @media (min-width: 1000px) { .tool-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
+
+    .tool-card {
+      background: var(--bg-card);
+      border: 0.5px solid var(--border);
+      border-radius: 18px;
+      padding: 26px 24px 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      min-height: 210px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .tool-card.active { cursor: pointer; }
+    .tool-card.active:hover {
+      border-color: var(--p);
+      transform: translateY(-1px);
+    }
+    .tool-card.disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .tool-badge {
+      position: absolute; top: 18px; right: 18px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.06em;
+    }
+    .tool-badge.ready { background: var(--p); color: #fff; }
+    .tool-badge.soon  {
+      background: rgba(0,0,0,0.06);
+      color: var(--text-m);
+    }
+
+    .tool-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: rgba(44, 82, 130, 0.08);
+      color: var(--p);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 18px;
+    }
+    .tool-icon svg { width: 26px; height: 26px; }
+    .tool-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+      letter-spacing: -0.4px;
+    }
+    .tool-desc {
+      font-size: 13px;
+      color: var(--text-s);
+      line-height: 1.55;
+      flex: 1;
+      word-break: keep-all;
+      letter-spacing: -0.1px;
+    }
+    .tool-meta {
+      font-size: 11px;
+      color: var(--text-l);
+      font-family: 'SF Mono', 'Menlo', monospace;
+      margin-top: 12px;
+      letter-spacing: 0.02em;
+    }
+    .tool-cta {
+      margin-top: 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--p);
+      letter-spacing: -0.1px;
+    }
+
+    /* ── 푸터 ── */
+    .hub-footer {
+      text-align: center;
+      color: var(--text-l);
+      font-size: 12px;
+      padding: 20px 0 0;
+      line-height: 1.8;
+      letter-spacing: -0.1px;
+    }
+    .hub-footer strong {
+      color: var(--text-m);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+<svg aria-hidden="true" style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-crane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="3" x2="12" y2="21"/><line x1="5" y1="6" x2="20" y2="6"/>
+    <line x1="12" y1="6" x2="5" y2="14"/><circle cx="5" cy="16" r="2"/><circle cx="10" cy="16" r="2"/>
+  </symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="2" width="6" height="4" rx="1"/><rect x="4" y="4" width="16" height="18" rx="2"/>
+    <line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="14" y2="15"/>
+  </symbol>
+  <symbol id="i-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9.59 4.59A2 2 0 1 1 11 8H2"/><path d="M12.59 19.41A2 2 0 1 0 14 16H2"/><path d="M6.8 13.8A2 2 0 1 0 8 17H2"/>
+    <line x1="2" y1="12" x2="20" y2="12"/>
+  </symbol>
+  <symbol id="i-lightning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13 2L4.09 12.96A1 1 0 0 0 5 14.5h6.5L10 22l9.91-10.96A1 1 0 0 0 19 9.5H12.5L13 2Z"/>
+  </symbol>
+  <symbol id="i-checklist" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5" width="4" height="4" rx="0.5"/><line x1="9" y1="7" x2="21" y2="7"/>
+    <polyline points="5 12 6.5 13.5 9 11" /><line x1="11" y1="12" x2="21" y2="12"/>
+    <rect x="3" y="16" width="4" height="4" rx="0.5"/><line x1="9" y1="18" x2="21" y2="18"/>
+  </symbol>
+  <symbol id="i-scaffold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="17" width="16" height="3" rx="1"/><rect x="7" y="11" width="10" height="3" rx="1"/>
+    <line x1="7" y1="11" x2="6" y2="3"/><line x1="17" y1="11" x2="18" y2="3"/>
+    <line x1="5" y1="7" x2="19" y2="7"/><line x1="6" y1="14" x2="6" y2="17"/><line x1="18" y1="14" x2="18" y2="17"/>
+  </symbol>
+  <symbol id="i-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </symbol>
+  <symbol id="i-ground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="14" width="20" height="7" rx="1"/>
+    <path d="M7 14V8l5-5 5 5v6"/><line x1="10" y1="14" x2="10" y2="10"/><line x1="14" y1="14" x2="14" y2="10"/>
+  </symbol>
+  <symbol id="i-sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="4" width="20" height="14" rx="2"/>
+    <circle cx="8" cy="11" r="2.5"/>
+    <path d="M13 9h5M13 13h3"/>
+  </symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    <line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="13" y2="11"/>
+  </symbol>
+</svg>
+
+  <div class="hub">
+    <header class="hub-header">
+      <div class="hub-logo">무사<em>이</em></div>
+      <div class="hub-tagline">오늘도 무사히, 현장을 지킵니다</div>
+      <div class="hub-sub">Musai · Industrial Safety Platform</div>
+    </header>
+
+    <main class="tool-grid">
+
+      <a href="lifting.html" class="tool-card active">
+        <span class="tool-badge ready">READY</span>
+        <div class="tool-icon"><svg><use href="#i-crane"/></svg></div>
+        <div class="tool-title">양중 안전검토</div>
+        <div class="tool-desc">슬링·로프·체인의 안전 검토. KOSHA M-94-2011 기준으로 인양 하중·각도·달기기구를 종합 판정합니다.</div>
+        <div class="tool-meta">도담이 · Phase 1</div>
+        <div class="tool-cta">검토 시작 →</div>
+      </a>
+
+      <a href="plan.html" class="tool-card active">
+        <span class="tool-badge ready">READY</span>
+        <div class="tool-icon"><svg><use href="#i-clipboard"/></svg></div>
+        <div class="tool-title">작업계획서 작성</div>
+        <div class="tool-desc">산업안전보건기준 제38조 별표4 기반 — 차량계 건설기계 · 하역운반기계 · 중량물 취급 3종 계획서 자동 생성.</div>
+        <div class="tool-meta">Phase 2</div>
+        <div class="tool-cta">작성 시작 →</div>
+      </a>
+
+      <a href="confined.html" class="tool-card active">
+        <span class="tool-badge ready">READY</span>
+        <div class="tool-icon"><svg><use href="#i-wind"/></svg></div>
+        <div class="tool-title">밀폐공간 환기검토</div>
+        <div class="tool-desc">KOSHA GUIDE E-G-18-2026 기반 환기량 계산기. 공간 체적·작업 조건·덕트 구성으로 필요 환기량(Q)과 팬 규격을 즉시 산정.</div>
+        <div class="tool-meta">E-G-18-2026 · Phase 2</div>
+        <div class="tool-cta">검토 시작 →</div>
+      </a>
+
+      <a href="elec-plan.html" class="tool-card active">
+        <span class="tool-badge ready">READY</span>
+        <div class="tool-icon"><svg><use href="#i-lightning"/></svg></div>
+        <div class="tool-title">전기작업계획서</div>
+        <div class="tool-desc">산업안전보건기준 제319조~제321조 기반. 정전·충전전로 근접·활선 작업 유형별 LOTO 절차·접근한계거리·절연보호구 확인.</div>
+        <div class="tool-meta">제319~321조 · Phase 3</div>
+        <div class="tool-cta">작성 시작 →</div>
+      </a>
+
+      <a href="tbm.html" class="tool-card active">
+        <span class="tool-badge ready">READY</span>
+        <div class="tool-icon"><svg><use href="#i-checklist"/></svg></div>
+        <div class="tool-title">TBM 체크리스트</div>
+        <div class="tool-desc">작업 유형 선택 시 위험요소·보호구 항목 자동 구성. 인쇄 후 현장 서명까지 가능한 일일 Tool Box Meeting 양식.</div>
+        <div class="tool-meta">7종 작업 유형 · Phase 3</div>
+        <div class="tool-cta">작성 시작 →</div>
+      </a>
+
+      <a href="scaffold.html" class="tool-card active">
+        <span class="tool-badge ready">READY</span>
+        <div class="tool-icon"><svg><use href="#i-scaffold"/></svg></div>
+        <div class="tool-title">고소작업 안전검토</div>
+        <div class="tool-desc">이동식 비계·달비계·고소작업대·사다리 5종 — 작업 높이·하중·지반을 입력하면 안정성 비율·접근한계·적합 여부를 즉시 판정.</div>
+        <div class="tool-meta">KOSHA GUIDE C-29 · Phase 3</div>
+        <div class="tool-cta">검토 시작 →</div>
+      </a>
+
+      <a href="risk.html" class="tool-card active">
+        <span class="tool-badge ready">READY</span>
+        <div class="tool-icon"><svg><use href="#i-warning"/></svg></div>
+        <div class="tool-title">위험성 평가</div>
+        <div class="tool-desc">KRAS · JSA 기반 위험성 평가표 자동 생성. 작업 유형별 대표 위험요인 빠른 입력, 가능성×중대성 자동 계산, 감소대책 및 잔류위험 관리.</div>
+        <div class="tool-meta">KOSHA GUIDE P-180 · Phase 4</div>
+        <div class="tool-cta">평가 시작 →</div>
+      </a>
+
+      <a href="sign.html" class="tool-card active">
+        <span class="tool-badge ready">READY</span>
+        <div class="tool-icon"><svg><use href="#i-sign"/></svg></div>
+        <div class="tool-title">안전표지 제작</div>
+        <div class="tool-desc">KS S ISO 7010 규격 안전표지 제작. 금지·경고·지시·안내 심볼을 A4에 자유 배치 후 PNG 저장·인쇄.</div>
+        <div class="tool-meta">KS S ISO 7010 · 21종 심볼</div>
+        <div class="tool-cta">표지 만들기 →</div>
+      </a>
+
+      <div class="tool-card disabled">
+        <span class="tool-badge soon">SOON</span>
+        <div class="tool-icon"><svg><use href="#i-ground"/></svg></div>
+        <div class="tool-title">지반 허용지내력</div>
+        <div class="tool-desc">아우트리거 반력 및 지반 허용지내력 검토. 크레인 설치 안전성을 현장에서 바로 확인.</div>
+        <div class="tool-meta">Phase 4 예정</div>
+        <div class="tool-cta">준비 중</div>
+      </div>
+
+      <div class="tool-card disabled">
+        <span class="tool-badge soon">SOON</span>
+        <div class="tool-icon"><svg><use href="#i-book"/></svg></div>
+        <div class="tool-title">법령 검색</div>
+        <div class="tool-desc">산업안전보건법·시행령·규칙을 현장 맥락에 맞춰 검색. 관련 KOSHA 가이드까지 한 번에.</div>
+        <div class="tool-meta">Phase 4 예정</div>
+        <div class="tool-cta">준비 중</div>
+      </div>
+
+    </main>
+
+    <footer class="hub-footer">
+      <strong>무사이(Musai)</strong> · 현장 안전 플랫폼 · v0.5.0<br>
+      수익화 배제 · 무료 호스팅 · 비전공자 친화 UX
+    </footer>
+  </div>
+</body>
+</html>

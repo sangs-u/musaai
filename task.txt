@@ -1,0 +1,266 @@
+# task.txt — plan-template.js v0.2.0 업데이트 (KOSHA GUIDE D-C-10-2026 보완)
+# 작성: 2026-04-24 / claude.ai 설계 세션
+# 실행: VS Code 터미널 → claude → "task.txt 읽고 실행해줘"
+# 주의: 확인 없이 바로 적용해줘
+
+## 목적
+plan-template.js v0.1.0에서 KOSHA GUIDE D-C-10-2026 검토 후
+누락된 항목들을 보완한다. 기존 구조(MUSAI_PLAN 네임스페이스)는 유지하고
+아래 4가지를 수정/추가한다.
+
+## 수정 규칙
+1. 전역 var 선언 유지 (const/let 금지)
+2. 기존 shared_fields, schemas, machine_map 구조 유지
+3. meta.version을 '0.2.0'으로 업데이트
+4. 주석은 한국어, 법조문은 원문 그대로
+
+## 변경 내용 상세
+
+### [1] shared_fields.equipment_basic 에 누락 필드 추가
+기존 필드는 그대로 두고 아래 필드들을 추가:
+
+```
+outrigger_front:  { label: '아웃트리거 폭 (전)', type: 'text', required: false, unit: 'mm' },
+outrigger_rear:   { label: '아웃트리거 폭 (후)', type: 'text', required: false, unit: 'mm' },
+boom_max_angle:   { label: '붐 최대각도',         type: 'number', required: false, unit: '도' },
+boom_min_angle:   { label: '붐 최소각도',         type: 'number', required: false, unit: '도' },
+hook_max_height:  { label: '훅 최대지상높이',     type: 'number', required: false, unit: 'm' },
+struct_change_date: { label: '구조변경일',        type: 'date',   required: false },
+struct_change_co:   { label: '구조변경업체명',    type: 'text',   required: false },
+repair_history:   { label: '수리·보수·점검이력', type: 'textarea', required: false,
+                    hint: '최근 수리·점검 이력 기재' }
+```
+
+### [2] shared_fields에 equipment_check 섹션 신규 추가
+방호장치 및 작동상태 점검 체크리스트 (KOSHA GUIDE 4. 기계·장비 개요 기준)
+
+```javascript
+equipment_check: {
+  label: '기계·장비 개요 및 점검사항',
+  fields: {
+    sling_type: {
+      label: '줄걸이 용구',
+      type: 'multi-select',
+      required: true,
+      options: ['와이어로프', '섬유벨트(슬링)', '체인', '클램프', '하카', '샤클', '기타']
+    },
+    manual_exist: {
+      label: '사용설명서',
+      type: 'select',
+      required: true,
+      options: ['있음', '없음']
+    },
+    // 방호장치 점검 — 각 항목은 정상/비정상/해당없음
+    guard_boom_wire:     { label: '붐(와이어로프·체인 구동) 인출·선회부', type: 'select', required: true, options: ['정상', '비정상', '해당없음'] },
+    guard_boom_length:   { label: '붐 인출 길이 표시장치',                 type: 'select', required: true, options: ['정상', '비정상', '해당없음'] },
+    guard_boom_stop:     { label: '붐 기복 정지장치 (붐 최대각도 내)',     type: 'select', required: true, options: ['정상', '비정상', '해당없음'] },
+    guard_moment:        { label: '모멘트 감지장치 (위치 제어장치)',        type: 'select', required: true, options: ['정상', '비정상', '해당없음'] },
+    guard_outrigger:     { label: '아웃트리거 전도방지장치',               type: 'select', required: true, options: ['정상', '비정상', '해당없음'] },
+    guard_overwind:      { label: '권과 방지장치',                         type: 'select', required: true, options: ['정상', '비정상', '해당없음'] },
+    guard_overload:      { label: '과부하 방지장치',                       type: 'select', required: true, options: ['정상', '비정상', '해당없음'] },
+    guard_hook_release:  { label: '훅 해지장치',                           type: 'select', required: true, options: ['정상', '비정상', '해당없음'] },
+    guard_hydraulic:     { label: '낙하 방지밸브 및 유압장치',             type: 'select', required: true, options: ['정상', '비정상', '해당없음'] }
+  }
+}
+```
+
+### [3] schemas.heavy_object.own.object_spec 에 누락 필드 추가
+기존 필드는 그대로 두고 아래를 추가:
+
+```
+object_shape: {
+  label: '중량물 형상',
+  type: 'select',
+  required: true,
+  options: ['긴 막대형', '박스형', '비정형', '기타']
+},
+object_shape_note: { label: '형상 특이사항', type: 'text', required: false },
+aux_tool: {
+  label: '달기구 (보조용구)',
+  type: 'multi-select',
+  required: true,
+  options: ['클램프', '해커', '체인슬링', '인양러그', '턴버클', '기타']
+},
+sling_method: {
+  label: '줄걸이 방법',
+  type: 'select',
+  required: true,
+  options: ['수직 1줄', '2줄 걸이', '4줄 걸이', '바스켓 걸이', '초크 걸이']
+},
+weight_center: {
+  label: '무게중심 확인',
+  type: 'select',
+  required: true,
+  options: ['확인완료', '확인필요', '해당없음']
+},
+work_sequence: {
+  label: '작업순서 (절차)',
+  type: 'textarea',
+  required: true,
+  hint: '인양 전 → 인양 중 → 거치 순서로 기재'
+}
+```
+
+### [4] shared_fields에 supervisor_role 섹션 신규 추가
+작업지휘자 역할 및 하역작업 주체 (KOSHA GUIDE 7. 작업지휘자 역할 기준)
+
+```javascript
+supervisor_role: {
+  label: '작업지휘자 역할 및 교육',
+  fields: {
+    unloading_party: {
+      label: '하역작업 주체',
+      type: 'select',
+      required: true,
+      options: ['화주 측', '운송업자 측', '받는 사업장', '공통']
+    },
+    edu_supervisor:  { label: '안전교육 — 작업지휘자', type: 'checkbox', required: false },
+    edu_signal_count:{ label: '신호수 (명)',            type: 'number',   required: false, unit: '명' },
+    edu_worker_count:{ label: '작업원 (명)',            type: 'number',   required: false, unit: '명' },
+    supervisor_duties: {
+      label: '작업지휘자 임무',
+      type: 'multi-select',
+      required: true,
+      options: [
+        '작업 지휘·감독',
+        '이탈 시 대리 지정',
+        '작업방법·근로자 배치 확인',
+        '출입금지 조치',
+        '안전대 등 보호구 착용상태 감시'
+      ]
+    },
+    guide_duties: {
+      label: '유도자 업무 확인',
+      type: 'multi-select',
+      required: false,
+      options: [
+        '운전원과 신호업무',
+        '눈에 띄는 복장 착용',
+        '무전기·유도봉 지참',
+        '출입통제선 밖에 위치'
+      ]
+    }
+  }
+}
+```
+
+### [5] shared_fields에 accident_prevention 섹션 신규 추가
+재해유형별 안전대책 DB (KOSHA GUIDE 8. 재해유형별 안전조치 기준)
+이동식 크레인 기준 표준 DB — core-plan.js에서 장비 종류별로 필터링해서 사용
+
+```javascript
+accident_prevention: {
+  label: '재해유형별 안전대책',
+  hint: 'KOSHA GUIDE D-C-10-2026 기준 표준 대책. 현장에 맞게 수정 가능',
+  // 표준 DB — 장비·작업별 위험유형 목록
+  // type: 'accident_table' — plan.html에서 전용 테이블 UI로 렌더링
+  type: 'accident_table',
+  required: true,
+  // 기본 제공 표준 항목 (사용자가 추가/수정 가능)
+  default_items: [
+    {
+      risk_type: '중량물 인양',
+      occurrence: '떨어짐',
+      accident: '고소작업자가 인양 중인 중량물에 맞고 떨어짐',
+      measure: '고소작업자 안전조치 철저 (안전난간, 추락방호망, 안전대)'
+    },
+    {
+      risk_type: '중량물 인양',
+      occurrence: '떨어짐',
+      accident: '중량물과 함께 탑승한 작업자가 균형을 잃고 떨어짐',
+      measure: '인양함 등에 작업자 탑승 금지'
+    },
+    {
+      risk_type: '중량물 인양',
+      occurrence: '맞음',
+      accident: '인양 중인 중량물이 떨어져 아래 작업자가 맞음',
+      measure: '중량물 2줄 걸이, 훅 해지장치 사용 / 정격하중 준수 / 인양구간 하부 출입금지'
+    },
+    {
+      risk_type: '크레인 넘어짐',
+      occurrence: '깔림',
+      accident: '인양작업 중인 크레인이 전복되면서 주변 작업자가 깔림',
+      measure: '평평한 곳에 이동식 크레인 설치 / 아웃트리거 설치 및 지반 확인 / 정격하중 준수'
+    },
+    {
+      risk_type: '크레인 넘어짐',
+      occurrence: '깔림',
+      accident: '선회부 볼트 일부 파단, 붐 파단으로 크레인이 넘어짐',
+      measure: '정기적으로 선회부 볼트 체결 확인 및 붐 등 용접부 비파괴검사 실시'
+    },
+    {
+      risk_type: '용도 외 사용',
+      occurrence: '떨어짐',
+      accident: '이동식크레인을 고소작업용으로 사용하다가 작업자 떨어짐',
+      measure: '고소작업대 사용이 곤란한 경우에만 탑승설비 설치 후 고소작업용으로 사용 (차량탑재형 불가)'
+    }
+  ],
+  // 사용자 추가 항목용 빈 필드
+  custom_items: []
+}
+```
+
+### [6] schemas 각각의 sections에 신규 섹션 참조 추가
+
+heavy_equipment sections에 추가:
+```
+{ key: 'equipment_check',   ref: 'shared_fields.equipment_check'   },
+{ key: 'supervisor_role',   ref: 'shared_fields.supervisor_role'   },
+{ key: 'accident_prevention', ref: 'shared_fields.accident_prevention' }
+```
+
+cargo_handling sections에 추가:
+```
+{ key: 'equipment_check',   ref: 'shared_fields.equipment_check'   },
+{ key: 'supervisor_role',   ref: 'shared_fields.supervisor_role'   },
+{ key: 'accident_prevention', ref: 'shared_fields.accident_prevention' }
+```
+
+heavy_object sections에 추가:
+```
+{ key: 'equipment_check',   ref: 'shared_fields.equipment_check'   },
+{ key: 'supervisor_role',   ref: 'shared_fields.supervisor_role'   },
+{ key: 'accident_prevention', ref: 'shared_fields.accident_prevention' }
+```
+
+### [7] machine_map에 소규모 현장 플래그 추가
+각 기계 항목에 아래 필드 추가:
+```
+small_site_form: true  // 50억 미만 소규모 현장용 약식 양식 사용 가능 여부
+```
+모든 기계에 small_site_form: true 추가
+
+### [8] meta 업데이트
+```
+version: '0.2.0',
+last_updated: '2026-04-24',
+kosha_guide: 'D-C-10-2026 (2026.1.30.)',
+note: '50억 미만 소규모 현장용 약식 양식 지원 추가'
+```
+
+### [9] 스모크 테스트 업데이트
+기존 console.assert에 신규 섹션 검증 추가:
+```javascript
+console.assert(
+  MUSAI_PLAN.schemas.heavy_equipment &&
+  MUSAI_PLAN.schemas.cargo_handling  &&
+  MUSAI_PLAN.schemas.heavy_object    &&
+  Object.keys(MUSAI_PLAN.machine_map).length >= 6 &&
+  MUSAI_PLAN.shared_fields.equipment_check &&
+  MUSAI_PLAN.shared_fields.supervisor_role &&
+  MUSAI_PLAN.shared_fields.accident_prevention &&
+  MUSAI_PLAN.shared_fields.accident_prevention.default_items.length >= 5,
+  '[MUSAI_PLAN v0.2.0] 스키마 또는 신규 섹션 로드 실패'
+);
+```
+
+## 생성 후 확인사항
+1. plan-template.js 파일 덮어쓰기 완료 확인
+2. 브라우저 콘솔에서 console.assert 통과 확인
+3. core.js / style.css / index.html / lifting.html / plan.html 미수정 확인
+4. 완료 후 라인 수 보고
+
+## 다음 단계 (이 task에서는 수행하지 않음)
+- plan.html에서 accident_table 타입 전용 UI 렌더링
+- core-plan.js에서 장비별 accident_prevention 필터링 로직
+- PDF 출력 시 재해유형별 안전대책 테이블 포맷

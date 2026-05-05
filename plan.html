@@ -1,0 +1,2162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2C5282">
+  <meta name="description" content="무사이(Musai) — 작업계획서 위자드">
+  <title>무사이 · 작업계획서</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    :root {
+      --p:       #2C5282;
+      --p-dk:    #1E3A5F;
+      --steel:   #7B9EE0;
+      --bg:      #F5F7FA;
+      --card:    #FFFFFF;
+      --ink:     #1E3148;
+      --ink-s:   #4A6280;
+      --ink-m:   #8FA3BC;
+      --line:    #E2E8F0;
+      --line-d:  #CBD5E0;
+      --shade:   #F0F4F8;
+      --focus:   #F7FAFF;
+      --ok:      #3D8F67;
+      --ok-bg:   #E8F4EE;
+      --ng:      #B94040;
+      --ng-bg:   #FEE8E8;
+      --warn-bg: #FEF3C7;
+      --warn-tx: #B45309;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: 56px 40px 1fr 64px;
+      grid-template-areas:
+        "toolbar  toolbar"
+        "progress progress"
+        "sidebar  main"
+        "nav      nav";
+      min-height: 100vh;
+    }
+
+    /* ── 툴바 ─────────────────────────────────────── */
+    .toolbar {
+      grid-area: toolbar;
+      background: var(--p);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      z-index: 10;
+    }
+    .tb-l, .tb-r { display: flex; align-items: center; gap: 14px; }
+    .tb-back {
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .tb-back:hover { background: rgba(255,255,255,0.22); }
+    .tb-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+    }
+    .btn-primary, .btn-secondary {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--steel); color: #fff; }
+    .btn-primary:hover { background: #5D82C9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary { background: rgba(255,255,255,0.12); color: #fff; }
+    .btn-secondary:hover { background: rgba(255,255,255,0.22); }
+
+    /* ── 진행바 ───────────────────────────────────── */
+    .progress {
+      grid-area: progress;
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 6px;
+      background: var(--line);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--p), var(--steel));
+      border-radius: 3px;
+      transition: width 0.3s ease;
+      width: 25%;
+    }
+    .progress-text {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--p);
+      min-width: 60px;
+      text-align: right;
+    }
+
+    /* ── 사이드바 ─────────────────────────────────── */
+    .sidebar {
+      grid-area: sidebar;
+      padding: 22px 14px;
+      background: var(--card);
+      border-right: 1px solid var(--line);
+      overflow-y: auto;
+    }
+    .sb-section { margin-bottom: 22px; }
+    .sb-label {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--ink-m);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0 8px 10px;
+    }
+    .sb-chapters { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+    .sb-ch {
+      display: flex;
+      align-items: center;
+      padding: 10px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--ink-s);
+      gap: 10px;
+      transition: background 0.15s;
+      line-height: 1.25;
+    }
+    .sb-ch:hover { background: var(--bg); }
+    .sb-ch.current {
+      background: var(--p);
+      color: #fff;
+      font-weight: 700;
+    }
+    .sb-ch.current:hover { background: var(--p-dk); }
+    .sb-ch-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--line);
+      color: var(--ink-s);
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .sb-ch.current .sb-ch-num { background: #fff; color: var(--p); }
+    .sb-ch.done:not(.current) .sb-ch-num { background: var(--ok-bg); color: var(--ok); }
+    .sb-ch-label { flex: 1; }
+    .sb-ch-check {
+      font-size: 13px;
+      color: var(--ok);
+      font-weight: 800;
+    }
+    .sb-status-done {
+      padding: 12px;
+      background: var(--ok-bg);
+      color: var(--ok);
+      border-radius: 7px;
+      font-size: 12.5px;
+      font-weight: 800;
+      text-align: center;
+    }
+    .sb-status-pending {
+      padding: 12px;
+      background: var(--warn-bg);
+      color: var(--warn-tx);
+      border-radius: 7px;
+      font-size: 12px;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .sb-status-pending strong { display: block; font-size: 20px; font-weight: 800; margin-top: 2px; }
+
+    /* ── 메인 ────────────────────────────────────── */
+    .main {
+      grid-area: main;
+      padding: 28px 32px 28px;
+      overflow-y: auto;
+      background: var(--bg);
+    }
+    .chapter { max-width: 920px; margin: 0 auto; }
+    .ch-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 18px;
+      border-bottom: 2px solid var(--line);
+    }
+    .ch-num {
+      width: 44px; height: 44px;
+      background: var(--p);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .ch-title { font-size: 20px; font-weight: 800; color: var(--ink); letter-spacing: -0.3px; }
+    .ch-desc { font-size: 13px; color: var(--ink-s); margin-top: 3px; }
+
+    /* ── 카드 ────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+    .card-h {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--p);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-h-sub { font-size: 11px; font-weight: 500; color: var(--ink-m); }
+
+    /* 필드 그리드 */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px 20px; }
+    .col-2 { grid-column: span 2; }
+    .col-full { grid-column: 1 / -1; }
+
+    .f { display: flex; flex-direction: column; gap: 5px; }
+    .f label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-s);
+    }
+    .f label em { color: var(--ng); font-style: normal; margin-left: 2px; }
+    .f input, .f select, .f textarea {
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--card);
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .f textarea {
+      height: auto;
+      min-height: 88px;
+      padding: 10px 12px;
+      line-height: 1.55;
+      resize: vertical;
+    }
+    .f input:focus, .f select:focus, .f textarea:focus {
+      border-color: var(--steel);
+      box-shadow: 0 0 0 3px rgba(123, 158, 224, 0.18);
+    }
+    .f input[type=date] { font-family: 'SF Mono', monospace; font-size: 12.5px; }
+
+    /* 체크박스 그룹 */
+    .chk-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 16px;
+      padding: 12px 0;
+      border-top: 1px solid var(--shade);
+    }
+    .chk-row:first-child { border-top: none; padding-top: 0; }
+    .chk-row-l {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-s);
+      min-width: 100px;
+    }
+    .chk {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--ink);
+      user-select: none;
+    }
+    .chk input {
+      accent-color: var(--p);
+      width: 16px; height: 16px;
+    }
+    .chk input:checked + span { color: var(--p); font-weight: 700; }
+
+    /* 사진 2x2 */
+    .photo-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .photo {
+      aspect-ratio: 4 / 3;
+      background: var(--bg);
+      border: 1.5px dashed var(--line-d);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .photo.has-img { border-style: solid; }
+    .photo img { width: 100%; height: calc(100% - 36px); object-fit: cover; display: block; }
+    .photo-cap {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      height: 36px;
+      padding: 0 10px;
+      border: none;
+      border-top: 1px solid var(--line);
+      background: #fff;
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      color: var(--ink);
+      width: 100%;
+    }
+    .photo-cap:focus { background: var(--focus); }
+    .photo-del {
+      position: absolute; top: 6px; right: 6px;
+      width: 26px; height: 26px;
+      background: rgba(185,64,64,0.92);
+      color: #fff; border: none;
+      border-radius: 50%;
+      font-size: 14px; font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+    }
+    .photo-empty {
+      width: 100%; height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--ink-m);
+      font-size: 12.5px;
+      font-weight: 600;
+      gap: 4px;
+    }
+    .photo-empty:hover { background: var(--shade); color: var(--p); }
+    .photo-plus { font-size: 28px; font-weight: 300; line-height: 1; }
+
+    /* 도면 */
+    .diagram-cell {
+      margin-top: 14px;
+      border: 1.5px dashed var(--line-d);
+      background: var(--bg);
+      border-radius: 8px;
+      min-height: 320px;
+      position: relative;
+      overflow: hidden;
+    }
+    .diagram-cell.has-img { border-style: solid; background: #fff; }
+    .diagram-img { width: 100%; max-height: 420px; object-fit: contain; display: block; }
+    .diagram-empty {
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--ink-s);
+      text-align: center;
+    }
+    .diagram-empty-t { font-size: 13px; line-height: 1.5; }
+    .dg-actions {
+      position: absolute;
+      top: 8px; right: 8px;
+      display: flex; gap: 6px;
+      z-index: 2;
+    }
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: inherit;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+    }
+    .btn-small.primary { background: var(--p); color: #fff; border-color: var(--p); }
+    .btn-small.primary:hover { background: var(--p-dk); }
+    .btn-small.danger { color: var(--ng); }
+    .btn-small.danger:hover { background: var(--ng-bg); }
+
+    /* 양중검토 링크 카드 */
+    .lift-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, var(--focus), #EEF4FF);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-bottom: 14px;
+    }
+    .lift-link-text { font-size: 13px; color: var(--ink-s); line-height: 1.5; }
+    .lift-link-text strong { color: var(--p); font-size: 14px; display: block; margin-bottom: 2px; }
+    .lift-btn {
+      padding: 10px 18px;
+      background: var(--p);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .lift-btn:hover { background: var(--p-dk); }
+    .lift-result-box {
+      padding: 12px 14px;
+      background: var(--ok-bg);
+      border: 1px solid #B7D9C4;
+      border-radius: 6px;
+      font-size: 12.5px;
+      color: #1B5E3A;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .lift-result-box.show { display: block; }
+
+    /* 줄걸이 검토 결과 패널 */
+    /* ── 시뮬레이터 모달 ─────────────────────────────── */
+    .sim-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 3000; display: none; align-items: center; justify-content: center; }
+    .sim-overlay.show { display: flex; }
+    .sim-modal { width: min(480px, 96vw); height: min(820px, 94vh); background: #fff; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(0,0,0,0.3); }
+    .sim-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #2C5282; color: #fff; flex-shrink: 0; }
+    .sim-bar-title { font-size: 14px; font-weight: 600; flex: 1; }
+    .sim-bar-hint  { font-size: 11px; opacity: 0.7; }
+    .sim-bar-close { background: rgba(255,255,255,0.18); border: none; color: #fff; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; white-space: nowrap; }
+    .sim-bar-close:hover { background: rgba(255,255,255,0.3); }
+    #sim-frame { flex: 1; border: none; width: 100%; }
+
+    /* 줄걸이 자동입력 상태 표시 */
+    .sling-status { display: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 10px; }
+    .sling-status.show { display: block; }
+    .sling-status.ok   { background: #E8F4EE; color: #1B5E3A; border: 1px solid #B7D9C4; }
+    .sling-status.warn { background: #FEF3E2; color: #7C4E09; border: 1px solid #F6D199; }
+    .sling-status.ng   { background: #FDECEA; color: #7C1D1D; border: 1px solid #F5B8B8; }
+    /* 인쇄: 줄걸이 판정 뱃지 */
+    .p-sling-badge { display: inline-block; padding: 2px 8px; font-size: 8.5px; font-weight: 700; border-radius: 3px; margin-bottom: 6px; }
+    .p-sling-badge.ok   { background: #E8F4EE; color: #1B5E3A; }
+    .p-sling-badge.warn { background: #FEF3E2; color: #7C4E09; }
+    .p-sling-badge.ng   { background: #FDECEA; color: #7C1D1D; }
+
+    /* 재해유형 테이블 */
+    .at-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .at-tbl th, .at-tbl td {
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+    .at-tbl th {
+      background: var(--shade);
+      color: var(--p);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .at-tbl .at-ce {
+      min-height: 26px;
+      outline: none;
+      font-size: 13px;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    .at-tbl .at-ce:focus { background: var(--focus); }
+    .at-tbl .at-ce:empty::before {
+      content: attr(data-ph);
+      color: var(--ink-m);
+    }
+    .at-tbl .at-actions { width: 34px; text-align: center; padding: 6px; }
+    .at-del {
+      width: 26px; height: 26px;
+      border: none;
+      background: transparent;
+      color: var(--ink-m);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 4px;
+    }
+    .at-del:hover { color: var(--ng); background: var(--ng-bg); }
+    .at-add {
+      margin-top: 12px;
+      padding: 10px 18px;
+      background: #fff;
+      border: 1.5px dashed var(--steel);
+      border-radius: 7px;
+      color: var(--p);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .at-add:hover { background: var(--focus); }
+
+    /* ── 하단 네비 ───────────────────────────────── */
+    .bottom-nav {
+      grid-area: nav;
+      background: var(--card);
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+    .nav-btn {
+      padding: 10px 22px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--ink-s);
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      min-width: 100px;
+    }
+    .nav-btn:hover:not(:disabled) { background: var(--bg); color: var(--ink); }
+    .nav-btn.primary {
+      background: var(--p);
+      color: #fff;
+      border-color: var(--p);
+    }
+    .nav-btn.primary:hover:not(:disabled) { background: var(--p-dk); }
+    .nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .dots { display: flex; gap: 10px; align-items: center; }
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--line);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      padding: 0;
+    }
+    .dot.active {
+      background: var(--p);
+      width: 28px;
+      border-radius: 5px;
+    }
+    .dot:hover:not(.active) { background: var(--line-d); }
+
+    /* ── 토스트 ──────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 80px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, -6px); }
+
+    /* ── 인쇄 미리보기 모달 ─────────────────────────── */
+    .preview-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,0.82);
+      z-index: 300;
+      display: none;
+      flex-direction: column;
+    }
+    .preview-overlay.show { display: flex; }
+    .preview-bar {
+      flex-shrink: 0;
+      background: var(--p-dk);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 52px;
+    }
+    .preview-bar-l { display: flex; align-items: center; gap: 16px; }
+    .preview-bar-title { font-size: 15px; font-weight: 800; }
+    .preview-bar-hint { font-size: 12px; opacity: 0.65; }
+    .preview-bar-r { display: flex; gap: 10px; }
+    .preview-body {
+      flex: 1;
+      overflow-y: auto;
+      background: #3D4F6A;
+      padding: 28px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* A4 용지 */
+    .print-paper {
+      width: 794px;
+      min-height: 1123px;
+      background: #fff;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      padding: 30px 42px 40px;
+      font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+      font-size: 10.5px;
+      line-height: 1.55;
+      color: #1E3148;
+      flex-shrink: 0;
+    }
+
+    /* 문서 헤더 */
+    .p-doc-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      border-bottom: 2.5px solid #2C5282;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+    }
+    .p-brand { font-size: 18px; font-weight: 900; color: #2C5282; letter-spacing: -0.5px; line-height: 1.1; }
+    .p-brand small { font-size: 9px; font-weight: 500; color: #7B9EE0; display: block; }
+    .p-doc-title { font-size: 13.5px; font-weight: 800; color: #1E3148; }
+    .p-doc-pg { font-size: 9.5px; color: #8FA3BC; text-align: right; }
+
+    /* 섹션 */
+    .p-section { margin-bottom: 12px; }
+    .p-sec-title {
+      background: #2C5282; color: #fff;
+      font-size: 10px; font-weight: 800;
+      padding: 4px 10px; letter-spacing: 0.02em;
+    }
+
+    /* 데이터 테이블 */
+    .p-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .p-tbl th, .p-tbl td { border: 1px solid #CBD5E0; padding: 5px 8px; vertical-align: top; word-break: keep-all; }
+    .p-tbl th { background: #EEF2F8; color: #2C5282; font-weight: 700; font-size: 9.5px; text-align: left; white-space: nowrap; }
+    .p-tbl td { font-size: 10.5px; }
+
+    /* 재해유형 테이블 */
+    .p-acc-tbl { width: 100%; border-collapse: collapse; font-size: 10px; }
+    .p-acc-tbl th, .p-acc-tbl td { border: 1px solid #CBD5E0; padding: 5px 8px; vertical-align: top; }
+    .p-acc-tbl th { background: #EEF2F8; color: #2C5282; font-weight: 700; text-align: center; }
+
+    /* 사진 그리드 */
+    .p-photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .p-photo-cell img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border: 1px solid #CBD5E0; display: block; }
+    .p-photo-cap { font-size: 9px; color: #4A6280; padding: 2px 4px; border: 1px solid #CBD5E0; border-top: none; background: #F5F7FA; text-align: center; }
+    .p-diagram { width: 100%; max-height: 280px; object-fit: contain; border: 1px solid #CBD5E0; display: block; margin-top: 8px; }
+
+    /* 서명란 */
+    .p-sign-row { display: flex; margin-top: 18px; border: 1px solid #CBD5E0; }
+    .p-sign-cell { flex: 1; text-align: center; padding: 5px 0 28px; font-size: 9.5px; color: #2C5282; font-weight: 700; border-right: 1px solid #CBD5E0; }
+    .p-sign-cell:last-child { border-right: none; }
+
+    /* ── 도면 캔버스 ─────────────────────────────────── */
+    .canvas-wrap { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-top: 14px; }
+    .canvas-toolbar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 12px; background: var(--shade);
+      border-bottom: 1px solid var(--line); flex-wrap: wrap;
+    }
+    .ctool {
+      padding: 0 10px; height: 30px;
+      border: 1px solid var(--line-d); background: var(--card);
+      border-radius: 5px; font-size: 12px; font-weight: 600;
+      color: var(--ink-s); cursor: pointer; font-family: inherit;
+      user-select: none; display: inline-flex; align-items: center;
+    }
+    .ctool:hover { background: var(--bg); color: var(--ink); }
+    .ctool.active { background: var(--p); color: #fff; border-color: var(--p); }
+    .ctool-sep { width: 1px; height: 20px; background: var(--line-d); flex-shrink: 0; }
+    input[type="color"].ctool { padding: 2px 4px; width: 36px; }
+    select.ctool { height: 30px; }
+    .canvas-board { background: #fff; cursor: crosshair; width: 100%; touch-action: none; display: block; }
+    .ctool-blue   { border-color: #2C5282; color: #2C5282; }
+    .ctool-blue.active   { background: #2C5282; color: #fff; border-color: #2C5282; }
+    .ctool-green  { border-color: #2D8653; color: #2D8653; }
+    .ctool-green.active  { background: #2D8653; color: #fff; border-color: #2D8653; }
+    .ctool-orange { border-color: #D97706; color: #D97706; }
+    .ctool-orange.active { background: #D97706; color: #fff; border-color: #D97706; }
+    .ctool-red    { border-color: #B94040; color: #B94040; }
+    .ctool-red.active    { background: #B94040; color: #fff; border-color: #B94040; }
+    .diag-hint {
+      font-size: 11.5px; color: var(--ink-m); padding: 6px 12px 4px;
+      background: var(--focus); border-bottom: 1px solid var(--line);
+      display: none;
+    }
+    .diag-hint.show { display: block; }
+
+    /* ── 작업순서 플로우 에디터 ───────────────────────── */
+    .ws-flow { display: flex; flex-direction: column; gap: 0; }
+    .ws-step-wrap { display: flex; align-items: stretch; gap: 10px; }
+    .ws-step-conn { width: 22px; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+    .ws-step-dot  { width: 14px; height: 14px; border-radius: 50%; background: #2C5282; flex-shrink: 0; margin-top: 20px; }
+    .ws-step-line { flex: 1; width: 2px; background: #CBD5E0; margin-bottom: -2px; }
+    .ws-box       { flex: 1; border: 1.5px solid #CBD5E0; border-radius: 8px; margin: 8px 0; background: #F8FAFD; overflow: hidden; }
+    .ws-phase-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #EBF0FB; border-bottom: 1px solid #CBD5E0; }
+    .ws-step-num  { font-size: 11px; font-weight: 700; color: #fff; background: #2C5282; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ws-phase-inp { flex: 1; border: none; background: transparent; font-weight: 600; font-size: 13px; color: #2C5282; outline: none; }
+    .ws-phase-inp::placeholder { color: #A0AEC0; font-weight: 400; }
+    .ws-del-step  { background: none; border: none; color: #B94040; cursor: pointer; font-size: 16px; line-height: 1; padding: 0 2px; opacity: 0.5; }
+    .ws-del-step:hover { opacity: 1; }
+    .ws-items-area { padding: 8px 12px 10px; }
+    .ws-item-row  { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .ws-item-num  { font-size: 11px; color: #7B9EE0; width: 16px; flex-shrink: 0; text-align: right; }
+    .ws-item-inp  { flex: 1; border: 1px solid #E2E8F0; border-radius: 4px; padding: 4px 8px; font-size: 12px; color: #2D3748; background: #fff; }
+    .ws-item-inp:focus { border-color: #7B9EE0; outline: none; }
+    .ws-del-item  { background: none; border: none; color: #B94040; cursor: pointer; font-size: 15px; opacity: 0.4; padding: 0 2px; line-height: 1; }
+    .ws-del-item:hover { opacity: 1; }
+    .ws-add-item  { background: none; border: 1px dashed #7B9EE0; border-radius: 4px; color: #7B9EE0; font-size: 11px; padding: 3px 10px; cursor: pointer; margin-top: 4px; }
+    .ws-add-step  { width: 100%; background: none; border: 1.5px dashed #7B9EE0; border-radius: 8px; padding: 10px; color: #7B9EE0; font-size: 13px; cursor: pointer; margin-top: 6px; }
+    .ws-add-step:hover { background: #EBF0FB; }
+
+    /* ── 인쇄: 작업순서 플로우 ─────────────────────── */
+    .p-wf-wrap  { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0; margin-top: 8px; }
+    .p-wf-box   { border: 1px solid #2C5282; border-radius: 4px; min-width: 80px; flex: 1; margin: 3px 0; }
+    .p-wf-phase { background: #2C5282; color: #fff; font-size: 8.5px; font-weight: 700; padding: 4px 6px; text-align: center; }
+    .p-wf-items { padding: 5px 6px; }
+    .p-wf-item  { font-size: 8px; color: #2D3748; padding: 1.5px 0; }
+    .p-wf-arrow { display: flex; align-items: flex-start; color: #2C5282; font-size: 14px; padding: 0 3px; padding-top: 20px; }
+
+    /* ── @media print ────────────────────────────────── */
+    @media print {
+      @page { size: A4 portrait; margin: 15mm 15mm 15mm 15mm; }
+      body > *:not(#preview-overlay) { display: none !important; }
+      #preview-overlay { position: static !important; background: none !important; display: block !important; }
+      .preview-bar { display: none !important; }
+      .preview-body { overflow: visible !important; padding: 0 !important; display: block !important; background: none !important; }
+      .print-paper { width: 100% !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important; min-height: 0 !important; page-break-after: always; }
+      .print-paper:last-child { page-break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app">
+
+    <header class="toolbar">
+      <div class="tb-l">
+        <a href="index.html" class="tb-back">← 홈으로</a>
+        <span class="tb-title" id="plan-title">이동식 크레인 작업계획서</span>
+      </div>
+      <div class="tb-r">
+        <button class="btn-secondary" onclick="tempSave()">임시저장</button>
+        <button class="btn-primary" id="pdf-btn" onclick="openPreview()">미리보기 / 인쇄</button>
+      </div>
+    </header>
+
+    <div class="progress">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-text" id="progress-text">1 / 4장</div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="sb-section">
+        <div class="sb-label">장 목록</div>
+        <ul class="sb-chapters" id="sb-chapters"></ul>
+      </div>
+      <div class="sb-section">
+        <div class="sb-label">필수항목 체크</div>
+        <div id="sb-status"></div>
+      </div>
+    </aside>
+
+    <main class="main">
+
+      <!-- ═════════ 1장 공통: 공사개요 + 인원 + 장비 + 사전조사 ═════════ -->
+      <section class="chapter" id="ch-overview" data-ch-id="ch-overview">
+        <div class="ch-header">
+          <div class="ch-num">1</div>
+          <div>
+            <div class="ch-title">공사개요 · 사전조사</div>
+            <div class="ch-desc">현장·인원·장비·지반 정보를 입력합니다</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">공사 개요</div>
+          <div class="grid-2">
+            <div class="f col-2"><label>현장명 <em>*</em></label><input data-k="pi.site_name" data-req placeholder="현장명"></div>
+            <div class="f"><label>업체명</label><input data-k="pi.contractor"></div>
+            <div class="f"><label>투입 인원</label><input data-k="pi.worker_count" type="number" placeholder="명"></div>
+            <div class="f col-2"><label>작업 장소 <em>*</em></label><input data-k="pi.work_location" data-req placeholder="작업 장소"></div>
+            <div class="f"><label>작업 시작일</label><input data-k="pi.work_start" type="date"></div>
+            <div class="f"><label>작업 종료일</label><input data-k="pi.work_end" type="date"></div>
+            <div class="f col-2"><label>작업 내용 <em>*</em></label><input data-k="pi.work_content" data-req placeholder="수행할 작업"></div>
+            <div class="f col-2"><label>운행제한속도</label><input data-k="pi.speed_limit" placeholder="예: 10 km/h 이내"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">작업 인원 및 신호</div>
+          <div class="grid-2">
+            <div class="f"><label>관리책임자</label><input data-k="pr.manager"></div>
+            <div class="f"><label>작업지휘자 성명 <em>*</em></label><input data-k="pr.supervisor" data-req></div>
+            <div class="f"><label>작업지휘자 연락처</label><input data-k="pr.sup_contact" type="tel"></div>
+            <div class="f"></div>
+            <div class="f"><label>운전원 성명 <em>*</em></label><input data-k="pr.operator" data-req></div>
+            <div class="f"><label>운전원 면허</label><input data-k="pr.op_license" placeholder="면허 종류"></div>
+            <div class="f"><label>운전원 연락처</label><input data-k="pr.op_contact" type="tel"></div>
+            <div class="f"></div>
+            <div class="f"><label>유도자 성명</label><input data-k="pr.guide"></div>
+            <div class="f"><label>유도자 연락처</label><input data-k="pr.guide_contact" type="tel"></div>
+          </div>
+          <div class="chk-row">
+            <span class="chk-row-l">신호방법</span>
+            <label class="chk"><input type="checkbox" data-k="pr.sig.voice"><span>수신호</span></label>
+            <label class="chk"><input type="checkbox" data-k="pr.sig.radio"><span>무전기</span></label>
+            <label class="chk"><input type="checkbox" data-k="pr.sig.other"><span>기타</span></label>
+          </div>
+          <div class="chk-row">
+            <span class="chk-row-l">운전원 교육이수</span>
+            <label class="chk"><input type="checkbox" data-k="pr.op_edu.sp"><span>특별교육</span></label>
+            <label class="chk"><input type="checkbox" data-k="pr.op_edu.bs"><span>기초안전보건교육</span></label>
+          </div>
+          <div class="chk-row">
+            <span class="chk-row-l">유도자 교육이수</span>
+            <label class="chk"><input type="checkbox" data-k="pr.gd_edu.sp"><span>특별교육</span></label>
+            <label class="chk"><input type="checkbox" data-k="pr.gd_edu.bs"><span>기초안전보건교육</span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">장비 · 기계 제원</div>
+          <div class="grid-2">
+            <div class="f">
+              <label>장비 종류 <em>*</em></label>
+              <select id="equip-type-sel">
+                <optgroup label="크레인">
+                  <option value="tower_crane">타워크레인</option>
+                  <option value="mobile_crane">이동식 크레인</option>
+                  <option value="cargo_crane">카고 크레인</option>
+                  <option value="crawler_crane">크롤러 크레인</option>
+                </optgroup>
+                <optgroup label="하역·운반기계">
+                  <option value="forklift">지게차</option>
+                  <option value="aerial_work">고소작업대</option>
+                  <option value="cargo_truck">화물자동차</option>
+                </optgroup>
+                <optgroup label="토공·굴착기계">
+                  <option value="excavator">굴착기</option>
+                  <option value="bulldozer">불도저</option>
+                  <option value="loader">로더</option>
+                  <option value="motor_grader">모터그레이더</option>
+                  <option value="scraper">스크레이퍼</option>
+                </optgroup>
+                <optgroup label="운반기계">
+                  <option value="dump_truck">덤프트럭</option>
+                </optgroup>
+                <optgroup label="기초·말뚝기계">
+                  <option value="pile_driver">항타기·항발기</option>
+                  <option value="boring_machine">천공기</option>
+                </optgroup>
+                <optgroup label="콘크리트기계">
+                  <option value="pump_car">콘크리트 펌프카</option>
+                  <option value="mixer_truck">콘크리트 믹서트럭</option>
+                </optgroup>
+                <optgroup label="도로포장기계">
+                  <option value="asphalt_finisher">아스팔트 피니셔</option>
+                  <option value="roller">롤러·다짐기계</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="f"><label>장비명 <em>*</em></label><input data-k="eq.name" data-req></div>
+            <div class="f"><label>등록번호</label><input data-k="eq.reg_no"></div>
+            <div class="f"><label>형식 · 규격</label><input data-k="eq.spec"></div>
+            <div class="f"><label>제조사 · 연도</label><input data-k="eq.maker"></div>
+            <div class="f"><label>붐 최대길이</label><input data-k="eq.boom_max" placeholder="m"></div>
+            <div class="f"><label>붐 각도 (최대/최소)</label><input data-k="eq.boom_angle" placeholder="75/0°"></div>
+            <div class="f"><label>작업반경</label><input data-k="eq.radius" placeholder="m"></div>
+            <div class="f"><label>정격하중</label><input data-k="eq.capacity" placeholder="ton"></div>
+            <div class="f col-2"><label>아웃트리거 (전/후)</label><input data-k="eq.outrigger" placeholder="3000/3000 mm"></div>
+            <div class="f"><label>검사 유효기간</label><input data-k="eq.inspection" type="date"></div>
+            <div class="f"><label>보험 유효기간</label><input data-k="eq.insurance" type="date"></div>
+          </div>
+          <div class="chk-row">
+            <span class="chk-row-l">비파괴검사</span>
+            <label class="chk"><input type="checkbox" data-k="eq.ndt.mag"><span>자분탐상</span></label>
+            <label class="chk"><input type="checkbox" data-k="eq.ndt.ut"><span>초음파탐상</span></label>
+            <label class="chk"><input type="checkbox" data-k="eq.ndt.none"><span>미실시</span></label>
+            <label class="chk" style="margin-left:auto;"><span style="font-size:12px;color:var(--ink-s);">실시일자</span><input type="date" data-k="eq.ndt_date" style="height:32px;padding:0 8px;border:1px solid var(--line);border-radius:5px;font-size:12px;"></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">사전조사 — 지형 및 지반 <span class="card-h-sub">별표4 제3호</span></div>
+          <div class="chk-row">
+            <span class="chk-row-l">지형</span>
+            <label class="chk"><input type="checkbox" data-k="ps.terrain.sand"><span>모래</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.terrain.soil"><span>일반 흙</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.terrain.soft_rock"><span>연암</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.terrain.hard_rock"><span>경암</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.terrain.pave"><span>포장</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.terrain.slope"><span>경사</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.terrain.other"><span>기타</span></label>
+            <input type="text" data-k="ps.terrain.other_text" placeholder="기타 지형 입력" style="height:32px;padding:0 8px;border:1px solid var(--line);border-radius:5px;font-size:12px;min-width:120px;flex-shrink:0;">
+          </div>
+          <div class="chk-row">
+            <span class="chk-row-l">지반 상태</span>
+            <label class="chk"><input type="checkbox" data-k="ps.ground.firm"><span>견고지반</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.ground.weak"><span>연약지반</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.ground.frozen"><span>동결지반</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.ground.special"><span>특이사항</span></label>
+          </div>
+          <div class="chk-row">
+            <span class="chk-row-l">지반 보강</span>
+            <label class="chk"><input type="checkbox" data-k="ps.reinf.none"><span>불필요</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.reinf.plate"><span>철판보강</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.reinf.improve"><span>지반개량</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.reinf.soil"><span>양질토사</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.reinf.fill"><span>성토</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.reinf.other"><span>기타</span></label>
+          </div>
+          <div class="chk-row">
+            <span class="chk-row-l">접근 차단</span>
+            <label class="chk"><input type="checkbox" data-k="ps.access.guide"><span>유도자</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.access.fence"><span>A형펜스</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.access.cone"><span>라바콘</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.access.web"><span>웨빙띠</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.access.other"><span>기타</span></label>
+          </div>
+          <div class="chk-row">
+            <span class="chk-row-l">지장물 · 가공전선</span>
+            <label class="chk"><input type="checkbox" data-k="ps.obs.none"><span>없음</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.obs.obstacle"><span>지장물(조치)</span></label>
+            <label class="chk"><input type="checkbox" data-k="ps.obs.wire"><span>가공전선(이격)</span></label>
+          </div>
+
+          <div class="photo-grid">
+            <div class="photo" id="photo-0"></div>
+            <div class="photo" id="photo-1"></div>
+            <div class="photo" id="photo-2"></div>
+            <div class="photo" id="photo-3"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════════ 양중 안전성 검토 (중량물 포함 기계 전용) ═════════ -->
+      <section class="chapter" id="ch-lifting" data-ch-id="ch-lifting" data-heavy-only="true" style="display:none;">
+        <div class="ch-header">
+          <div class="ch-num" data-num>2</div>
+          <div>
+            <div class="ch-title">양중 안전성 검토</div>
+            <div class="ch-desc">중량물 제원 · 양중 적합성 · 5대 위험 예방대책</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">줄걸이 안전성 검토 <span class="card-h-sub">무사이 양중 시뮬레이터 연동</span></div>
+          <div class="lift-link">
+            <div class="lift-link-text">
+              <strong>양중 시뮬레이터에서 종합결과(6단계)까지 완료하면 아래 항목이 자동 입력됩니다</strong>
+              수동으로 직접 입력할 수도 있습니다
+            </div>
+            <button class="lift-btn" onclick="openLiftingModal()">양중 시뮬레이터 →</button>
+          </div>
+          <div class="sling-status" id="sling-status"></div>
+          <div class="grid-2" style="margin-top:10px;">
+            <div class="f"><label>인양하중 W (t)</label><input data-k="sl.W" type="number" step="0.01" placeholder="설계 인양하중"></div>
+            <div class="f"><label>줄 수</label><input data-k="sl.lines" type="number" placeholder="유효 줄 수"></div>
+            <div class="f"><label>줄걸이 방식</label><input data-k="sl.mode" placeholder="수직 / 바스켓 / 초크"></div>
+            <div class="f"><label>슬링 종류</label><input data-k="sl.stype" placeholder="와이어로프 / 섬유벨트 / 체인"></div>
+            <div class="f"><label>슬링 SWL (t)</label><input data-k="sl.swl" type="number" step="0.01" placeholder="1가닥 허용하중"></div>
+            <div class="f"><label>조임각 (°)</label><input data-k="sl.alpha" type="number" placeholder="초크걸이 시 기입"></div>
+            <div class="f"><label>줄당 장력 Ts (t)</label><input data-k="sl.ts" type="number" step="0.01" placeholder="줄당 실제 장력"></div>
+            <div class="f"><label>종합 허용하중 (t)</label><input data-k="sl.cap" type="number" step="0.01" placeholder="슬링 합산 허용하중"></div>
+            <div class="f"><label>사용률 (%)</label><input data-k="sl.ratio" type="number" placeholder="W ÷ 종합허용 × 100"></div>
+            <div class="f"><label>안전율 (배)</label><input data-k="sl.sf" type="number" step="0.01" placeholder="종합허용 ÷ W"></div>
+            <div class="f"><label>검토 판정 <em>*</em></label>
+              <select data-k="sl.verdict">
+                <option value="">선택</option>
+                <option value="이상없음">이상없음</option>
+                <option value="주의">주의</option>
+                <option value="부적합">부적합</option>
+              </select>
+            </div>
+            <div class="f"><label>검토 일자</label><input data-k="lr.date" type="date"></div>
+            <div class="f"><label>검토자</label><input data-k="lr.reviewer"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">중량물 제원</div>
+          <div class="grid-2">
+            <div class="f"><label>품명 <em>*</em></label><input data-k="ob.name" data-req></div>
+            <div class="f"><label>인양물 중량 (ton) <em>*</em></label><input data-k="ob.weight" type="number" data-req></div>
+            <div class="f">
+              <label>중량물 형상</label>
+              <select data-k="ob.shape">
+                <option value="">선택</option>
+                <option value="long">긴 막대형</option>
+                <option value="box">박스형</option>
+                <option value="irregular">비정형</option>
+                <option value="other">기타</option>
+              </select>
+            </div>
+            <div class="f">
+              <label>무게중심 확인</label>
+              <select data-k="ob.center">
+                <option value="">선택</option>
+                <option value="ok">확인 완료</option>
+                <option value="need">확인 필요</option>
+                <option value="na">해당 없음</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top: 14px;">
+            <div class="f col-2">
+              <label>줄걸이 방법</label>
+              <select data-k="ob.sling_method">
+                <option value="">선택</option>
+                <option value="수직 1줄">수직 1줄</option>
+                <option value="2줄 걸이">2줄 걸이</option>
+                <option value="4줄 걸이">4줄 걸이</option>
+                <option value="바스켓 걸이">바스켓 걸이</option>
+                <option value="초크 걸이">초크 걸이</option>
+              </select>
+            </div>
+          </div>
+          <div class="chk-row">
+            <span class="chk-row-l">달기구 (보조용구)</span>
+            <label class="chk"><input type="checkbox" data-k="ob.aux.clamp"><span>클램프</span></label>
+            <label class="chk"><input type="checkbox" data-k="ob.aux.hacker"><span>해커</span></label>
+            <label class="chk"><input type="checkbox" data-k="ob.aux.chain"><span>체인슬링</span></label>
+            <label class="chk"><input type="checkbox" data-k="ob.aux.lug"><span>인양러그</span></label>
+            <label class="chk"><input type="checkbox" data-k="ob.aux.turn"><span>턴버클</span></label>
+            <label class="chk"><input type="checkbox" data-k="ob.aux.other"><span>기타</span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">5대 위험 예방대책 <span class="card-h-sub">별표4 제11호</span></div>
+          <div class="f" style="margin-bottom:14px;"><label>가. 추락위험 예방대책 <em>*</em></label><textarea data-k="h5.fall" data-req></textarea></div>
+          <div class="f" style="margin-bottom:14px;"><label>나. 낙하위험 예방대책 <em>*</em></label><textarea data-k="h5.drop" data-req></textarea></div>
+          <div class="f" style="margin-bottom:14px;"><label>다. 전도위험 예방대책 <em>*</em></label><textarea data-k="h5.tip" data-req></textarea></div>
+          <div class="f" style="margin-bottom:14px;"><label>라. 협착위험 예방대책 <em>*</em></label><textarea data-k="h5.crush" data-req></textarea></div>
+          <div class="f"><label>마. 붕괴위험 예방대책 <em>*</em></label><textarea data-k="h5.collapse" data-req></textarea></div>
+        </div>
+      </section>
+
+      <!-- ═════════ 운행경로 + 작업방법 (공통) ═════════ -->
+      <section class="chapter" id="ch-route" data-ch-id="ch-route" style="display:none;">
+        <div class="ch-header">
+          <div class="ch-num" data-num>3</div>
+          <div>
+            <div class="ch-title">운행경로 · 작업방법</div>
+            <div class="ch-desc">장비 이동경로와 작업 수행 순서를 기술합니다</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">운행경로 및 작업계획 도면</div>
+          <div class="f" style="margin-bottom:12px;"><label>운행경로 설명 <em>*</em></label><input data-k="rt.desc" data-req placeholder="예: 자재 적치장 → 인양지점 → 하차지점"></div>
+          <div class="canvas-wrap">
+            <div class="canvas-toolbar">
+              <button class="ctool ctool-blue"   id="ds-supervisor" onclick="setDiagMode('supervisor')">작업지휘자</button>
+              <button class="ctool ctool-green"  id="ds-guide"      onclick="setDiagMode('guide')">유도원</button>
+              <button class="ctool ctool-orange" id="ds-equipment"  onclick="setDiagMode('equipment')">장비 배치</button>
+              <button class="ctool ctool-red"    id="ds-noaccess"   onclick="setDiagMode('noaccess')">출입금지</button>
+              <div class="ctool-sep"></div>
+              <button class="ctool ctool-orange" id="ds-route"    onclick="setDiagMode('route')">운행경로 →</button>
+              <button class="ctool ctool-red"    id="ds-danger"   onclick="setDiagMode('danger')">위험구간 □</button>
+              <button class="ctool ctool-blue"   id="ds-workzone" onclick="setDiagMode('workzone')">작업구획 □</button>
+              <div class="ctool-sep"></div>
+              <button class="ctool"              id="ds-delete"   onclick="setDiagMode('delete')">삭제</button>
+              <div style="flex:1"></div>
+              <label class="ctool" style="cursor:pointer">배경 이미지<input type="file" accept="image/*" style="display:none" id="diag-bg"></label>
+              <button class="ctool"                               onclick="diagUndo()">실행취소</button>
+              <button class="ctool"                               onclick="diagClear()">전체삭제</button>
+            </div>
+            <div class="diag-hint" id="diag-hint"></div>
+            <canvas id="diagram-canvas" class="canvas-board" width="920" height="520"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">작업방법 및 작업순서</div>
+          <div id="ws-container"></div>
+        </div>
+      </section>
+
+      <!-- ═════════ 재해유형별 안전대책 (공통) ═════════ -->
+      <section class="chapter" id="ch-accident" data-ch-id="ch-accident" style="display:none;">
+        <div class="ch-header">
+          <div class="ch-num" data-num>4</div>
+          <div>
+            <div class="ch-title">재해유형별 안전대책</div>
+            <div class="ch-desc">위험 요인별 발생형태 · 재해유형 · 안전조치를 작성합니다</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">재해유형별 안전대책 <span class="card-h-sub">KOSHA D-C-10-2026</span></div>
+          <table class="at-tbl">
+            <colgroup>
+              <col style="width:110px;">
+              <col style="width:90px;">
+              <col>
+              <col>
+              <col style="width:40px;">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>위험</th>
+                <th>발생형태</th>
+                <th>재해유형</th>
+                <th>안전조치</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="acc-tbody"></tbody>
+          </table>
+          <button class="at-add" onclick="addAccRow()">+ 행 추가</button>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="bottom-nav">
+      <button class="nav-btn" id="prev-btn" onclick="prevChapter()">← 이전</button>
+      <div class="dots" id="dots"></div>
+      <button class="nav-btn primary" id="next-btn" onclick="nextChapter()">다음 →</button>
+    </footer>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- 양중 시뮬레이터 모달 -->
+  <div id="sim-overlay" class="sim-overlay">
+    <div class="sim-modal">
+      <div class="sim-bar">
+        <span class="sim-bar-title">양중 시뮬레이터</span>
+        <span class="sim-bar-hint">종합결과(6단계) 완료 시 자동 반영</span>
+        <button class="sim-bar-close" onclick="closeLiftingModal()">✕ 닫기</button>
+      </div>
+      <iframe id="sim-frame" src=""></iframe>
+    </div>
+  </div>
+
+  <!-- 인쇄 미리보기 모달 -->
+  <div id="preview-overlay" class="preview-overlay">
+    <div class="preview-bar">
+      <div class="preview-bar-l">
+        <span class="preview-bar-title">인쇄 미리보기</span>
+        <span class="preview-bar-hint">A4 기준 · 브라우저 인쇄 대화상자에서 "PDF로 저장" 선택 가능</span>
+      </div>
+      <div class="preview-bar-r">
+        <button class="btn-secondary" onclick="closePreview()">✕ 닫기</button>
+        <button class="btn-primary" onclick="doPrint()">인쇄 / PDF 저장</button>
+      </div>
+    </div>
+    <div class="preview-body" id="preview-body"></div>
+  </div>
+
+  <script src="plan-template.js"></script>
+  <script src="core-plan.js"></script>
+  <script>
+    /* ════════════════════════════════════════════════════
+     *  무사이 작업계획서 — 위자드 UX
+     * ════════════════════════════════════════════════════ */
+
+    var LS_KEY = 'musai_plan_data';
+    var LS_LIFT_KEY = 'musai_lifting_last';
+
+    var CHAPTERS = [
+      { id: 'ch-overview', short: '공사개요 · 사전조사',   always: true },
+      { id: 'ch-lifting',  short: '양중 안전성 검토',       heavyOnly: true },
+      { id: 'ch-route',    short: '운행경로 · 작업방법',    always: true },
+      { id: 'ch-accident', short: '재해유형별 안전대책',    always: true }
+    ];
+
+    var STATE = {
+      meta:         { equipType: 'mobile_crane', currentIdx: 0 },
+      fields:       {},
+      checks:       {},
+      photos:       [null, null, null, null],
+      diagram:      null,
+      diagramItems: [],
+      workSteps:    [],
+      liftingData:  null,
+      accRows:      []
+    };
+
+    /* ── 유틸 ─────────────────────────── */
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function today() { return new Date().toISOString().slice(0, 10); }
+    function isHeavy() { return MUSAI_CORE.isHeavyMachine(STATE.meta.equipType); }
+    function getActiveChapters() {
+      var heavy = isHeavy();
+      return CHAPTERS.filter(function (c) { return c.always || (heavy && c.heavyOnly); });
+    }
+    function toast(m) {
+      var t = document.getElementById('toast');
+      t.textContent = m;
+      t.classList.add('show');
+      setTimeout(function () { t.classList.remove('show'); }, 1800);
+    }
+
+    /* ── localStorage ─────────────────── */
+    function saveToStorage() {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch (e) {}
+    }
+    function loadFromStorage() {
+      try {
+        var raw = localStorage.getItem(LS_KEY);
+        if (!raw) return;
+        var s = JSON.parse(raw);
+        if (s.meta)    Object.assign(STATE.meta, s.meta);
+        if (s.fields)  STATE.fields  = s.fields;
+        if (s.checks)  STATE.checks  = s.checks;
+        if (s.photos)  STATE.photos  = s.photos;
+        if (s.diagram)      STATE.diagram      = s.diagram;
+        if (s.diagramItems) STATE.diagramItems = s.diagramItems;
+        if (s.workSteps)    STATE.workSteps    = s.workSteps;
+        if (s.accRows)      STATE.accRows      = s.accRows;
+      } catch (e) { console.warn('[plan] 복원 실패', e); }
+    }
+    function tempSave() {
+      try { saveToStorage(); toast('임시저장 완료'); }
+      catch (e) { alert('저장 실패: ' + e.message); }
+    }
+
+    /* ── 필드 복원/바인딩 ──────────────── */
+    function restoreFields() {
+      document.querySelectorAll('[data-k]').forEach(function (el) {
+        var k = el.dataset.k;
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          if (STATE.checks[k]) el.checked = true;
+        } else {
+          if (STATE.fields[k] != null) el.value = STATE.fields[k];
+        }
+      });
+      var sel = document.getElementById('equip-type-sel');
+      if (sel) sel.value = STATE.meta.equipType;
+    }
+    document.addEventListener('input', function (e) {
+      var t = e.target;
+      if (!t.dataset || !t.dataset.k) return;
+      if (t.type === 'checkbox' || t.type === 'radio') return;
+      STATE.fields[t.dataset.k] = t.value;
+      saveToStorage();
+      renderSidebar();
+    });
+    document.addEventListener('change', function (e) {
+      var t = e.target;
+      if (!t.dataset || !t.dataset.k) return;
+      if (t.type === 'radio') {
+        var g = document.querySelectorAll('input[type=radio][name="' + t.name + '"][data-k]');
+        g.forEach(function (r) { STATE.checks[r.dataset.k] = r.checked; });
+      } else if (t.type === 'checkbox') {
+        STATE.checks[t.dataset.k] = t.checked;
+      } else if (t.tagName === 'SELECT') {
+        STATE.fields[t.dataset.k] = t.value;
+      }
+      saveToStorage();
+      renderSidebar();
+    });
+
+    /* ── 장비 종류 변경 ────────────────── */
+    function onEquipTypeChange() {
+      var sel = document.getElementById('equip-type-sel');
+      STATE.meta.equipType = sel.value;
+      STATE.accRows = MUSAI_CORE.getAccidentItems(STATE.meta.equipType);
+      renderAccRows();
+      var active = getActiveChapters();
+      if (STATE.meta.currentIdx >= active.length) STATE.meta.currentIdx = 0;
+      updateTitle();
+      showChapter(STATE.meta.currentIdx);
+      saveToStorage();
+    }
+    function updateTitle() {
+      document.getElementById('plan-title').textContent = MUSAI_CORE.getMachineLabel(STATE.meta.equipType) + ' 작업계획서';
+    }
+
+    /* ── 장 전환 ──────────────────────── */
+    function showChapter(idx) {
+      var active = getActiveChapters();
+      if (idx < 0) idx = 0;
+      if (idx >= active.length) idx = active.length - 1;
+      STATE.meta.currentIdx = idx;
+
+      document.querySelectorAll('.chapter').forEach(function (el) { el.style.display = 'none'; });
+      var cur = document.getElementById(active[idx].id);
+      if (cur) cur.style.display = 'block';
+
+      active.forEach(function (c, i) {
+        var el = document.getElementById(c.id);
+        if (el) {
+          var numEl = el.querySelector('[data-num], .ch-num');
+          if (numEl) numEl.textContent = String(i + 1);
+        }
+      });
+
+      renderSidebar();
+      renderProgress();
+      renderDots();
+      updateNavButtons();
+
+      /* 양중 장으로 이동할 때마다 최신 결과 갱신 */
+      if (active[idx] && active[idx].id === 'ch-lifting') {
+        tryLoadLiftingResult();
+      }
+
+      var main = document.querySelector('.main');
+      if (main) main.scrollTop = 0;
+
+      saveToStorage();
+    }
+    function prevChapter() { showChapter(STATE.meta.currentIdx - 1); }
+    function nextChapter() { showChapter(STATE.meta.currentIdx + 1); }
+    function goToChapter(i) { showChapter(i); }
+
+    function updateNavButtons() {
+      var active = getActiveChapters();
+      document.getElementById('prev-btn').disabled = STATE.meta.currentIdx === 0;
+      document.getElementById('next-btn').disabled = STATE.meta.currentIdx === active.length - 1;
+    }
+
+    /* ── 진행바 ──────────────────────── */
+    function renderProgress() {
+      var active = getActiveChapters();
+      var num = STATE.meta.currentIdx + 1;
+      var pct = (num / active.length) * 100;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-text').textContent = num + ' / ' + active.length + '장';
+    }
+
+    /* ── 도트 ───────────────────────── */
+    function renderDots() {
+      var active = getActiveChapters();
+      var wrap = document.getElementById('dots');
+      var html = '';
+      for (var i = 0; i < active.length; i++) {
+        html += '<button class="dot' + (i === STATE.meta.currentIdx ? ' active' : '')
+             + '" onclick="goToChapter(' + i + ')" aria-label="' + (i + 1) + '장"></button>';
+      }
+      wrap.innerHTML = html;
+    }
+
+    /* ── 필수항목 카운트 ───────────────── */
+    function countEmptyReqInChapter(chId) {
+      var el = document.getElementById(chId);
+      if (!el) return 0;
+      var reqs = el.querySelectorAll('[data-req]');
+      var empty = 0;
+      reqs.forEach(function (r) {
+        var v = r.value;
+        if (!v || !String(v).trim()) empty++;
+      });
+      return empty;
+    }
+
+    /* ── 사이드바 ────────────────────── */
+    function renderSidebar() {
+      var active = getActiveChapters();
+      var listEl = document.getElementById('sb-chapters');
+      var totalEmpty = 0;
+      listEl.innerHTML = active.map(function (ch, i) {
+        var empty = countEmptyReqInChapter(ch.id);
+        totalEmpty += empty;
+        var done = empty === 0;
+        var current = i === STATE.meta.currentIdx;
+        var cls = 'sb-ch' + (current ? ' current' : '') + (done ? ' done' : '');
+        var check = done ? '<span class="sb-ch-check">✓</span>' : '';
+        return '<li class="' + cls + '" onclick="goToChapter(' + i + ')">'
+             +   '<span class="sb-ch-num">' + (i + 1) + '</span>'
+             +   '<span class="sb-ch-label">' + esc(ch.short) + '</span>'
+             +   check
+             + '</li>';
+      }).join('');
+
+      var statusEl = document.getElementById('sb-status');
+      if (totalEmpty === 0) {
+        statusEl.innerHTML = '<div class="sb-status-done">✓ 작성 완료</div>';
+      } else {
+        statusEl.innerHTML = '<div class="sb-status-pending">미입력 필수항목<strong>' + totalEmpty + '개</strong></div>';
+      }
+    }
+
+    /* ── 사진 ───────────────────────── */
+    function renderPhoto(i) {
+      var cell = document.getElementById('photo-' + i);
+      if (!cell) return;
+      var p = STATE.photos[i];
+      if (p) {
+        cell.classList.add('has-img');
+        cell.innerHTML = ''
+          + '<img src="' + esc(p.dataUrl) + '" alt="현장사진 ' + (i + 1) + '">'
+          + '<button class="photo-del" onclick="deletePhoto(' + i + ')" title="삭제">×</button>'
+          + '<input class="photo-cap" placeholder="사진 설명" value="' + esc(p.caption || '') + '" oninput="editPhotoCap(' + i + ', this.value)">';
+      } else {
+        cell.classList.remove('has-img');
+        cell.innerHTML = ''
+          + '<label class="photo-empty">'
+          +   '<input type="file" accept="image/*" style="display:none;" onchange="uploadPhoto(this, ' + i + ')">'
+          +   '<div class="photo-plus">+</div>'
+          +   '<div>사진 ' + (i + 1) + ' 추가</div>'
+          + '</label>';
+      }
+    }
+    function renderAllPhotos() { for (var i = 0; i < 4; i++) renderPhoto(i); }
+    function uploadPhoto(input, i) {
+      var file = input.files[0]; if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { alert('5MB 이하만 허용'); input.value = ''; return; }
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        STATE.photos[i] = { dataUrl: e.target.result, caption: '' };
+        renderPhoto(i);
+        saveToStorage();
+      };
+      reader.readAsDataURL(file);
+      input.value = '';
+    }
+    function deletePhoto(i) { STATE.photos[i] = null; renderPhoto(i); saveToStorage(); }
+    function editPhotoCap(i, v) { if (STATE.photos[i]) { STATE.photos[i].caption = v; saveToStorage(); } }
+
+    /* ── 현장 도면 (심볼 배치) ──────────────────────── */
+    var _dv = null, _dx = null, _dBg = null;
+    var _dMode = '', _dFirstPt = null;
+
+    var DIAG_SYM = {
+      supervisor: { label: '작업지휘자', color: '#2C5282', shape: 'circle',   short: '지휘' },
+      guide:      { label: '유도원',     color: '#2D8653', shape: 'circle',   short: '유도' },
+      equipment:  { label: '장비 배치', color: '#D97706', shape: 'diamond',  short: '장비' },
+      noaccess:   { label: '출입금지',   color: '#B94040', shape: 'cross',    short: '×'    },
+      route:      { label: '운행경로',   color: '#D97706', shape: 'arrow',    short: ''     },
+      danger:     { label: '위험구간',   color: '#B94040', shape: 'zone',     short: ''     },
+      workzone:   { label: '작업구획',   color: '#2C5282', shape: 'zone',     short: ''     }
+    };
+    var _TWOPOINT = { route: 1, danger: 1, workzone: 1 };
+
+    function _hexAlpha(hex, a) {
+      var r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+    }
+
+    function initDiagram() {
+      _dv = document.getElementById('diagram-canvas');
+      if (!_dv) return;
+      _dx = _dv.getContext('2d');
+      if (!STATE.diagramItems) STATE.diagramItems = [];
+      if (STATE.diagram) {
+        _dBg = new Image();
+        _dBg.onload = function () { _diagRender(); };
+        _dBg.src = STATE.diagram;
+      } else {
+        _diagRender();
+      }
+      _dv.addEventListener('click',     _diagClick);
+      _dv.addEventListener('mousemove', _diagHover);
+      _dv.addEventListener('mouseleave', function () { if (_dFirstPt) _diagRender(); });
+      document.getElementById('diag-bg').addEventListener('change', _diagLoadBg);
+    }
+
+    function setDiagMode(mode) {
+      _dMode = (_dMode === mode) ? '' : mode;
+      _dFirstPt = null;
+      Object.keys(DIAG_SYM).concat(['delete']).forEach(function (m) {
+        var el = document.getElementById('ds-' + m);
+        if (el) el.classList.toggle('active', m === _dMode);
+      });
+      if (_dv) _dv.style.cursor = _dMode ? (_dMode === 'delete' ? 'pointer' : 'crosshair') : 'default';
+      var hint = document.getElementById('diag-hint');
+      if (hint) {
+        if (_dMode === 'delete') {
+          hint.textContent = '삭제: 심볼을 클릭하세요'; hint.classList.add('show');
+        } else if (_dMode && _TWOPOINT[_dMode]) {
+          hint.textContent = (DIAG_SYM[_dMode] ? DIAG_SYM[_dMode].label : '') + ': 시작점을 클릭 → 끝점을 클릭'; hint.classList.add('show');
+        } else if (_dMode) {
+          hint.textContent = (DIAG_SYM[_dMode] ? DIAG_SYM[_dMode].label : '') + ': 배치할 위치를 클릭하세요'; hint.classList.add('show');
+        } else {
+          hint.classList.remove('show');
+        }
+      }
+      _diagRender();
+    }
+
+    function _diagRatioPos(e) {
+      var r = _dv.getBoundingClientRect();
+      return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
+    }
+
+    function _diagClick(e) {
+      if (!_dMode) return;
+      var p = _diagRatioPos(e);
+      if (_dMode === 'delete') { _diagDeleteAt(p); return; }
+      if (_TWOPOINT[_dMode]) {
+        if (!_dFirstPt) {
+          _dFirstPt = p;
+          var hint = document.getElementById('diag-hint');
+          if (hint) hint.textContent = '끝점을 클릭하세요';
+        } else {
+          STATE.diagramItems.push({ type: _dMode, x: _dFirstPt.x, y: _dFirstPt.y, x2: p.x, y2: p.y });
+          _dFirstPt = null;
+          var hint = document.getElementById('diag-hint');
+          if (hint && DIAG_SYM[_dMode]) hint.textContent = DIAG_SYM[_dMode].label + ': 시작점을 클릭 → 끝점을 클릭';
+          _diagSave();
+        }
+      } else {
+        STATE.diagramItems.push({ type: _dMode, x: p.x, y: p.y });
+        _diagSave();
+      }
+    }
+
+    function _diagHover(e) {
+      if (!_dMode || !_dFirstPt) return;
+      var p = _diagRatioPos(e);
+      _diagRender();
+      var sym = DIAG_SYM[_dMode]; if (!sym) return;
+      var W = _dv.width, H = _dv.height;
+      var x1 = _dFirstPt.x * W, y1 = _dFirstPt.y * H, x2 = p.x * W, y2 = p.y * H;
+      _dx.globalAlpha = 0.55;
+      if (_dMode === 'route') _drawRoute(_dx, x1, y1, x2, y2, sym.color);
+      else _drawZone(_dx, x1, y1, x2, y2, sym.color, sym.label);
+      _dx.globalAlpha = 1;
+      // start dot
+      _dx.fillStyle = sym.color;
+      _dx.beginPath(); _dx.arc(x1, y1, 7, 0, Math.PI * 2); _dx.fill();
+    }
+
+    function _ptSegDist(px, py, x1, y1, x2, y2) {
+      var dx = x2 - x1, dy = y2 - y1;
+      var lenSq = dx * dx + dy * dy;
+      if (lenSq === 0) return Math.sqrt((px-x1)*(px-x1) + (py-y1)*(py-y1));
+      var t = Math.max(0, Math.min(1, ((px-x1)*dx + (py-y1)*dy) / lenSq));
+      var nx = x1 + t*dx, ny = y1 + t*dy;
+      return Math.sqrt((px-nx)*(px-nx) + (py-ny)*(py-ny));
+    }
+
+    function _diagDeleteAt(p) {
+      var W = _dv.width, H = _dv.height;
+      var cx = p.x * W, cy = p.y * H;
+      for (var i = STATE.diagramItems.length - 1; i >= 0; i--) {
+        var it = STATE.diagramItems[i];
+        var hit = false;
+        if (_TWOPOINT[it.type]) {
+          var x1 = it.x * W, y1 = it.y * H;
+          var x2 = it.x2 * W, y2 = it.y2 * H;
+          if (it.type === 'route') {
+            // 선분에서 16px 이내
+            hit = _ptSegDist(cx, cy, x1, y1, x2, y2) < 16;
+          } else {
+            // 사각형 내부 클릭 또는 테두리 16px 이내
+            var minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
+            var minY = Math.min(y1, y2), maxY = Math.max(y1, y2);
+            hit = (cx >= minX - 16 && cx <= maxX + 16 && cy >= minY - 16 && cy <= maxY + 16);
+          }
+        } else {
+          var ix = it.x * W, iy = it.y * H;
+          hit = Math.sqrt((cx-ix)*(cx-ix) + (cy-iy)*(cy-iy)) < 32;
+        }
+        if (hit) { STATE.diagramItems.splice(i, 1); _diagSave(); return; }
+      }
+    }
+
+    function _diagRender() {
+      if (!_dx) return;
+      var W = _dv.width, H = _dv.height;
+      _dx.fillStyle = '#ffffff'; _dx.fillRect(0, 0, W, H);
+      if (_dBg && _dBg.complete && _dBg.naturalWidth) {
+        // 가로 꽉 채우기, 세로는 비율대로 (캔버스 높이가 이미 맞춰져 있음)
+        _dx.drawImage(_dBg, 0, 0, W, H);
+      }
+      if (STATE.diagramItems) {
+        STATE.diagramItems.forEach(function (it) { _drawItem(_dx, it); });
+      }
+    }
+
+    function _drawItem(ctx, it) {
+      var sym = DIAG_SYM[it.type]; if (!sym) return;
+      var W = _dv.width, H = _dv.height;
+      var x = it.x * W, y = it.y * H;
+      if (it.type === 'route') { _drawRoute(ctx, x, y, it.x2 * W, it.y2 * H, sym.color); return; }
+      if (it.type === 'danger' || it.type === 'workzone') { _drawZone(ctx, x, y, it.x2 * W, it.y2 * H, sym.color, sym.label); return; }
+      _drawPoint(ctx, sym, x, y);
+    }
+
+    function _drawPoint(ctx, sym, x, y) {
+      var R = 24;
+      ctx.save();
+      if (sym.shape === 'diamond') {
+        ctx.fillStyle = sym.color;
+        ctx.beginPath(); ctx.moveTo(x, y-R); ctx.lineTo(x+R, y); ctx.lineTo(x, y+R); ctx.lineTo(x-R, y); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      } else {
+        ctx.fillStyle = sym.color;
+        ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        if (sym.shape === 'cross') {
+          var d = R * 0.52;
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 3.5;
+          ctx.beginPath(); ctx.moveTo(x-d, y-d); ctx.lineTo(x+d, y+d); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(x+d, y-d); ctx.lineTo(x-d, y+d); ctx.stroke();
+        }
+      }
+      if (sym.short && sym.shape !== 'cross') {
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(sym.short, x, y);
+      }
+      // label badge
+      ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+      var lw = ctx.measureText(sym.label).width + 8;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillRect(x - lw/2, y + R + 3, lw, 15);
+      ctx.strokeStyle = sym.color; ctx.lineWidth = 1;
+      ctx.strokeRect(x - lw/2, y + R + 3, lw, 15);
+      ctx.fillStyle = sym.color; ctx.textBaseline = 'top';
+      ctx.fillText(sym.label, x, y + R + 5);
+      ctx.restore();
+    }
+
+    function _drawRoute(ctx, x1, y1, x2, y2, color) {
+      var dx = x2-x1, dy = y2-y1;
+      var len = Math.sqrt(dx*dx + dy*dy); if (len < 8) return;
+      var ang = Math.atan2(dy, dx), aL = 18, aA = Math.PI/6;
+      ctx.save();
+      ctx.strokeStyle = color; ctx.lineWidth = 3.5;
+      ctx.setLineDash([10, 6]);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - aL*Math.cos(ang-aA), y2 - aL*Math.sin(ang-aA));
+      ctx.lineTo(x2 - aL*Math.cos(ang+aA), y2 - aL*Math.sin(ang+aA));
+      ctx.closePath(); ctx.fill();
+      var mx = (x1+x2)/2, my = (y1+y2)/2, lw = 60, lh = 18;
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.fillRect(mx-lw/2, my-lh/2, lw, lh);
+      ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+      ctx.strokeRect(mx-lw/2, my-lh/2, lw, lh);
+      ctx.fillStyle = color; ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('운행경로', mx, my);
+      ctx.restore();
+    }
+
+    function _drawZone(ctx, x1, y1, x2, y2, color, label) {
+      var rx = Math.min(x1,x2), ry = Math.min(y1,y2);
+      var rw = Math.abs(x2-x1), rh = Math.abs(y2-y1);
+      if (rw < 12 || rh < 12) return;
+      ctx.save();
+      ctx.fillStyle = _hexAlpha(color, 0.12);
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+      ctx.setLineDash([9, 6]);
+      ctx.beginPath(); ctx.rect(rx, ry, rw, rh); ctx.fill(); ctx.stroke();
+      ctx.setLineDash([]);
+      var lw = ctx.measureText(label).width + 14, lh = 20;
+      var lx = rx + rw/2, ly = ry + rh/2;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillRect(lx - lw/2, ly - lh/2, lw, lh);
+      ctx.strokeStyle = color; ctx.lineWidth = 1;
+      ctx.strokeRect(lx - lw/2, ly - lh/2, lw, lh);
+      ctx.fillStyle = color; ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(label, lx, ly);
+      ctx.restore();
+    }
+
+    function _diagLoadBg(e) {
+      var file = e.target.files[0]; if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        STATE.diagram = ev.target.result;
+        _dBg = new Image();
+        _dBg.onload = function () {
+          // 가로는 캔버스 너비에 꽉 채우고, 세로는 이미지 비율에 맞게 조정
+          var W = _dv.width;
+          _dv.height = Math.round(W * _dBg.naturalHeight / _dBg.naturalWidth);
+          _diagRender(); saveToStorage();
+        };
+        _dBg.src = STATE.diagram;
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+
+    function diagUndo() {
+      if (!STATE.diagramItems || !STATE.diagramItems.length) { toast('취소할 항목이 없습니다'); return; }
+      STATE.diagramItems.pop(); _diagSave();
+    }
+
+    function diagClear() {
+      if (!confirm('도면의 모든 항목을 지우시겠습니까?')) return;
+      STATE.diagramItems = []; STATE.diagram = null; _dBg = null;
+      _diagRender(); saveToStorage();
+    }
+
+    function _diagSave() { _diagRender(); saveToStorage(); }
+
+    /* ── 작업순서 플로우 ──────────────────────────────── */
+    var CIRCLE_NUMS = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+    var DEFAULT_WORK_STEPS = [
+      { phase: '작업준비',  items: ['TBM 실시', '장비 반입', '아웃트리거 확장 및 지반 확인'] },
+      { phase: '인양 작업', items: ['줄걸이 실시', '유도로프 체결', '신호수 확인 후 인양'] },
+      { phase: '이동 및 거치', items: ['신호에 따라 이동', '지정 위치 거치'] },
+      { phase: '철수',      items: ['줄걸이 해제', '장비 원위치 및 현장 정리'] }
+    ];
+
+    function renderWorkSteps() {
+      var el = document.getElementById('ws-container');
+      if (!el) return;
+      var steps = STATE.workSteps;
+      var html = '<div class="ws-flow">';
+      steps.forEach(function (step, si) {
+        html += '<div class="ws-step-wrap">'
+              + '<div class="ws-step-conn"><div class="ws-step-dot"></div>'
+              + (si < steps.length - 1 ? '<div class="ws-step-line"></div>' : '')
+              + '</div>'
+              + '<div class="ws-box">'
+              + '<div class="ws-phase-row">'
+              + '<div class="ws-step-num">' + (si + 1) + '</div>'
+              + '<input class="ws-phase-inp" placeholder="단계명 (예: 작업준비)" value="' + esc(step.phase) + '" oninput="updateWorkPhase(' + si + ',this.value)">'
+              + (steps.length > 1 ? '<button class="ws-del-step" onclick="removeWorkStep(' + si + ')" title="단계 삭제">×</button>' : '')
+              + '</div><div class="ws-items-area">';
+        step.items.forEach(function (item, ii) {
+          html += '<div class="ws-item-row">'
+                + '<span class="ws-item-num">' + (CIRCLE_NUMS[ii] || (ii + 1)) + '</span>'
+                + '<input class="ws-item-inp" placeholder="작업내용" value="' + esc(item) + '" oninput="updateWorkItem(' + si + ',' + ii + ',this.value)">'
+                + (step.items.length > 1 ? '<button class="ws-del-item" onclick="removeWorkItem(' + si + ',' + ii + ')" title="항목 삭제">×</button>' : '')
+                + '</div>';
+        });
+        html += '<button class="ws-add-item" onclick="addWorkItem(' + si + ')">+ 작업내용 추가</button>'
+              + '</div></div></div>';
+      });
+      html += '<button class="ws-add-step" onclick="addWorkStep()">+ 단계 추가</button>';
+      html += '</div>';
+      el.innerHTML = html;
+    }
+
+    function updateWorkPhase(si, val) { STATE.workSteps[si].phase = val; saveToStorage(); }
+    function updateWorkItem(si, ii, val) { STATE.workSteps[si].items[ii] = val; saveToStorage(); }
+    function addWorkStep() {
+      STATE.workSteps.push({ phase: '', items: [''] });
+      renderWorkSteps(); saveToStorage();
+    }
+    function removeWorkStep(si) {
+      STATE.workSteps.splice(si, 1);
+      renderWorkSteps(); saveToStorage();
+    }
+    function addWorkItem(si) {
+      STATE.workSteps[si].items.push('');
+      renderWorkSteps(); saveToStorage();
+    }
+    function removeWorkItem(si, ii) {
+      STATE.workSteps[si].items.splice(ii, 1);
+      renderWorkSteps(); saveToStorage();
+    }
+
+    /* ── 재해유형 행 ───────────────── */
+    function renderAccRows() {
+      var tbody = document.getElementById('acc-tbody');
+      if (!tbody) return;
+      if (!STATE.accRows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#8FA3BC;padding:16px;">항목 없음 — "+ 행 추가" 클릭</td></tr>';
+        return;
+      }
+      tbody.innerHTML = STATE.accRows.map(function (r, i) {
+        return '<tr>'
+          + '<td><div class="at-ce" contenteditable="true" data-ph="위험"    data-ai="' + i + '" data-af="risk">'  + esc(r.risk)  + '</div></td>'
+          + '<td><div class="at-ce" contenteditable="true" data-ph="발생형태" data-ai="' + i + '" data-af="occur">' + esc(r.occur) + '</div></td>'
+          + '<td><div class="at-ce" contenteditable="true" data-ph="재해유형" data-ai="' + i + '" data-af="acc">'  + esc(r.acc)   + '</div></td>'
+          + '<td><div class="at-ce" contenteditable="true" data-ph="안전조치" data-ai="' + i + '" data-af="meas">' + esc(r.meas)  + '</div></td>'
+          + '<td class="at-actions"><button class="at-del" onclick="delAccRow(' + i + ')" title="삭제">×</button></td>'
+          + '</tr>';
+      }).join('');
+    }
+    function addAccRow() { STATE.accRows.push({ risk: '', occur: '', acc: '', meas: '' }); renderAccRows(); saveToStorage(); }
+    function delAccRow(i) { STATE.accRows.splice(i, 1); renderAccRows(); saveToStorage(); }
+    document.addEventListener('input', function (e) {
+      var t = e.target;
+      if (t.classList && t.classList.contains('at-ce')) {
+        var i = parseInt(t.dataset.ai, 10);
+        var f = t.dataset.af;
+        if (STATE.accRows[i]) { STATE.accRows[i][f] = t.textContent; saveToStorage(); }
+      }
+    });
+
+    /* ── 양중 시뮬레이터 모달 ──────────────────────── */
+    function openLiftingModal() {
+      var overlay = document.getElementById('sim-overlay');
+      var frame   = document.getElementById('sim-frame');
+      if (!overlay || !frame) return;
+      frame.src = 'lifting.html';
+      overlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLiftingModal() {
+      var overlay = document.getElementById('sim-overlay');
+      var frame   = document.getElementById('sim-frame');
+      if (overlay) overlay.classList.remove('show');
+      if (frame)   frame.src = '';
+      document.body.style.overflow = '';
+      tryLoadLiftingResult();
+    }
+    /* 시뮬레이터(iframe)가 결과를 저장하는 순간 자동 감지 */
+    window.addEventListener('storage', function (e) {
+      if (e.key === LS_LIFT_KEY && e.newValue) {
+        var overlay = document.getElementById('sim-overlay');
+        if (overlay && overlay.classList.contains('show')) {
+          closeLiftingModal();
+          toast('줄걸이 검토 결과가 자동 입력되었습니다');
+        }
+      }
+    });
+    function _fmtT(kg) {
+      if (kg == null || !isFinite(kg) || kg <= 0) return '';
+      return (kg / 1000).toFixed(2);
+    }
+    function _setField(k, v) {
+      STATE.fields[k] = String(v);
+      var el = document.querySelector('[data-k="' + k + '"]');
+      if (el) el.value = String(v);
+    }
+    function tryLoadLiftingResult() {
+      try {
+        var raw = localStorage.getItem(LS_LIFT_KEY);
+        var status = document.getElementById('sling-status');
+        if (!raw) return;
+        var d = JSON.parse(raw);
+        if (!d) return;
+
+        STATE.liftingData = d;
+
+        /* 필드 자동 입력 */
+        _setField('sl.W',     _fmtT(d.W));
+        _setField('sl.lines', d.lines  || '');
+        _setField('sl.mode',  d.modeLabel  || '');
+        _setField('sl.stype', d.sTypeLabel || '');
+        _setField('sl.swl',   _fmtT(d.sWLL));
+        _setField('sl.alpha', d.alpha != null ? d.alpha : '');
+        _setField('sl.ts',    _fmtT(d.Ts));
+        _setField('sl.cap',   _fmtT(d.totalCap));
+        _setField('sl.ratio', d.ratio != null ? d.ratio : '');
+        _setField('sl.sf',    d.sf || '');
+        _setField('sl.verdict', d.result || '');
+        saveToStorage();
+
+        /* 상태 표시 */
+        if (status) {
+          var ico = { ok: '✅', warn: '⚠️', ng: '❌' }[d.verdict] || '';
+          status.className = 'sling-status ' + (d.verdict || 'ok') + ' show';
+          status.textContent = ico + ' 시뮬레이터 결과 자동 입력됨 · ' + (d.timestamp || '');
+        }
+      } catch (e) {}
+    }
+
+    /* ── 인쇄 미리보기 ──────────────────────────────── */
+    function pv(k) { return STATE.fields[k] || ''; }
+    function pcList(keys, labels) {
+      var r = [];
+      keys.forEach(function (k, i) { if (STATE.checks[k]) r.push(labels[i]); });
+      return r.join('　') || '—';
+    }
+    function pCell(v) {
+      return (v == null || v === '') ? '<span style="color:#CBD5E0;font-style:italic">—</span>' : esc(String(v));
+    }
+    function pRow1(label, value) {
+      return '<tr><th>' + label + '</th><td colspan="3">' + pCell(value) + '</td></tr>';
+    }
+    function pRow2(label1, val1, label2, val2) {
+      if (!label2 && !val2) return '<tr><th>' + label1 + '</th><td colspan="3">' + pCell(val1) + '</td></tr>';
+      return '<tr><th>' + label1 + '</th><td>' + pCell(val1) + '</td><th>' + label2 + '</th><td>' + pCell(val2) + '</td></tr>';
+    }
+    function pRowTA(label, value) {
+      var v = (value == null || value === '') ? '<span style="color:#CBD5E0;font-style:italic">—</span>' : esc(String(value)).replace(/\n/g, '<br>');
+      return '<tr><th style="vertical-align:top">' + label + '</th><td colspan="3">' + v + '</td></tr>';
+    }
+    function pRowTA1(label, value) {
+      var v = (value == null || value === '') ? '<span style="color:#CBD5E0;font-style:italic">—</span>' : esc(String(value)).replace(/\n/g, '<br>');
+      return '<tr><th style="vertical-align:top">' + label + '</th><td>' + v + '</td></tr>';
+    }
+    function buildDocHeader(title, pgOf) {
+      return '<div class="p-doc-header">'
+           +   '<div class="p-brand">무사이<small>Musai — 오늘도 무사히, 현장을 지킵니다</small></div>'
+           +   '<div class="p-doc-title">' + esc(title) + '</div>'
+           +   '<div class="p-doc-pg">작성일: ' + today() + '<br>' + pgOf + '</div>'
+           + '</div>';
+    }
+    function buildSignRow() {
+      return '<div class="p-sign-row">'
+           +   '<div class="p-sign-cell">관리책임자</div>'
+           +   '<div class="p-sign-cell">작업지휘자</div>'
+           +   '<div class="p-sign-cell">안전관리자</div>'
+           +   '<div class="p-sign-cell">확 인</div>'
+           + '</div>';
+    }
+
+    function buildPage1HTML(pgOf) {
+      var equip = MUSAI_CORE.getMachineLabel(STATE.meta.equipType);
+      var terrain = (function () {
+        var t = pcList(['ps.terrain.sand','ps.terrain.soil','ps.terrain.soft_rock','ps.terrain.hard_rock','ps.terrain.pave','ps.terrain.slope'], ['모래','일반 흙','연암','경암','포장','경사']);
+        if (STATE.checks['ps.terrain.other']) {
+          var ot = pv('ps.terrain.other_text');
+          t = (t === '—' ? '' : t + '　') + (ot ? ot : '기타');
+        }
+        return t || '—';
+      }());
+      var ground  = pcList(['ps.ground.firm','ps.ground.weak','ps.ground.frozen','ps.ground.special'], ['견고지반','연약지반','동결지반','특이사항']);
+      var reinf   = pcList(['ps.reinf.none','ps.reinf.plate','ps.reinf.improve','ps.reinf.soil','ps.reinf.fill','ps.reinf.other'], ['불필요','철판보강','지반개량','양질토사','성토','기타']);
+      var access  = pcList(['ps.access.guide','ps.access.fence','ps.access.cone','ps.access.web','ps.access.other'], ['유도자','A형펜스','라바콘','웨빙띠','기타']);
+      var obs     = pcList(['ps.obs.none','ps.obs.obstacle','ps.obs.wire'], ['없음','지장물(조치)','가공전선(이격)']);
+      var sigs    = pcList(['pr.sig.voice','pr.sig.radio','pr.sig.other'], ['수신호','무전기','기타']);
+      var opEdu   = pcList(['pr.op_edu.sp','pr.op_edu.bs'], ['특별교육','기초안전보건교육']);
+      var gdEdu   = pcList(['pr.gd_edu.sp','pr.gd_edu.bs'], ['특별교육','기초안전보건교육']);
+      var ndt     = pcList(['eq.ndt.mag','eq.ndt.ut','eq.ndt.none'], ['자분탐상','초음파탐상','미실시']);
+      var ndtDate = pv('eq.ndt_date');
+
+      var photoHtml = '';
+      var hasPhoto  = STATE.photos.some(function (p) { return p; });
+      if (hasPhoto) {
+        photoHtml = '<div class="p-photo-grid">';
+        STATE.photos.forEach(function (p, i) {
+          if (p) photoHtml += '<div class="p-photo-cell"><img src="' + p.dataUrl + '" alt="사진' + (i+1) + '"><div class="p-photo-cap">' + esc(p.caption || '사진 ' + (i+1)) + '</div></div>';
+        });
+        photoHtml += '</div>';
+      }
+
+      return '<div class="print-paper">'
+           + buildDocHeader(equip + ' 작업계획서', pgOf)
+           + '<div class="p-section"><div class="p-sec-title">1. 공사 개요</div>'
+           +   '<table class="p-tbl"><colgroup><col style="width:88px"><col><col style="width:88px"><col></colgroup>'
+           +   pRow1('현장명', pv('pi.site_name'))
+           +   pRow2('업체명', pv('pi.contractor'), '투입인원', pv('pi.worker_count') ? pv('pi.worker_count') + '명' : '')
+           +   pRow1('작업장소', pv('pi.work_location'))
+           +   pRow2('작업시작', pv('pi.work_start'), '작업종료', pv('pi.work_end'))
+           +   pRow1('작업내용', pv('pi.work_content'))
+           +   pRow2('운행제한속도', pv('pi.speed_limit'), '장비 종류', equip)
+           +   '</table></div>'
+           + '<div class="p-section"><div class="p-sec-title">2. 작업 인원 및 신호</div>'
+           +   '<table class="p-tbl"><colgroup><col style="width:88px"><col><col style="width:88px"><col></colgroup>'
+           +   pRow2('관리책임자', pv('pr.manager'), '작업지휘자', pv('pr.supervisor'))
+           +   pRow2('지휘자 연락처', pv('pr.sup_contact'), '', '')
+           +   pRow2('운전원', pv('pr.operator'), '면허 종류', pv('pr.op_license'))
+           +   pRow2('운전원 연락처', pv('pr.op_contact'), '유도자', pv('pr.guide'))
+           +   pRow2('유도자 연락처', pv('pr.guide_contact'), '', '')
+           +   '<tr><th>신호방법</th><td>' + sigs + '</td><th>운전원 교육</th><td>' + opEdu + '</td></tr>'
+           +   '<tr><th>유도자 교육</th><td colspan="3">' + gdEdu + '</td></tr>'
+           +   '</table></div>'
+           + '<div class="p-section"><div class="p-sec-title">3. 장비·기계 제원</div>'
+           +   '<table class="p-tbl"><colgroup><col style="width:88px"><col><col style="width:88px"><col></colgroup>'
+           +   pRow2('장비명', pv('eq.name'), '등록번호', pv('eq.reg_no'))
+           +   pRow2('형식·규격', pv('eq.spec'), '제조사·연도', pv('eq.maker'))
+           +   pRow2('붐 최대길이', pv('eq.boom_max') ? pv('eq.boom_max') + 'm' : '', '작업반경', pv('eq.radius') ? pv('eq.radius') + 'm' : '')
+           +   pRow2('붐 각도', pv('eq.boom_angle'), '정격하중', pv('eq.capacity') ? pv('eq.capacity') + 't' : '')
+           +   pRow1('아웃트리거', pv('eq.outrigger'))
+           +   pRow2('검사유효기간', pv('eq.inspection'), '보험유효기간', pv('eq.insurance'))
+           +   pRow2('비파괴검사', ndt, '실시일자', ndtDate)
+           +   '</table></div>'
+           + '<div class="p-section"><div class="p-sec-title">4. 사전조사 — 지형·지반 (별표4 제3호)</div>'
+           +   '<table class="p-tbl"><colgroup><col style="width:88px"><col></colgroup>'
+           +   pRow1('지형', terrain) + pRow1('지반 상태', ground) + pRow1('지반 보강', reinf)
+           +   pRow1('접근 차단', access) + pRow1('지장물·가공전선', obs)
+           +   '</table>' + photoHtml + '</div>'
+           + '</div>';
+    }
+
+    function buildPage2HTML(pgOf) {
+      var auxTools = pcList(['ob.aux.clamp','ob.aux.hacker','ob.aux.chain','ob.aux.lug','ob.aux.turn','ob.aux.other'], ['클램프','해커','체인슬링','인양러그','턴버클','기타']);
+      var shapeMap  = { long: '긴 막대형', box: '박스형', irregular: '비정형', other: '기타' };
+      var centerMap = { ok: '확인 완료', need: '확인 필요', na: '해당 없음' };
+
+      var slVerdict = pv('sl.verdict');
+      var slBadge = slVerdict
+        ? '<span class="p-sling-badge ' + ({이상없음:'ok',주의:'warn',부적합:'ng'}[slVerdict]||'ok') + '">' + slVerdict + '</span>'
+        : '';
+      var slingSec = slBadge
+             + '<table class="p-tbl"><colgroup><col style="width:88px"><col><col style="width:88px"><col></colgroup>'
+             + pRow2('인양하중 W', pv('sl.W') ? pv('sl.W') + ' t' : '', '줄 수', pv('sl.lines') ? pv('sl.lines') + ' 줄' : '')
+             + pRow2('줄걸이 방식', pv('sl.mode'), '슬링 종류', pv('sl.stype'))
+             + pRow2('슬링 SWL', pv('sl.swl') ? pv('sl.swl') + ' t' : '', '조임각', pv('sl.alpha') ? pv('sl.alpha') + '°' : '')
+             + pRow2('줄당 장력 Ts', pv('sl.ts') ? pv('sl.ts') + ' t' : '', '사용률', pv('sl.ratio') ? pv('sl.ratio') + '%' : '')
+             + pRow2('종합 허용하중', pv('sl.cap') ? pv('sl.cap') + ' t' : '', '안전율', pv('sl.sf') ? pv('sl.sf') + ' 배' : '')
+             + '</table>';
+
+      return '<div class="print-paper">'
+           + buildDocHeader('양중 안전성 검토', pgOf)
+           + '<div class="p-section"><div class="p-sec-title">1. 줄걸이 안전성 검토 (KOSHA GUIDE B-M-12-2025)</div>'
+           +   slingSec
+           + '</div>'
+           + '<div class="p-section"><div class="p-sec-title">2. 양중검토 종합</div>'
+           +   '<table class="p-tbl"><colgroup><col style="width:88px"><col><col style="width:88px"><col></colgroup>'
+           +   pRow2('검토 결과', pv('lr.result'), '검토 일자', pv('lr.date'))
+           +   pRow2('검토자', pv('lr.reviewer'), '', '')
+           +   '</table></div>'
+           + '<div class="p-section"><div class="p-sec-title">3. 중량물 제원</div>'
+           +   '<table class="p-tbl"><colgroup><col style="width:88px"><col><col style="width:88px"><col></colgroup>'
+           +   pRow2('품명', pv('ob.name'), '중량', pv('ob.weight') ? pv('ob.weight') + ' t' : '')
+           +   pRow2('형상', shapeMap[pv('ob.shape')] || pv('ob.shape'), '무게중심', centerMap[pv('ob.center')] || pv('ob.center'))
+           +   pRow1('달기구', auxTools)
+           +   pRow1('줄걸이 방법', pv('ob.sling_method'))
+           +   '</table></div>'
+           + '<div class="p-section"><div class="p-sec-title">4. 5대 위험 예방대책 (별표4 제11호)</div>'
+           +   '<table class="p-tbl"><colgroup><col style="width:88px"><col></colgroup>'
+           +   pRowTA1('가. 추락위험', pv('h5.fall'))
+           +   pRowTA1('나. 낙하위험', pv('h5.drop'))
+           +   pRowTA1('다. 전도위험', pv('h5.tip'))
+           +   pRowTA1('라. 협착위험', pv('h5.crush'))
+           +   pRowTA1('마. 붕괴위험', pv('h5.collapse'))
+           +   '</table></div>'
+           + '</div>';
+    }
+
+    function buildPage3HTML(pgOf, diagUrl) {
+      var diagramHtml = diagUrl
+        ? '<img class="p-diagram" src="' + diagUrl + '" alt="작업도면">'
+        : '<div style="height:80px;background:#F5F7FA;border:1px dashed #CBD5E0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#8FA3BC;margin-top:6px;">도면 미첨부</div>';
+
+      return '<div class="print-paper">'
+           + buildDocHeader('운행경로 · 작업방법', pgOf)
+           + '<div class="p-section"><div class="p-sec-title">1. 운행경로 및 작업계획 도면</div>'
+           +   '<table class="p-tbl"><colgroup><col style="width:88px"><col></colgroup>'
+           +   pRow1('운행경로', pv('rt.desc'))
+           +   '</table>' + diagramHtml + '</div>'
+           + '<div class="p-section"><div class="p-sec-title">2. 작업방법 및 작업순서</div>'
+           +   (function () {
+                 var steps = STATE.workSteps || [];
+                 if (!steps.length) return '<div style="color:#8FA3BC;font-size:9px;padding:8px;">작업순서 미입력</div>';
+                 var h = '<div class="p-wf-wrap">';
+                 steps.forEach(function (step, si) {
+                   if (si > 0) h += '<div class="p-wf-arrow">&#8594;</div>';
+                   h += '<div class="p-wf-box">'
+                      + '<div class="p-wf-phase">' + (si + 1) + '. ' + esc(step.phase || '') + '</div>'
+                      + '<div class="p-wf-items">';
+                   step.items.forEach(function (item, ii) {
+                     h += '<div class="p-wf-item">' + (CIRCLE_NUMS[ii] || (ii + 1)) + ' ' + esc(item || '') + '</div>';
+                   });
+                   h += '</div></div>';
+                 });
+                 h += '</div>';
+                 return h;
+               }())
+           + '</div>'
+           + '</div>';
+    }
+
+    function buildPage4HTML(pgOf) {
+      var rows = STATE.accRows.map(function (r) {
+        return '<tr><td>' + esc(r.risk) + '</td><td>' + esc(r.occur) + '</td><td>' + esc(r.acc) + '</td><td>' + esc(r.meas) + '</td></tr>';
+      }).join('');
+      if (!rows) rows = '<tr><td colspan="4" style="text-align:center;color:#8FA3BC;padding:14px;">항목 없음</td></tr>';
+
+      return '<div class="print-paper">'
+           + buildDocHeader('재해유형별 안전대책', pgOf)
+           + '<div class="p-section"><div class="p-sec-title">재해유형별 안전대책 (KOSHA GUIDE D-C-10-2026)</div>'
+           +   '<table class="p-acc-tbl"><colgroup><col style="width:90px"><col style="width:70px"><col><col></colgroup>'
+           +   '<thead><tr><th>위험</th><th>발생형태</th><th>재해유형</th><th>안전조치</th></tr></thead>'
+           +   '<tbody>' + rows + '</tbody>'
+           +   '</table></div>'
+           + '</div>';
+    }
+
+    function openPreview() {
+      var active = getActiveChapters();
+      var total  = active.length;
+      var idx    = 1;
+      var pages  = [];
+      pages.push(buildPage1HTML(idx++ + ' / ' + total));
+      if (isHeavy()) pages.push(buildPage2HTML(idx++ + ' / ' + total));
+      var diagUrl = _dv ? _dv.toDataURL('image/png') : null;
+      pages.push(buildPage3HTML(idx++ + ' / ' + total, diagUrl));
+      pages.push(buildPage4HTML(idx++ + ' / ' + total));
+      document.getElementById('preview-body').innerHTML = pages.join('');
+      document.getElementById('preview-overlay').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closePreview() {
+      document.getElementById('preview-overlay').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    function doPrint() { window.print(); }
+
+    /* ── 초기 부트 ─────────────────── */
+    loadFromStorage();
+    if (!STATE.accRows || !STATE.accRows.length) {
+      STATE.accRows = MUSAI_CORE.getAccidentItems(STATE.meta.equipType);
+    }
+    if (!STATE.photos || STATE.photos.length < 4) {
+      STATE.photos = [null, null, null, null];
+    }
+    if (!STATE.workSteps || !STATE.workSteps.length) {
+      STATE.workSteps = DEFAULT_WORK_STEPS.map(function (s) {
+        return { phase: s.phase, items: s.items.slice() };
+      });
+    }
+
+    restoreFields();
+    updateTitle();
+    renderAllPhotos();
+    initDiagram();
+    renderWorkSteps();
+    renderAccRows();
+    tryLoadLiftingResult();
+
+    var sel = document.getElementById('equip-type-sel');
+    if (sel) sel.addEventListener('change', onEquipTypeChange);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closePreview();
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { diagUndo(); e.preventDefault(); }
+    });
+
+    showChapter(STATE.meta.currentIdx || 0);
+  </script>
+
+</body>
+</html>

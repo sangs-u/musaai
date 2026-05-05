@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2C5282">
+  <title>무사이 · 전기작업계획서</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    :root {
+      --p:       #2C5282;
+      --p-dk:    #1E3A5F;
+      --steel:   #7B9EE0;
+      --bg:      #F5F7FA;
+      --card:    #FFFFFF;
+      --ink:     #1E3148;
+      --ink-s:   #4A6280;
+      --ink-m:   #8FA3BC;
+      --line:    #E2E8F0;
+      --line-d:  #CBD5E0;
+      --shade:   #F0F4F8;
+      --focus:   #F7FAFF;
+      --ok:      #3D8F67;
+      --ok-bg:   #E8F4EE;
+      --ng:      #B94040;
+      --ng-bg:   #FEE8E8;
+      --warn-bg: #FEF3C7;
+      --warn-tx: #B45309;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: 56px 40px 1fr 64px;
+      grid-template-areas: "toolbar toolbar" "progress progress" "sidebar main" "nav nav";
+      min-height: 100vh;
+    }
+
+    /* ── 툴바 ── */
+    .toolbar {
+      grid-area: toolbar;
+      background: var(--p);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      z-index: 10;
+    }
+    .tb-l, .tb-r { display: flex; align-items: center; gap: 14px; }
+    .tb-back {
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .tb-back:hover { background: rgba(255,255,255,0.22); }
+    .tb-title { font-size: 16px; font-weight: 800; letter-spacing: -0.2px; }
+    .btn-primary, .btn-secondary {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--steel); color: #fff; }
+    .btn-primary:hover { background: #5D82C9; }
+    .btn-secondary { background: rgba(255,255,255,0.12); color: #fff; }
+    .btn-secondary:hover { background: rgba(255,255,255,0.22); }
+
+    /* ── 진행바 ── */
+    .progress {
+      grid-area: progress;
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+    }
+    .progress-track { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--p), var(--steel));
+      border-radius: 3px;
+      transition: width 0.3s ease;
+      width: 25%;
+    }
+    .progress-text { font-size: 12px; font-weight: 700; color: var(--p); min-width: 60px; text-align: right; }
+
+    /* ── 사이드바 ── */
+    .sidebar {
+      grid-area: sidebar;
+      padding: 22px 14px;
+      background: var(--card);
+      border-right: 1px solid var(--line);
+      overflow-y: auto;
+    }
+    .sb-section { margin-bottom: 22px; }
+    .sb-label { font-size: 10.5px; font-weight: 800; color: var(--ink-m); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 8px 10px; }
+    .sb-chapters { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+    .sb-ch {
+      display: flex; align-items: center; padding: 10px 10px; border-radius: 7px; cursor: pointer;
+      font-size: 13px; color: var(--ink-s); gap: 10px; transition: background 0.15s; line-height: 1.25;
+    }
+    .sb-ch:hover { background: var(--bg); }
+    .sb-ch.current { background: var(--p); color: #fff; font-weight: 700; }
+    .sb-ch.current:hover { background: var(--p-dk); }
+    .sb-ch-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--line); color: var(--ink-s); font-size: 11px; font-weight: 800; flex-shrink: 0;
+    }
+    .sb-ch.current .sb-ch-num { background: #fff; color: var(--p); }
+    .sb-ch.done:not(.current) .sb-ch-num { background: var(--ok-bg); color: var(--ok); }
+    .sb-ch-label { flex: 1; }
+    .sb-ch-check { font-size: 13px; color: var(--ok); font-weight: 800; }
+
+    /* ── 메인 ── */
+    .main { grid-area: main; padding: 28px 32px; overflow-y: auto; background: var(--bg); }
+    .chapter { max-width: 920px; margin: 0 auto; display: none; }
+    .chapter.active { display: block; }
+    .ch-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 18px; border-bottom: 2px solid var(--line); }
+    .ch-num { width: 44px; height: 44px; background: var(--p); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; flex-shrink: 0; }
+    .ch-title { font-size: 20px; font-weight: 800; color: var(--ink); letter-spacing: -0.3px; }
+    .ch-desc { font-size: 13px; color: var(--ink-s); margin-top: 3px; }
+
+    /* ── 카드 ── */
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(15,23,42,0.03); }
+    .card-h { font-size: 15px; font-weight: 800; color: var(--p); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px 20px; }
+    .col-2 { grid-column: span 2; }
+    .col-full { grid-column: 1 / -1; }
+
+    .f { display: flex; flex-direction: column; gap: 5px; }
+    .f label { font-size: 12px; font-weight: 600; color: var(--ink-s); }
+    .f label em { color: var(--ng); font-style: normal; margin-left: 2px; }
+    .f input, .f select, .f textarea {
+      height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px;
+      background: var(--card); font-family: inherit; font-size: 13px; color: var(--ink); outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .f textarea { height: auto; min-height: 88px; padding: 10px 12px; line-height: 1.55; resize: vertical; }
+    .f input:focus, .f select:focus, .f textarea:focus { border-color: var(--steel); box-shadow: 0 0 0 3px rgba(123,158,224,0.18); }
+    .f input[type=date] { font-family: 'SF Mono', monospace; font-size: 12.5px; }
+
+    .chk-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 0; border-top: 1px solid var(--shade); }
+    .chk-row:first-child { border-top: none; padding-top: 0; }
+    .chk-row-l { font-size: 12px; font-weight: 700; color: var(--ink-s); min-width: 100px; }
+    .chk { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: var(--ink); user-select: none; }
+    .chk input { accent-color: var(--p); width: 16px; height: 16px; }
+    .chk input:checked + span { color: var(--p); font-weight: 700; }
+
+    /* ── 작업 유형 선택 버튼 ── */
+    .work-type-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .wt-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 14px 8px; border: 1.5px solid var(--line); border-radius: 10px;
+      cursor: pointer; background: var(--card); color: var(--ink-s);
+      font-size: 12px; font-weight: 600; gap: 8px; transition: all 0.15s;
+      text-align: center; line-height: 1.3;
+    }
+    .wt-btn:hover { border-color: var(--steel); color: var(--p); background: var(--focus); }
+    .wt-btn.selected { border-color: var(--p); background: var(--p); color: #fff; }
+    .wt-btn svg { width: 28px; height: 28px; flex-shrink: 0; }
+
+    /* ── LOTO 절차 ── */
+    .loto-flow { display: flex; flex-direction: column; gap: 0; }
+    .loto-step { display: flex; align-items: flex-start; gap: 12px; }
+    .loto-conn { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 28px; }
+    .loto-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--p); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .loto-line { flex: 1; width: 2px; background: var(--line-d); min-height: 20px; }
+    .loto-body { flex: 1; padding: 4px 0 20px; }
+    .loto-title { font-size: 13px; font-weight: 700; color: var(--ink); }
+    .loto-desc { font-size: 12px; color: var(--ink-s); margin-top: 3px; line-height: 1.5; }
+    .loto-step:last-child .loto-conn .loto-line { display: none; }
+
+    /* ── 접근한계거리 테이블 ── */
+    .limit-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .limit-tbl th, .limit-tbl td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; }
+    .limit-tbl th { background: var(--shade); color: var(--p); font-size: 12px; font-weight: 700; }
+    .limit-tbl tr.hi td { background: #FEF3C7; font-weight: 600; }
+
+    /* ── 절연보호구 체크 ── */
+    .ppe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ppe-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 8px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .ppe-item.checked { border-color: var(--ok); background: var(--ok-bg); }
+    .ppe-item input { accent-color: var(--ok); width: 16px; height: 16px; flex-shrink: 0; }
+    .ppe-item-label { font-size: 13px; font-weight: 500; color: var(--ink-s); line-height: 1.3; }
+    .ppe-item.checked .ppe-item-label { color: var(--ok); font-weight: 600; }
+
+    /* ── 재해 유형 테이블 ── */
+    .at-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .at-tbl th, .at-tbl td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; text-align: left; }
+    .at-tbl th { background: var(--shade); color: var(--p); font-size: 12px; font-weight: 700; }
+    .at-tbl .at-ce { min-height: 26px; outline: none; font-size: 13px; color: var(--ink); line-height: 1.5; }
+    .at-tbl .at-ce:focus { background: var(--focus); }
+    .at-tbl .at-ce:empty::before { content: attr(data-ph); color: var(--ink-m); }
+    .at-tbl .at-actions { width: 34px; text-align: center; padding: 6px; }
+    .at-del { width: 26px; height: 26px; border: none; background: transparent; color: var(--ink-m); cursor: pointer; font-size: 14px; font-weight: 700; border-radius: 4px; }
+    .at-del:hover { color: var(--ng); background: var(--ng-bg); }
+    .at-add { margin-top: 12px; padding: 10px 18px; background: #fff; border: 1.5px dashed var(--steel); border-radius: 7px; color: var(--p); font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .at-add:hover { background: var(--focus); }
+
+    /* ── 하단 네비 ── */
+    .bottom-nav {
+      grid-area: nav;
+      background: var(--card);
+      border-top: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 32px;
+    }
+    .nav-btn {
+      padding: 10px 22px; border: 1px solid var(--line); background: var(--card);
+      color: var(--ink-s); border-radius: 7px; font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit; min-width: 100px;
+    }
+    .nav-btn:hover:not(:disabled) { background: var(--bg); color: var(--ink); }
+    .nav-btn.primary { background: var(--p); color: #fff; border-color: var(--p); }
+    .nav-btn.primary:hover:not(:disabled) { background: var(--p-dk); }
+    .nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .dots { display: flex; gap: 10px; align-items: center; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); cursor: pointer; transition: all 0.2s; border: none; padding: 0; }
+    .dot.active { background: var(--p); width: 28px; border-radius: 5px; }
+    .dot:hover:not(.active) { background: var(--line-d); }
+
+    /* ── 토스트 ── */
+    .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 8px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.22); opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s; z-index: 100; }
+    .toast.show { opacity: 1; transform: translate(-50%, -6px); }
+
+    /* ── 인쇄 미리보기 모달 ── */
+    .preview-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.82); z-index: 300; display: none; flex-direction: column; }
+    .preview-overlay.show { display: flex; }
+    .preview-bar { flex-shrink: 0; background: var(--p-dk); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 52px; }
+    .preview-bar-l { display: flex; align-items: center; gap: 16px; }
+    .preview-bar-title { font-size: 15px; font-weight: 800; }
+    .preview-bar-hint { font-size: 12px; opacity: 0.65; }
+    .preview-bar-r { display: flex; gap: 10px; }
+    .preview-body { flex: 1; overflow-y: auto; background: #3D4F6A; padding: 28px 0; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+
+    /* A4 용지 */
+    .print-paper { width: 794px; min-height: 1123px; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.4); padding: 30px 42px 40px; font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; font-size: 10.5px; line-height: 1.55; color: #1E3148; flex-shrink: 0; }
+    .p-doc-header { display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 2.5px solid #2C5282; padding-bottom: 8px; margin-bottom: 14px; }
+    .p-brand { font-size: 18px; font-weight: 900; color: #2C5282; letter-spacing: -0.5px; line-height: 1.1; }
+    .p-brand small { font-size: 9px; font-weight: 500; color: #7B9EE0; display: block; }
+    .p-doc-title { font-size: 13.5px; font-weight: 800; color: #1E3148; }
+    .p-doc-pg { font-size: 9.5px; color: #8FA3BC; text-align: right; }
+    .p-section { margin-bottom: 12px; }
+    .p-sec-title { background: #2C5282; color: #fff; font-size: 10px; font-weight: 800; padding: 4px 10px; letter-spacing: 0.02em; }
+    .p-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .p-tbl th, .p-tbl td { border: 1px solid #CBD5E0; padding: 5px 8px; vertical-align: top; word-break: keep-all; }
+    .p-tbl th { background: #EEF2F8; color: #2C5282; font-weight: 700; font-size: 9.5px; text-align: left; white-space: nowrap; }
+    .p-tbl td { font-size: 10.5px; }
+    .p-sign-row { display: flex; margin-top: 18px; border: 1px solid #CBD5E0; }
+    .p-sign-cell { flex: 1; text-align: center; padding: 5px 0 28px; font-size: 9.5px; color: #2C5282; font-weight: 700; border-right: 1px solid #CBD5E0; }
+    .p-sign-cell:last-child { border-right: none; }
+    .p-loto-step { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .p-loto-num { width: 20px; height: 20px; border-radius: 50%; background: #2C5282; color: #fff; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .p-loto-text { font-size: 10px; line-height: 1.5; }
+    .p-loto-text strong { color: #2C5282; }
+    .p-acc-tbl { width: 100%; border-collapse: collapse; font-size: 10px; }
+    .p-acc-tbl th, .p-acc-tbl td { border: 1px solid #CBD5E0; padding: 5px 8px; vertical-align: top; }
+    .p-acc-tbl th { background: #EEF2F8; color: #2C5282; font-weight: 700; text-align: center; }
+    .p-limit-tbl { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+    .p-limit-tbl th, .p-limit-tbl td { border: 1px solid #CBD5E0; padding: 4px 6px; text-align: center; }
+    .p-limit-tbl th { background: #EEF2F8; color: #2C5282; font-weight: 700; }
+
+    /* 작업순서 플로우 */
+    .ws-flow { display: flex; flex-direction: column; gap: 0; }
+    .ws-step-wrap { display: flex; align-items: stretch; gap: 10px; }
+    .ws-step-conn { width: 22px; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+    .ws-step-dot { width: 14px; height: 14px; border-radius: 50%; background: #2C5282; flex-shrink: 0; margin-top: 20px; }
+    .ws-step-line { flex: 1; width: 2px; background: #CBD5E0; margin-bottom: -2px; }
+    .ws-box { flex: 1; border: 1.5px solid #CBD5E0; border-radius: 8px; margin: 8px 0; background: #F8FAFD; overflow: hidden; }
+    .ws-phase-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #EBF0FB; border-bottom: 1px solid #CBD5E0; }
+    .ws-step-num { font-size: 11px; font-weight: 700; color: #fff; background: #2C5282; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ws-phase-inp { flex: 1; border: none; background: transparent; font-weight: 600; font-size: 13px; color: #2C5282; outline: none; }
+    .ws-phase-inp::placeholder { color: #A0AEC0; font-weight: 400; }
+    .ws-del-step { background: none; border: none; color: #B94040; cursor: pointer; font-size: 16px; line-height: 1; padding: 0 2px; opacity: 0.5; }
+    .ws-del-step:hover { opacity: 1; }
+    .ws-items-area { padding: 8px 12px 10px; }
+    .ws-item-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .ws-item-num { font-size: 11px; color: #7B9EE0; width: 16px; flex-shrink: 0; text-align: right; }
+    .ws-item-inp { flex: 1; border: 1px solid #E2E8F0; border-radius: 4px; padding: 4px 8px; font-size: 12px; color: #2D3748; background: #fff; }
+    .ws-item-inp:focus { border-color: #7B9EE0; outline: none; }
+    .ws-del-item { background: none; border: none; color: #B94040; cursor: pointer; font-size: 15px; opacity: 0.4; padding: 0 2px; line-height: 1; }
+    .ws-del-item:hover { opacity: 1; }
+    .ws-add-item { background: none; border: 1px dashed #7B9EE0; border-radius: 4px; color: #7B9EE0; font-size: 11px; padding: 3px 10px; cursor: pointer; margin-top: 4px; }
+    .ws-add-step { width: 100%; background: none; border: 1.5px dashed #7B9EE0; border-radius: 8px; padding: 10px; color: #7B9EE0; font-size: 13px; cursor: pointer; margin-top: 6px; }
+    .ws-add-step:hover { background: #EBF0FB; }
+    .p-wf-wrap { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0; margin-top: 8px; }
+    .p-wf-box { border: 1px solid #2C5282; border-radius: 4px; min-width: 80px; flex: 1; margin: 3px 0; }
+    .p-wf-phase { background: #2C5282; color: #fff; font-size: 8.5px; font-weight: 700; padding: 4px 6px; text-align: center; }
+    .p-wf-items { padding: 5px 6px; }
+    .p-wf-item { font-size: 8px; color: #2D3748; padding: 1.5px 0; }
+    .p-wf-arrow { display: flex; align-items: flex-start; color: #2C5282; font-size: 14px; padding: 0 3px; padding-top: 20px; }
+
+    /* 법령 근거 박스 */
+    .law-box { background: var(--focus); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-top: 4px; }
+    .law-box-title { font-size: 11px; font-weight: 700; color: var(--p); margin-bottom: 6px; letter-spacing: 0.02em; }
+    .law-box ul { padding-left: 16px; }
+    .law-box li { font-size: 12px; color: var(--ink-s); margin-bottom: 2px; line-height: 1.55; }
+
+    /* 전기 고유 스타일 */
+    .voltage-box {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--warn-bg); border: 1px solid #FBBF24;
+      border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;
+    }
+    .voltage-box svg { color: var(--warn-tx); flex-shrink: 0; }
+    .voltage-box-text { font-size: 12.5px; color: var(--warn-tx); line-height: 1.5; }
+    .voltage-box-text strong { font-size: 14px; display: block; margin-bottom: 2px; }
+
+    .limit-row-hi { background: #FEF3C7 !important; }
+
+    /* ── 도면 캔버스 ── */
+    .canvas-wrap { position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .canvas-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: var(--shade); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+    .ctool {
+      padding: 5px 12px; border: 1px solid var(--line); border-radius: 5px;
+      background: #fff; font-size: 12px; font-weight: 600; cursor: pointer;
+      color: var(--ink-s); font-family: inherit; white-space: nowrap; transition: all 0.12s;
+    }
+    .ctool:hover { background: var(--focus); border-color: var(--steel); color: var(--p); }
+    .ctool.active { background: var(--p); color: #fff; border-color: var(--p); }
+    .diag-sep { width: 1px; height: 20px; background: var(--line); margin: 0 2px; flex-shrink: 0; }
+    .canvas-board { display: block; width: 100%; cursor: crosshair; }
+    .diag-hint { font-size: 11px; color: var(--ink-m); padding: 5px 10px; }
+    .p-diagram { width: 100%; border: 1px solid #CBD5E0; border-radius: 3px; margin-top: 8px; display: block; }
+
+    @media print {
+      @page { size: A4 portrait; margin: 15mm 15mm 15mm 15mm; }
+      body > *:not(#preview-overlay) { display: none !important; }
+      #preview-overlay { position: static !important; background: none !important; display: block !important; }
+      .preview-bar { display: none !important; }
+      .preview-body { overflow: visible !important; padding: 0 !important; display: block !important; background: none !important; }
+      .print-paper { width: 100% !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important; min-height: 0 !important; page-break-after: always; }
+      .print-paper:last-child { page-break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SVG 아이콘 스프라이트 -->
+<svg aria-hidden="true" style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="s-elec-stop" viewBox="0 0 20 20">
+    <path d="M10 2L13 8H7L10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+    <path d="M10 8V11M10 13.5V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <rect x="3" y="15" width="14" height="3" rx="1" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  </symbol>
+  <symbol id="s-elec-near" viewBox="0 0 20 20">
+    <path d="M4 10H16M13 6L17 10L13 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="4" cy="10" r="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  </symbol>
+  <symbol id="s-elec-live" viewBox="0 0 20 20">
+    <path d="M11 3L7 10H11L9 17L15 8H11L13 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </symbol>
+  <symbol id="s-lock" viewBox="0 0 20 20">
+    <rect x="4" y="9" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    <path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+    <circle cx="10" cy="13" r="1.5" stroke="currentColor" stroke-width="1.2" fill="none"/>
+  </symbol>
+  <symbol id="s-shield" viewBox="0 0 20 20">
+    <path d="M10 2L4 5v5c0 4 2.8 7 6 8 3.2-1 6-4 6-8V5L10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+    <path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="s-warning" viewBox="0 0 20 20">
+    <path d="M10 3L2 17h16L10 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+    <path d="M10 9v4M10 14.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="s-accident" viewBox="0 0 20 20">
+    <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    <path d="M10 7v4M10 12.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="s-print" viewBox="0 0 20 20">
+    <rect x="4" y="3" width="12" height="6" rx="1" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    <path d="M4 9H2v6h16V9h-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <rect x="5" y="12" width="10" height="5" rx="1" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    <circle cx="15" cy="11.5" r="0.8" fill="currentColor"/>
+  </symbol>
+  <symbol id="s-save" viewBox="0 0 20 20">
+    <path d="M4 3h10l3 3v11a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+    <rect x="7" y="3" width="6" height="4" rx="0.5" stroke="currentColor" stroke-width="1.2" fill="none"/>
+    <rect x="5" y="11" width="10" height="5" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/>
+  </symbol>
+</svg>
+
+<div class="app">
+
+  <header class="toolbar">
+    <div class="tb-l">
+      <a href="index.html" class="tb-back">← 홈으로</a>
+      <span class="tb-title">전기작업계획서</span>
+    </div>
+    <div class="tb-r">
+      <button class="btn-secondary" onclick="tempSave()">
+        <svg width="14" height="14" style="vertical-align:-2px;margin-right:4px"><use href="#s-save"/></svg>임시저장
+      </button>
+      <button class="btn-primary" onclick="openPreview()">
+        <svg width="14" height="14" style="vertical-align:-2px;margin-right:4px"><use href="#s-print"/></svg>미리보기 / 인쇄
+      </button>
+    </div>
+  </header>
+
+  <div class="progress">
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-text" id="progress-text">1 / 4장</div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sb-section">
+      <div class="sb-label">장 목록</div>
+      <ul class="sb-chapters" id="sb-chapters">
+        <li class="sb-ch current" onclick="goChapter(0)">
+          <span class="sb-ch-num">1</span>
+          <span class="sb-ch-label">공사개요 · 작업인원</span>
+        </li>
+        <li class="sb-ch" onclick="goChapter(1)">
+          <span class="sb-ch-num">2</span>
+          <span class="sb-ch-label">전기설비 현황 · 작업 유형</span>
+        </li>
+        <li class="sb-ch" onclick="goChapter(2)">
+          <span class="sb-ch-num">3</span>
+          <span class="sb-ch-label">안전작업절차</span>
+        </li>
+        <li class="sb-ch" onclick="goChapter(3)">
+          <span class="sb-ch-num">4</span>
+          <span class="sb-ch-label">재해유형별 안전대책</span>
+        </li>
+      </ul>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">법령 근거</div>
+      <div style="padding: 0 8px;">
+        <div style="font-size:11.5px;color:var(--ink-s);line-height:1.7;">
+          산업안전보건기준에<br>관한 규칙<br>
+          <span style="color:var(--p);font-weight:700;">제319조 ~ 제321조</span><br>
+          제44조 (접근한계거리)
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ═══ 1장: 공사개요 + 작업인원 ═══ -->
+    <section class="chapter active" id="ch-1">
+      <div class="ch-header">
+        <div class="ch-num">1</div>
+        <div>
+          <div class="ch-title">공사개요 · 작업인원</div>
+          <div class="ch-desc">현장·작업 기본 정보와 전기작업 담당 인원을 입력합니다</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">공사 개요</div>
+        <div class="grid-2">
+          <div class="f col-2"><label>현장명 <em>*</em></label><input id="pi_site" placeholder="현장명" oninput="autoSave()"></div>
+          <div class="f"><label>업체명</label><input id="pi_contractor" oninput="autoSave()"></div>
+          <div class="f"><label>투입 인원</label><input id="pi_workers" type="number" placeholder="명" oninput="autoSave()"></div>
+          <div class="f col-2"><label>작업 장소 <em>*</em></label><input id="pi_location" placeholder="건물명·층·실 등" oninput="autoSave()"></div>
+          <div class="f"><label>작업 시작일</label><input id="pi_start" type="date" oninput="autoSave()"></div>
+          <div class="f"><label>작업 종료일</label><input id="pi_end" type="date" oninput="autoSave()"></div>
+          <div class="f col-2"><label>작업 내용 <em>*</em></label><input id="pi_content" placeholder="구체적인 전기작업 내용" oninput="autoSave()"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">작업 인원 및 자격</div>
+        <div class="grid-2">
+          <div class="f"><label>관리책임자</label><input id="pr_manager" oninput="autoSave()"></div>
+          <div class="f"><label>작업지휘자 <em>*</em></label><input id="pr_supervisor" oninput="autoSave()"></div>
+          <div class="f"><label>지휘자 연락처</label><input id="pr_sup_contact" type="tel" oninput="autoSave()"></div>
+          <div class="f"></div>
+          <div class="f"><label>전기 담당자 (전기기사 등)</label><input id="pr_elec_manager" oninput="autoSave()"></div>
+          <div class="f"><label>담당자 자격</label><input id="pr_elec_cert" placeholder="예: 전기기사 / 전기공사기사" oninput="autoSave()"></div>
+          <div class="f"><label>검전자 성명</label><input id="pr_tester" placeholder="검전기 조작자" oninput="autoSave()"></div>
+          <div class="f"><label>검전자 연락처</label><input id="pr_tester_contact" type="tel" oninput="autoSave()"></div>
+          <div class="f"><label>감시인 성명</label><input id="pr_watcher" oninput="autoSave()"></div>
+          <div class="f"><label>감시인 연락처</label><input id="pr_watcher_contact" type="tel" oninput="autoSave()"></div>
+        </div>
+        <div class="chk-row">
+          <span class="chk-row-l">전기작업 교육</span>
+          <label class="chk"><input type="checkbox" id="edu_special" onchange="autoSave()"><span>전기작업 특별교육</span></label>
+          <label class="chk"><input type="checkbox" id="edu_basic" onchange="autoSave()"><span>기초안전보건교육</span></label>
+          <label class="chk"><input type="checkbox" id="edu_cert" onchange="autoSave()"><span>전기안전 자격 보유</span></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 2장: 전기설비 현황 + 작업 유형 ═══ -->
+    <section class="chapter" id="ch-2">
+      <div class="ch-header">
+        <div class="ch-num">2</div>
+        <div>
+          <div class="ch-title">전기설비 현황 · 작업 유형</div>
+          <div class="ch-desc">대상 전기설비 정보와 작업 종류를 선택합니다</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">전기설비 현황</div>
+        <div class="grid-2">
+          <div class="f"><label>전압 (V) <em>*</em></label><input id="eq_voltage" type="number" placeholder="예: 22900" oninput="onVoltageChange()"></div>
+          <div class="f">
+            <label>전로 종류 <em>*</em></label>
+            <select id="eq_circuit_type" onchange="autoSave()">
+              <option value="">선택</option>
+              <option>배전반 (분전반 포함)</option>
+              <option>분기 케이블</option>
+              <option>가공 배전선로</option>
+              <option>지중 배전선로</option>
+              <option>설비 내부 전로</option>
+              <option>기타</option>
+            </select>
+          </div>
+          <div class="f"><label>차단기 번호 / 위치</label><input id="eq_breaker" placeholder="예: 2층 분전반 3번" oninput="autoSave()"></div>
+          <div class="f"><label>계통 구성</label><input id="eq_system" placeholder="예: 3상 4선 AC 22.9kV" oninput="autoSave()"></div>
+          <div class="f col-2"><label>설비 위치 및 특이사항</label><input id="eq_location" placeholder="건물·층·패널 위치 등" oninput="autoSave()"></div>
+        </div>
+        <div id="voltage-warn-box" style="display:none;" class="voltage-box" style="margin-top:12px;">
+          <svg width="20" height="20"><use href="#s-warning"/></svg>
+          <div class="voltage-box-text">
+            <strong id="voltage-warn-title">고압 전기설비</strong>
+            <span id="voltage-warn-desc">충전전로 접근한계거리를 반드시 확인하세요.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">작업 종류 선택 <em>*</em></div>
+        <div class="work-type-grid">
+          <button class="wt-btn" id="wt-stop" onclick="selWorkType('stop')">
+            <svg width="28" height="28"><use href="#s-elec-stop"/></svg>
+            정전 작업<br><span style="font-size:10px;font-weight:400;color:inherit;opacity:0.75">LOTO 실시 후 무전압 확인</span>
+          </button>
+          <button class="wt-btn" id="wt-near" onclick="selWorkType('near')">
+            <svg width="28" height="28"><use href="#s-elec-near"/></svg>
+            충전전로 근접<br><span style="font-size:10px;font-weight:400;color:inherit;opacity:0.75">접근한계거리 이격 유지</span>
+          </button>
+          <button class="wt-btn" id="wt-live" onclick="selWorkType('live')">
+            <svg width="28" height="28"><use href="#s-elec-live"/></svg>
+            활선 작업<br><span style="font-size:10px;font-weight:400;color:inherit;opacity:0.75">절연방호구 완전 설치</span>
+          </button>
+        </div>
+        <div id="work-type-hint" style="display:none;margin-top:12px;padding:10px 14px;background:var(--ok-bg);border:1px solid #B7D9C4;border-radius:8px;font-size:12.5px;color:#1B5E3A;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">작업 전 사전조사</div>
+        <div class="chk-row" style="padding-top:0;border-top:none;">
+          <span class="chk-row-l">사전확인 항목</span>
+        </div>
+        <div class="chk-row">
+          <label class="chk" style="width:100%;"><input type="checkbox" id="pre_diagram" onchange="autoSave()"><span>단선 결선도 또는 전기 계통도 확보 완료</span></label>
+        </div>
+        <div class="chk-row">
+          <label class="chk" style="width:100%;"><input type="checkbox" id="pre_permit" onchange="autoSave()"><span>관련 기관(전력사업자 등) 작업 허가 취득 완료</span></label>
+        </div>
+        <div class="chk-row">
+          <label class="chk" style="width:100%;"><input type="checkbox" id="pre_notify" onchange="autoSave()"><span>전기 정전 사전 통보 및 관련자 공지 완료</span></label>
+        </div>
+        <div class="chk-row">
+          <label class="chk" style="width:100%;"><input type="checkbox" id="pre_tester" onchange="autoSave()"><span>검전기 작동 상태 확인 완료 (동일 전압 등급)</span></label>
+        </div>
+        <div class="chk-row">
+          <label class="chk" style="width:100%;"><input type="checkbox" id="pre_ppe" onchange="autoSave()"><span>절연보호구 절연성능 확인 완료 (유효기간 이내)</span></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">전기설비 배치 도면 <span style="font-size:11px;font-weight:500;color:var(--ink-m);">선택 입력</span></div>
+        <div class="canvas-wrap">
+          <div class="canvas-toolbar">
+            <button class="ctool" id="dtool-panel"    onclick="edSelTool('panel')">분전반</button>
+            <button class="ctool" id="dtool-breaker"  onclick="edSelTool('breaker')">차단기</button>
+            <button class="ctool" id="dtool-worker"   onclick="edSelTool('worker')">작업자</button>
+            <button class="ctool" id="dtool-watcher"  onclick="edSelTool('watcher')">감시인</button>
+            <div class="diag-sep"></div>
+            <button class="ctool" id="dtool-danger"   onclick="edSelTool('danger')">위험구역</button>
+            <button class="ctool" id="dtool-limit"    onclick="edSelTool('limit')">접근한계선</button>
+            <button class="ctool" id="dtool-workzone" onclick="edSelTool('workzone')">작업구역</button>
+            <div class="diag-sep"></div>
+            <label class="ctool" style="cursor:pointer;">배경 이미지<input type="file" accept="image/*" style="display:none" onchange="edLoadBg(event)"></label>
+            <button class="ctool" onclick="edUndo()">되돌리기</button>
+            <button class="ctool" onclick="edClear()">전체삭제</button>
+          </div>
+          <canvas id="elec-diag-canvas" class="canvas-board" width="920" height="480"></canvas>
+        </div>
+        <div class="diag-hint" id="elec-diag-hint">도구를 선택한 후 캔버스를 클릭하여 배치하세요. 구역 도구는 드래그로 영역을 지정합니다.</div>
+      </div>
+    </section>
+
+    <!-- ═══ 3장: 안전작업절차 ═══ -->
+    <section class="chapter" id="ch-3">
+      <div class="ch-header">
+        <div class="ch-num">3</div>
+        <div>
+          <div class="ch-title">안전작업절차</div>
+          <div class="ch-desc">작업 유형에 따른 단계별 안전 절차 및 보호구를 확인합니다</div>
+        </div>
+      </div>
+
+      <!-- 정전작업 LOTO 절차 (stop 선택 시 표시) -->
+      <div class="card" id="card-loto" style="display:none;">
+        <div class="card-h">정전작업 LOTO 절차 <span style="font-size:11px;font-weight:500;color:var(--ink-m);">규칙 제319조~제321조</span></div>
+        <div class="loto-flow">
+          <div class="loto-step">
+            <div class="loto-conn"><div class="loto-dot">1</div><div class="loto-line"></div></div>
+            <div class="loto-body"><div class="loto-title">작업 전 전로 차단 요청</div><div class="loto-desc">전기 담당자 또는 전력사업자에게 해당 전로 차단 요청. 서면 또는 공식 절차 통해 진행.</div></div>
+          </div>
+          <div class="loto-step">
+            <div class="loto-conn"><div class="loto-dot">2</div><div class="loto-line"></div></div>
+            <div class="loto-body"><div class="loto-title">차단기 개방(OFF) 및 개방 확인</div><div class="loto-desc">해당 회로의 차단기 OFF. 개방 상태 육안 확인 후 기록.</div></div>
+          </div>
+          <div class="loto-step">
+            <div class="loto-conn"><div class="loto-dot">3</div><div class="loto-line"></div></div>
+            <div class="loto-body"><div class="loto-title">잠금(Lock-Out) 및 표지(Tag-Out) 실시</div><div class="loto-desc">차단기에 개인별 자물쇠 잠금 + "작업 중 투입 금지" 표지 부착. 열쇠는 작업자가 직접 보관.</div></div>
+          </div>
+          <div class="loto-step">
+            <div class="loto-conn"><div class="loto-dot">4</div><div class="loto-line"></div></div>
+            <div class="loto-body"><div class="loto-title">검전기로 무전압(無電壓) 확인</div><div class="loto-desc">동일 전압 등급 검전기를 사용하여 작업 대상 전로 전압이 없음을 확인. 3상 전체 확인.</div></div>
+          </div>
+          <div class="loto-step">
+            <div class="loto-conn"><div class="loto-dot">5</div><div class="loto-line"></div></div>
+            <div class="loto-body"><div class="loto-title">잔류전하 방전 및 접지 실시</div><div class="loto-desc">규칙 제320조 — 검전 후 잔류전하 방전. 대용량 설비는 접지봉으로 접지 실시 후 작업.</div></div>
+          </div>
+          <div class="loto-step">
+            <div class="loto-conn"><div class="loto-dot">6</div><div class="loto-line"></div></div>
+            <div class="loto-body"><div class="loto-title">작업 수행</div><div class="loto-desc">절연보호구 착용 유지 상태에서 작업 진행. 감시인은 작업 전 과정 감시.</div></div>
+          </div>
+          <div class="loto-step">
+            <div class="loto-conn"><div class="loto-dot">7</div><div class="loto-line"></div></div>
+            <div class="loto-body"><div class="loto-title">임시 접지 제거</div><div class="loto-desc">작업 완료 후 임시 접지봉 및 접지 케이블 완전 제거 확인.</div></div>
+          </div>
+          <div class="loto-step">
+            <div class="loto-conn"><div class="loto-dot">8</div><div class="loto-line"></div></div>
+            <div class="loto-body"><div class="loto-title">작업자 전원 대피 확인 후 Tag-Out 해제</div><div class="loto-desc">모든 작업자가 안전지대로 대피했음을 육안 및 구두 확인 후 각 작업자 Tag-Out 해제.</div></div>
+          </div>
+          <div class="loto-step">
+            <div class="loto-conn"><div class="loto-dot">9</div></div>
+            <div class="loto-body"><div class="loto-title">복전</div><div class="loto-desc">전기 담당자 최종 확인 후 차단기 투입(ON). 복전 후 이상 여부 재확인.</div></div>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <div class="f"><label>정전 예정 시간</label><input id="loto_start_time" type="datetime-local" oninput="autoSave()"></div>
+          <div class="f" style="margin-top:10px;"><label>복전 예정 시간</label><input id="loto_end_time" type="datetime-local" oninput="autoSave()"></div>
+          <div class="f" style="margin-top:10px;"><label>비상 연락처 (정전 담당)</label><input id="loto_emergency" type="tel" oninput="autoSave()"></div>
+        </div>
+      </div>
+
+      <!-- 접근한계거리 테이블 (near/live 선택 시 표시) -->
+      <div class="card" id="card-limit" style="display:none;">
+        <div class="card-h">충전전로 접근한계거리 <span style="font-size:11px;font-weight:500;color:var(--ink-m);">규칙 제44조 별표 1</span></div>
+        <div id="voltage-highlight-row" style="display:none;margin-bottom:12px;padding:12px 14px;background:#FEF3C7;border:1px solid #FBBF24;border-radius:8px;font-size:13px;font-weight:700;color:#92400E;"></div>
+        <table class="limit-tbl">
+          <thead>
+            <tr>
+              <th>전압(V)</th>
+              <th>충전전로에 대한 접근한계거리</th>
+            </tr>
+          </thead>
+          <tbody id="limit-tbody">
+            <tr><td>300 이하</td><td>접촉 금지</td></tr>
+            <tr><td>300 초과 ~ 750 이하</td><td>30 cm</td></tr>
+            <tr><td>750 초과 ~ 2,000 이하</td><td>45 cm</td></tr>
+            <tr><td>2,000 초과 ~ 15,000 이하</td><td>60 cm</td></tr>
+            <tr><td>15,000 초과 ~ 37,000 이하</td><td>90 cm</td></tr>
+            <tr><td>37,000 초과 ~ 88,000 이하</td><td>150 cm</td></tr>
+            <tr><td>88,000 초과 ~ 121,000 이하</td><td>180 cm</td></tr>
+            <tr><td>121,000 초과 ~ 145,000 이하</td><td>200 cm</td></tr>
+            <tr><td>145,000 초과 ~ 169,000 이하</td><td>225 cm</td></tr>
+            <tr><td>169,000 초과 ~ 242,000 이하</td><td>290 cm</td></tr>
+            <tr><td>242,000 초과 ~ 362,000 이하</td><td>380 cm</td></tr>
+            <tr><td>362,000 초과 ~ 550,000 이하</td><td>520 cm</td></tr>
+            <tr><td>550,000 초과</td><td>640 cm</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px;">
+          <div class="f"><label>해당 전압의 접근한계거리 확인 및 현장 표시 방법</label><input id="limit_marking" placeholder="예: 바닥 라인테이프, 안전 로프, 표지판 등" oninput="autoSave()"></div>
+        </div>
+      </div>
+
+      <!-- 활선작업 추가 조치 (live 선택 시) -->
+      <div class="card" id="card-live-extra" style="display:none;">
+        <div class="card-h">활선작업 추가 안전조치</div>
+        <div class="chk-row" style="padding-top:0;border-top:none;">
+          <label class="chk" style="width:100%;"><input type="checkbox" id="live_tool" onchange="autoSave()"><span>절연공구 전수 사용 확인 (절연손잡이·절연스패너 등)</span></label>
+        </div>
+        <div class="chk-row">
+          <label class="chk" style="width:100%;"><input type="checkbox" id="live_barrier" onchange="autoSave()"><span>인접 충전전로 절연방호구 (방호덮개·절연테이프) 설치 완료</span></label>
+        </div>
+        <div class="chk-row">
+          <label class="chk" style="width:100%;"><input type="checkbox" id="live_partner" onchange="autoSave()"><span>2인 1조 작업 및 감시인 별도 배치</span></label>
+        </div>
+        <div class="chk-row">
+          <label class="chk" style="width:100%;"><input type="checkbox" id="live_no_rain" onchange="autoSave()"><span>우천·우설 등 이상기후 시 활선작업 중단 기준 공유</span></label>
+        </div>
+      </div>
+
+      <!-- 절연보호구 체크 (공통) -->
+      <div class="card">
+        <div class="card-h">절연보호구 착용 확인</div>
+        <div class="ppe-grid" id="ppe-grid">
+          <label class="ppe-item" onclick="togglePpe(this)">
+            <input type="checkbox" id="ppe_glove" onchange="autoSave()">
+            <span class="ppe-item-label">절연장갑<br><small style="font-size:10px;opacity:0.7;">AC 1,000V 이상 내전압</small></span>
+          </label>
+          <label class="ppe-item" onclick="togglePpe(this)">
+            <input type="checkbox" id="ppe_shoe" onchange="autoSave()">
+            <span class="ppe-item-label">절연화<br><small style="font-size:10px;opacity:0.7;">내전압형</small></span>
+          </label>
+          <label class="ppe-item" onclick="togglePpe(this)">
+            <input type="checkbox" id="ppe_helmet" onchange="autoSave()">
+            <span class="ppe-item-label">절연 안전모<br><small style="font-size:10px;opacity:0.7;">AE형</small></span>
+          </label>
+          <label class="ppe-item" onclick="togglePpe(this)">
+            <input type="checkbox" id="ppe_suit" onchange="autoSave()">
+            <span class="ppe-item-label">절연복<br><small style="font-size:10px;opacity:0.7;">필요 시</small></span>
+          </label>
+          <label class="ppe-item" onclick="togglePpe(this)">
+            <input type="checkbox" id="ppe_sleeve" onchange="autoSave()">
+            <span class="ppe-item-label">절연 소매<br><small style="font-size:10px;opacity:0.7;">팔 보호</small></span>
+          </label>
+          <label class="ppe-item" onclick="togglePpe(this)">
+            <input type="checkbox" id="ppe_tools" onchange="autoSave()">
+            <span class="ppe-item-label">절연공구<br><small style="font-size:10px;opacity:0.7;">절연손잡이 전용</small></span>
+          </label>
+          <label class="ppe-item" onclick="togglePpe(this)">
+            <input type="checkbox" id="ppe_detector" onchange="autoSave()">
+            <span class="ppe-item-label">검전기 보유<br><small style="font-size:10px;opacity:0.7;">동일 전압 등급</small></span>
+          </label>
+          <label class="ppe-item" onclick="togglePpe(this)">
+            <input type="checkbox" id="ppe_glasses" onchange="autoSave()">
+            <span class="ppe-item-label">아크 차광안경<br><small style="font-size:10px;opacity:0.7;">활선 시 필수</small></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 작업순서 플로우 -->
+      <div class="card">
+        <div class="card-h">작업순서 편집</div>
+        <div id="ws-container"></div>
+      </div>
+    </section>
+
+    <!-- ═══ 4장: 재해유형별 안전대책 ═══ -->
+    <section class="chapter" id="ch-4">
+      <div class="ch-header">
+        <div class="ch-num">4</div>
+        <div>
+          <div class="ch-title">재해유형별 안전대책</div>
+          <div class="ch-desc">전기작업 특성에 맞는 재해 유형별 안전조치를 입력합니다</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">재해유형별 안전대책</div>
+        <table class="at-tbl">
+          <thead>
+            <tr>
+              <th style="width:100px;">위험요인</th>
+              <th style="width:90px;">발생형태</th>
+              <th style="width:80px;">재해유형</th>
+              <th>안전조치</th>
+              <th class="at-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="acc-tbody"></tbody>
+        </table>
+        <button class="at-add" onclick="addAccRow()">+ 행 추가</button>
+      </div>
+
+      <div class="card">
+        <div class="card-h">비상대응 계획</div>
+        <div class="f">
+          <label>감전 사고 발생 시 응급처치 절차</label>
+          <textarea id="emrg_shock" rows="3" placeholder="1. 전원 차단 → 2. 부상자 접촉 금지(고압 시) → 3. 119 신고 → 4. 심폐소생술 실시(필요 시)" oninput="autoSave()"></textarea>
+        </div>
+        <div class="f" style="margin-top:10px;">
+          <label>화재 발생 시 대응 절차</label>
+          <textarea id="emrg_fire" rows="2" placeholder="전기화재: CO2 소화기 사용, 물 사용 금지, 차단기 OFF 후 대피" oninput="autoSave()"></textarea>
+        </div>
+        <div class="chk-row">
+          <span class="chk-row-l">비상 설비</span>
+          <label class="chk"><input type="checkbox" id="emrg_aed" onchange="autoSave()"><span>AED 위치 확인</span></label>
+          <label class="chk"><input type="checkbox" id="emrg_kit" onchange="autoSave()"><span>구급함 위치 확인</span></label>
+          <label class="chk"><input type="checkbox" id="emrg_co2" onchange="autoSave()"><span>CO2 소화기 비치</span></label>
+        </div>
+      </div>
+
+      <div class="law-box">
+        <div class="law-box-title">법령 근거</div>
+        <ul>
+          <li>산업안전보건기준에 관한 규칙 제44조 — 충전전로 근접 작업 시 보호조치 (접근한계거리 준수)</li>
+          <li>동 규칙 제319조 — 정전(停電) 작업 절차 (차단·잠금·검전·접지·복전)</li>
+          <li>동 규칙 제320조 — 잔류전하 방전 조치</li>
+          <li>동 규칙 제321조 — 충전전로의 방호구 설치 등 (활선작업 시)</li>
+          <li>산업안전보건법 제38조 — 안전조치 의무</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn" id="btn-prev" onclick="prevChapter()" disabled>← 이전</button>
+    <div class="dots">
+      <button class="dot active" onclick="goChapter(0)"></button>
+      <button class="dot" onclick="goChapter(1)"></button>
+      <button class="dot" onclick="goChapter(2)"></button>
+      <button class="dot" onclick="goChapter(3)"></button>
+    </div>
+    <button class="nav-btn primary" id="btn-next" onclick="nextChapter()">다음 →</button>
+  </nav>
+
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<!-- 인쇄 미리보기 오버레이 -->
+<div class="preview-overlay" id="preview-overlay">
+  <div class="preview-bar">
+    <div class="preview-bar-l">
+      <span class="preview-bar-title">전기작업계획서 미리보기</span>
+      <span class="preview-bar-hint">인쇄 전 내용을 확인하세요</span>
+    </div>
+    <div class="preview-bar-r">
+      <button class="btn-secondary" onclick="closePreview()">닫기</button>
+      <button class="btn-primary" onclick="doPrint()">
+        <svg width="14" height="14" style="vertical-align:-2px;margin-right:4px"><use href="#s-print"/></svg>인쇄 / PDF 저장
+      </button>
+    </div>
+  </div>
+  <div class="preview-body" id="preview-body"></div>
+</div>
+
+<script>
+  var LS_KEY = 'musai_elec_plan_v1';
+  var CIRCLE_NUMS = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+
+  var STATE = {
+    currentIdx: 0,
+    workType: '',
+    accRows: [],
+    workSteps: [],
+    elecDiagItems: [],
+    elecDiagBg: null
+  };
+
+  var LIMIT_TABLE = [
+    { max: 300,    label: '300 이하',                     dist: '접촉 금지' },
+    { max: 750,    label: '300 초과 ~ 750 이하',           dist: '30 cm' },
+    { max: 2000,   label: '750 초과 ~ 2,000 이하',         dist: '45 cm' },
+    { max: 15000,  label: '2,000 초과 ~ 15,000 이하',      dist: '60 cm' },
+    { max: 37000,  label: '15,000 초과 ~ 37,000 이하',     dist: '90 cm' },
+    { max: 88000,  label: '37,000 초과 ~ 88,000 이하',     dist: '150 cm' },
+    { max: 121000, label: '88,000 초과 ~ 121,000 이하',    dist: '180 cm' },
+    { max: 145000, label: '121,000 초과 ~ 145,000 이하',   dist: '200 cm' },
+    { max: 169000, label: '145,000 초과 ~ 169,000 이하',   dist: '225 cm' },
+    { max: 242000, label: '169,000 초과 ~ 242,000 이하',   dist: '290 cm' },
+    { max: 362000, label: '242,000 초과 ~ 362,000 이하',   dist: '380 cm' },
+    { max: 550000, label: '362,000 초과 ~ 550,000 이하',   dist: '520 cm' },
+    { max: Infinity, label: '550,000 초과',               dist: '640 cm' }
+  ];
+
+  var DEFAULT_ACC_ROWS = [
+    { risk: '충전부 접촉', occur: '직접 접촉', acc: '감전', meas: '정전 작업 원칙 준수, LOTO 실시, 검전 확인' },
+    { risk: '절연 불량', occur: '누전·지락', acc: '감전·화재', meas: '절연저항 측정, 접지 설치, 누전차단기 설치' },
+    { risk: '잔류전하', occur: '방전 미실시', acc: '감전·아크 화상', meas: '방전 접지 실시 후 작업, 접지봉 사용' },
+    { risk: '단락', occur: '도체 접촉', acc: '아크 화상·화재', meas: '절연 방호구 설치, 단락보호 확인' },
+    { risk: '오조작', occur: 'LOTO 미실시', acc: '감전', meas: '차단기 표지 부착, 개인 잠금장치 사용' },
+    { risk: '케이블 손상', occur: '피복 파손', acc: '감전', meas: '케이블 사전 점검, 손상 구간 절연 처리' }
+  ];
+
+  var DEFAULT_WORK_STEPS = [
+    { phase: '작업 준비',       items: ['TBM 실시 및 위험요소 공유', '전기설비 현황 확인 및 계통도 검토', '검전기·절연보호구 준비 및 이상 여부 확인'] },
+    { phase: '정전 및 잠금',    items: ['담당자에게 정전 요청 및 승인', '차단기 OFF 후 Lock-Out / Tag-Out 실시', '검전기로 무전압 확인, 잔류전하 방전'] },
+    { phase: '전기 작업 수행',  items: ['감시인 배치 후 작업 시작', '절연보호구 착용 유지', '작업 진행 및 이상 여부 실시간 확인'] },
+    { phase: '복전 및 정리',    items: ['임시접지 제거 확인', '작업자 전원 대피 후 Tag-Out 해제', '담당자 최종 확인 후 복전', '현장 정리 및 이상 여부 재확인'] }
+  ];
+
+  var DEFAULT_WORK_STEPS_NEAR = [
+    { phase: '작업 준비',       items: ['접근한계거리 확인 및 현장 표시', '절연방호구 설치 범위 결정', '감시인 배치 위치 선정'] },
+    { phase: '방호구 설치',     items: ['인접 충전전로에 절연방호덮개 설치', '접근금지 라인 테이프 또는 안전로프 설치', '작업자 전원 접근한계거리 교육'] },
+    { phase: '작업 수행',       items: ['절연보호구 착용 후 작업 진행', '접근한계거리 이내 진입 금지 유지', '감시인의 지속 감시'] },
+    { phase: '철수',            items: ['방호구 제거 및 현장 정리', '이상 여부 확인'] }
+  ];
+
+  /* ── 장 네비게이션 ── */
+  function goChapter(idx) {
+    STATE.currentIdx = idx;
+    document.querySelectorAll('.chapter').forEach(function (el, i) {
+      el.classList.toggle('active', i === idx);
+    });
+    var chs = document.querySelectorAll('.sb-ch');
+    chs.forEach(function (el, i) { el.classList.toggle('current', i === idx); });
+    var dots = document.querySelectorAll('.dot');
+    dots.forEach(function (el, i) { el.classList.toggle('active', i === idx); });
+    document.getElementById('btn-prev').disabled = (idx === 0);
+    document.getElementById('btn-next').disabled = (idx === 3);
+    document.getElementById('btn-next').textContent = idx === 3 ? '완료 ✓' : '다음 →';
+    var pct = ((idx + 1) / 4 * 100) + '%';
+    document.getElementById('progress-fill').style.width = pct;
+    document.getElementById('progress-text').textContent = (idx + 1) + ' / 4장';
+    document.querySelector('.main').scrollTop = 0;
+  }
+
+  function prevChapter() { if (STATE.currentIdx > 0) goChapter(STATE.currentIdx - 1); }
+  function nextChapter() { if (STATE.currentIdx < 3) goChapter(STATE.currentIdx + 1); }
+
+  /* ── 작업 유형 선택 ── */
+  var WORK_TYPE_HINTS = {
+    stop: '✅ 정전작업: LOTO 9단계 절차를 반드시 준수합니다. 무전압 확인 없이 작업 시작 절대 금지.',
+    near: '⚠️ 충전전로 근접작업: 전압별 접근한계거리(별표 1) 이상 이격을 유지합니다. 이격 거리 현장 표시 필수.',
+    live: '🔴 활선작업: 절연방호구 완전 설치 후에만 작업 가능. 반드시 절연공구 사용, 2인 1조 원칙.'
+  };
+
+  function selWorkType(type) {
+    STATE.workType = type;
+    ['stop','near','live'].forEach(function (t) {
+      document.getElementById('wt-' + t).classList.toggle('selected', t === type);
+    });
+    var hint = document.getElementById('work-type-hint');
+    hint.style.display = 'block';
+    hint.textContent = WORK_TYPE_HINTS[type] || '';
+
+    var isStop = (type === 'stop');
+    var isNearLive = (type === 'near' || type === 'live');
+    document.getElementById('card-loto').style.display = isStop ? '' : 'none';
+    document.getElementById('card-limit').style.display = isNearLive ? '' : 'none';
+    document.getElementById('card-live-extra').style.display = (type === 'live') ? '' : 'none';
+
+    /* 작업순서 기본값 교체 */
+    if (!STATE._wsCustomized) {
+      var tpl = (type === 'stop') ? DEFAULT_WORK_STEPS : DEFAULT_WORK_STEPS_NEAR;
+      STATE.workSteps = tpl.map(function (s) { return { phase: s.phase, items: s.items.slice() }; });
+      renderWorkSteps();
+    }
+
+    highlightLimitRow();
+    autoSave();
+  }
+
+  /* ── 전압 입력 → 경고 + 테이블 하이라이트 ── */
+  function onVoltageChange() {
+    var val = parseInt(document.getElementById('eq_voltage').value) || 0;
+    var warnBox = document.getElementById('voltage-warn-box');
+    if (val > 750) {
+      warnBox.style.display = 'flex';
+      var tier = val <= 7000 ? '고압' : val <= 25000 ? '특고압' : '초고압';
+      document.getElementById('voltage-warn-title').textContent = tier + ' 전기설비 (약 ' + (val/1000).toFixed(1) + ' kV)';
+      document.getElementById('voltage-warn-desc').textContent = '3장 접근한계거리 테이블에서 해당 전압 행을 확인하세요.';
+    } else {
+      warnBox.style.display = 'none';
+    }
+    highlightLimitRow();
+    autoSave();
+  }
+
+  function highlightLimitRow() {
+    var val = parseInt(document.getElementById('eq_voltage').value) || 0;
+    if (!val) return;
+    var rows = document.querySelectorAll('#limit-tbody tr');
+    var matchIdx = -1;
+    for (var i = 0; i < LIMIT_TABLE.length; i++) {
+      if (val <= LIMIT_TABLE[i].max) { matchIdx = i; break; }
+    }
+    rows.forEach(function (r, i) {
+      r.style.background = (i === matchIdx) ? '#FEF3C7' : '';
+      r.style.fontWeight = (i === matchIdx) ? '700' : '';
+    });
+    var hl = document.getElementById('voltage-highlight-row');
+    if (matchIdx >= 0 && LIMIT_TABLE[matchIdx]) {
+      hl.style.display = 'block';
+      hl.textContent = '현재 전압(' + val.toLocaleString() + 'V) 기준 접근한계거리: ' + LIMIT_TABLE[matchIdx].dist;
+    }
+  }
+
+  /* ── PPE 토글 ── */
+  function togglePpe(el) {
+    setTimeout(function () { el.classList.toggle('checked', el.querySelector('input').checked); autoSave(); }, 0);
+  }
+
+  /* ── 작업순서 ── */
+  function renderWorkSteps() {
+    var el = document.getElementById('ws-container');
+    if (!el) return;
+    var steps = STATE.workSteps;
+    var html = '<div class="ws-flow">';
+    steps.forEach(function (step, si) {
+      html += '<div class="ws-step-wrap">'
+            + '<div class="ws-step-conn"><div class="ws-step-dot"></div>'
+            + (si < steps.length - 1 ? '<div class="ws-step-line"></div>' : '')
+            + '</div>'
+            + '<div class="ws-box">'
+            + '<div class="ws-phase-row">'
+            + '<div class="ws-step-num">' + (si + 1) + '</div>'
+            + '<input class="ws-phase-inp" placeholder="단계명" value="' + esc(step.phase) + '" oninput="updateWorkPhase(' + si + ',this.value)">'
+            + (steps.length > 1 ? '<button class="ws-del-step" onclick="removeWorkStep(' + si + ')">×</button>' : '')
+            + '</div><div class="ws-items-area">';
+      step.items.forEach(function (item, ii) {
+        html += '<div class="ws-item-row">'
+              + '<span class="ws-item-num">' + (CIRCLE_NUMS[ii] || (ii+1)) + '</span>'
+              + '<input class="ws-item-inp" placeholder="작업내용" value="' + esc(item) + '" oninput="updateWorkItem(' + si + ',' + ii + ',this.value)">'
+              + (step.items.length > 1 ? '<button class="ws-del-item" onclick="removeWorkItem(' + si + ',' + ii + ')">×</button>' : '')
+              + '</div>';
+      });
+      html += '<button class="ws-add-item" onclick="addWorkItem(' + si + ')">+ 추가</button></div></div></div>';
+    });
+    html += '<button class="ws-add-step" onclick="addWorkStep()">+ 단계 추가</button></div>';
+    el.innerHTML = html;
+  }
+
+  function updateWorkPhase(si, val) { STATE.workSteps[si].phase = val; STATE._wsCustomized = true; autoSave(); }
+  function updateWorkItem(si, ii, val) { STATE.workSteps[si].items[ii] = val; STATE._wsCustomized = true; autoSave(); }
+  function addWorkStep() { STATE.workSteps.push({ phase: '', items: [''] }); renderWorkSteps(); autoSave(); }
+  function removeWorkStep(si) { STATE.workSteps.splice(si, 1); renderWorkSteps(); autoSave(); }
+  function addWorkItem(si) { STATE.workSteps[si].items.push(''); renderWorkSteps(); autoSave(); }
+  function removeWorkItem(si, ii) { STATE.workSteps[si].items.splice(ii, 1); renderWorkSteps(); autoSave(); }
+
+  /* ── 재해유형 ── */
+  function renderAccRows() {
+    var tbody = document.getElementById('acc-tbody');
+    if (!tbody) return;
+    if (!STATE.accRows.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#8FA3BC;padding:16px;">항목 없음</td></tr>';
+      return;
+    }
+    tbody.innerHTML = STATE.accRows.map(function (r, i) {
+      return '<tr>'
+        + '<td><div class="at-ce" contenteditable="true" data-ph="위험요인" data-ai="' + i + '" data-af="risk">'  + esc(r.risk)  + '</div></td>'
+        + '<td><div class="at-ce" contenteditable="true" data-ph="발생형태" data-ai="' + i + '" data-af="occur">' + esc(r.occur) + '</div></td>'
+        + '<td><div class="at-ce" contenteditable="true" data-ph="재해유형" data-ai="' + i + '" data-af="acc">'   + esc(r.acc)   + '</div></td>'
+        + '<td><div class="at-ce" contenteditable="true" data-ph="안전조치" data-ai="' + i + '" data-af="meas">'  + esc(r.meas)  + '</div></td>'
+        + '<td class="at-actions"><button class="at-del" onclick="delAccRow(' + i + ')">×</button></td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  function addAccRow() { STATE.accRows.push({ risk: '', occur: '', acc: '', meas: '' }); renderAccRows(); autoSave(); }
+  function delAccRow(i) { STATE.accRows.splice(i, 1); renderAccRows(); autoSave(); }
+
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.classList && t.classList.contains('at-ce')) {
+      var i = parseInt(t.dataset.ai, 10);
+      var f = t.dataset.af;
+      if (STATE.accRows[i]) { STATE.accRows[i][f] = t.textContent; autoSave(); }
+    }
+  });
+
+  /* ── 저장/복원 ── */
+  function gatherFields() {
+    var ids = ['pi_site','pi_contractor','pi_workers','pi_location','pi_start','pi_end','pi_content',
+               'pr_manager','pr_supervisor','pr_sup_contact','pr_elec_manager','pr_elec_cert',
+               'pr_tester','pr_tester_contact','pr_watcher','pr_watcher_contact',
+               'eq_voltage','eq_circuit_type','eq_breaker','eq_system','eq_location',
+               'loto_start_time','loto_end_time','loto_emergency','limit_marking',
+               'emrg_shock','emrg_fire'];
+    var fields = {};
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) fields[id] = el.value;
+    });
+    var chkIds = ['edu_special','edu_basic','edu_cert',
+                  'pre_diagram','pre_permit','pre_notify','pre_tester','pre_ppe',
+                  'live_tool','live_barrier','live_partner','live_no_rain',
+                  'ppe_glove','ppe_shoe','ppe_helmet','ppe_suit','ppe_sleeve','ppe_tools','ppe_detector','ppe_glasses',
+                  'emrg_aed','emrg_kit','emrg_co2'];
+    var checks = {};
+    chkIds.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) checks[id] = el.checked;
+    });
+    return { fields: fields, checks: checks };
+  }
+
+  function autoSave() {
+    try {
+      var d = gatherFields();
+      d.workType      = STATE.workType;
+      d.workSteps     = STATE.workSteps;
+      d.accRows       = STATE.accRows;
+      d.currentIdx    = STATE.currentIdx;
+      d._wsCustomized = STATE._wsCustomized;
+      d.elecDiagItems = STATE.elecDiagItems;
+      d.elecDiagBg    = STATE.elecDiagBg;
+      localStorage.setItem(LS_KEY, JSON.stringify(d));
+    } catch (e) {}
+  }
+
+  function tempSave() { autoSave(); toast('임시저장 완료'); }
+
+  function loadFromStorage() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (!d) return;
+      if (d.fields) {
+        Object.keys(d.fields).forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.value = d.fields[id];
+        });
+      }
+      if (d.checks) {
+        Object.keys(d.checks).forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) { el.checked = d.checks[id]; if (el.closest('.ppe-item')) el.closest('.ppe-item').classList.toggle('checked', el.checked); }
+        });
+      }
+      if (d.workType) { STATE.workType = d.workType; selWorkType(d.workType); }
+      if (d.workSteps && d.workSteps.length) { STATE.workSteps = d.workSteps; renderWorkSteps(); }
+      if (d.accRows && d.accRows.length) { STATE.accRows = d.accRows; renderAccRows(); }
+      if (d._wsCustomized) STATE._wsCustomized = true;
+      if (d.elecDiagItems) { STATE.elecDiagItems = d.elecDiagItems; }
+      if (d.elecDiagBg) { STATE.elecDiagBg = d.elecDiagBg; }
+      onVoltageChange();
+    } catch (e) {}
+  }
+
+  /* ── 인쇄 미리보기 ── */
+  function fv(id) { var el = document.getElementById(id); return el ? (el.value || '') : ''; }
+  function fc(id) { var el = document.getElementById(id); return el ? el.checked : false; }
+  function pCell(v) { return (v == null || v === '') ? '<span style="color:#CBD5E0;font-style:italic">—</span>' : esc(String(v)); }
+  function pRow2(l1, v1, l2, v2) {
+    if (!l2 && v2 == null) return '<tr><th>' + l1 + '</th><td colspan="3">' + pCell(v1) + '</td></tr>';
+    return '<tr><th>' + l1 + '</th><td>' + pCell(v1) + '</td><th>' + l2 + '</th><td>' + pCell(v2) + '</td></tr>';
+  }
+  function pRow1(l, v) { return '<tr><th>' + l + '</th><td colspan="3">' + pCell(v) + '</td></tr>'; }
+  function pRowTA(l, v) {
+    var val = (!v) ? '<span style="color:#CBD5E0;font-style:italic">—</span>' : esc(v).replace(/\n/g,'<br>');
+    return '<tr><th style="vertical-align:top">' + l + '</th><td colspan="3">' + val + '</td></tr>';
+  }
+  function pChkList(ids, labels) {
+    var r = [];
+    ids.forEach(function (id, i) { if (fc(id)) r.push(labels[i]); });
+    return r.join('　') || '—';
+  }
+
+  function buildDocHeader(title, pg) {
+    return '<div class="p-doc-header">'
+         + '<div class="p-brand">무사이<small>Musai — 오늘도 무사히, 현장을 지킵니다</small></div>'
+         + '<div class="p-doc-title">' + esc(title) + '</div>'
+         + '<div class="p-doc-pg">작성일: ' + today() + '<br>' + pg + '</div>'
+         + '</div>';
+  }
+
+  function buildPage1(pg) {
+    var wt = {'stop':'정전작업','near':'충전전로 근접작업','live':'활선작업'}[STATE.workType] || '—';
+    var edu = pChkList(['edu_special','edu_basic','edu_cert'], ['전기작업 특별교육','기초안전보건교육','전기안전 자격 보유']);
+    var pre = pChkList(['pre_diagram','pre_permit','pre_notify','pre_tester','pre_ppe'],
+                       ['계통도 확보','작업허가 취득','정전 통보 완료','검전기 확인','보호구 확인']);
+    return '<div class="print-paper">'
+         + buildDocHeader('전기작업계획서', pg)
+         + '<div class="p-section"><div class="p-sec-title">1. 공사 개요</div>'
+         + '<table class="p-tbl"><colgroup><col style="width:80px"><col><col style="width:80px"><col></colgroup>'
+         + pRow1('현장명', fv('pi_site'))
+         + pRow2('업체명', fv('pi_contractor'), '투입인원', fv('pi_workers') ? fv('pi_workers')+'명' : '')
+         + pRow1('작업장소', fv('pi_location'))
+         + pRow2('시작일', fv('pi_start'), '종료일', fv('pi_end'))
+         + pRow1('작업내용', fv('pi_content'))
+         + pRow2('작업 종류', wt, '', '')
+         + '</table></div>'
+         + '<div class="p-section"><div class="p-sec-title">2. 작업 인원 및 자격</div>'
+         + '<table class="p-tbl"><colgroup><col style="width:80px"><col><col style="width:80px"><col></colgroup>'
+         + pRow2('관리책임자', fv('pr_manager'), '작업지휘자', fv('pr_supervisor'))
+         + pRow2('지휘자 연락처', fv('pr_sup_contact'), '', '')
+         + pRow2('전기 담당자', fv('pr_elec_manager'), '자격', fv('pr_elec_cert'))
+         + pRow2('검전자', fv('pr_tester'), '검전자 연락처', fv('pr_tester_contact'))
+         + pRow2('감시인', fv('pr_watcher'), '감시인 연락처', fv('pr_watcher_contact'))
+         + '<tr><th>전기 교육</th><td colspan="3">' + edu + '</td></tr>'
+         + '</table></div>'
+         + '<div class="p-section"><div class="p-sec-title">3. 전기설비 현황</div>'
+         + '<table class="p-tbl"><colgroup><col style="width:80px"><col><col style="width:80px"><col></colgroup>'
+         + pRow2('전압', fv('eq_voltage') ? fv('eq_voltage')+'V' : '', '전로 종류', fv('eq_circuit_type'))
+         + pRow2('차단기 번호', fv('eq_breaker'), '계통 구성', fv('eq_system'))
+         + pRow1('설비 위치', fv('eq_location'))
+         + '<tr><th>사전확인</th><td colspan="3">' + pre + '</td></tr>'
+         + '</table></div>'
+         + (_edCanvas && STATE.elecDiagItems && STATE.elecDiagItems.length ? '<div class="p-section"><div class="p-sec-title">전기설비 배치 도면</div><img class="p-diagram" src="' + _edCanvas.toDataURL() + '"></div>' : '')
+         + '</div>';
+  }
+
+  function buildPage2(pg) {
+    var wt = STATE.workType;
+    var ppeList = pChkList(
+      ['ppe_glove','ppe_shoe','ppe_helmet','ppe_suit','ppe_sleeve','ppe_tools','ppe_detector','ppe_glasses'],
+      ['절연장갑','절연화','절연안전모','절연복','절연소매','절연공구','검전기','아크차광안경']
+    );
+
+    var procHtml = '';
+    if (wt === 'stop') {
+      var lotoSteps = [
+        { n:1, t:'전로 차단 요청', d:'전기 담당자·전력사업자에게 해당 전로 차단 요청 및 승인' },
+        { n:2, t:'차단기 OFF',    d:'해당 회로 차단기 개방(OFF) 및 개방 상태 확인' },
+        { n:3, t:'LOTO 실시',     d:'자물쇠 잠금(Lock-Out) + "작업 중 투입 금지" 표지(Tag-Out) 부착' },
+        { n:4, t:'검전 확인',     d:'검전기로 무전압(無電壓) 상태 확인 (3상 전체)' },
+        { n:5, t:'접지 실시',     d:'잔류전하 방전 및 접지봉 접지 실시 (규칙 제320조)' },
+        { n:6, t:'작업 수행',     d:'절연보호구 착용 유지, 감시인 감시 하에 작업 진행' },
+        { n:7, t:'접지 제거',     d:'작업 완료 후 임시 접지봉 및 케이블 제거' },
+        { n:8, t:'대피 확인',     d:'모든 작업자 안전지대 대피 확인 후 Tag-Out 해제' },
+        { n:9, t:'복전',          d:'전기 담당자 최종 확인 후 차단기 투입(ON)' }
+      ];
+      var lotoProcHtml = lotoSteps.map(function (s) {
+        return '<div class="p-loto-step">'
+             + '<div class="p-loto-num">' + s.n + '</div>'
+             + '<div class="p-loto-text"><strong>' + s.t + '</strong> — ' + s.d + '</div>'
+             + '</div>';
+      }).join('');
+      var lotoTime = fv('loto_start_time') + (fv('loto_end_time') ? ' ~ ' + fv('loto_end_time') : '');
+      procHtml = '<div class="p-section"><div class="p-sec-title">4. 정전작업 LOTO 절차 (규칙 제319조~제321조)</div>'
+               + '<div style="padding:8px 0;">' + lotoProcHtml + '</div>'
+               + (lotoTime ? '<table class="p-tbl" style="margin-top:8px;"><colgroup><col style="width:80px"><col></colgroup>' + pRow1('정전 시간', lotoTime) + '</table>' : '')
+               + '</div>';
+    } else {
+      var v = parseInt(fv('eq_voltage')) || 0;
+      var matchRow = null;
+      for (var i = 0; i < LIMIT_TABLE.length; i++) {
+        if (v <= LIMIT_TABLE[i].max) { matchRow = LIMIT_TABLE[i]; break; }
+      }
+      var limitNote = matchRow
+        ? '<div style="background:#FEF3C7;border:1px solid #FBBF24;border-radius:4px;padding:6px 10px;font-size:10px;font-weight:700;color:#92400E;margin-bottom:8px;">현재 전압(' + v.toLocaleString() + 'V) → 접근한계거리: ' + matchRow.dist + '</div>'
+        : '';
+      var limitRows = LIMIT_TABLE.map(function (row, idx) {
+        var hi = (v > 0 && v <= row.max && (idx === 0 || v > LIMIT_TABLE[idx-1].max));
+        return '<tr' + (hi ? ' style="background:#FEF3C7;font-weight:700;"' : '') + '><td>' + row.label + '</td><td style="text-align:center">' + row.dist + '</td></tr>';
+      }).join('');
+      procHtml = '<div class="p-section"><div class="p-sec-title">4. 충전전로 접근한계거리 (규칙 제44조 별표 1)</div>'
+               + limitNote
+               + '<table class="p-limit-tbl"><thead><tr><th>전압(V)</th><th>접근한계거리</th></tr></thead><tbody>' + limitRows + '</tbody></table>'
+               + (fv('limit_marking') ? '<div style="margin-top:6px;font-size:10px;">현장 이격 표시 방법: ' + esc(fv('limit_marking')) + '</div>' : '')
+               + '</div>';
+    }
+
+    var wsHtml = '';
+    var steps = STATE.workSteps || [];
+    if (steps.length) {
+      var wfBoxes = steps.map(function (s, si) {
+        var items = s.items.map(function (it, ii) { return '<div class="p-wf-item">' + (CIRCLE_NUMS[ii]||ii+1) + ' ' + esc(it) + '</div>'; }).join('');
+        return (si > 0 ? '<div class="p-wf-arrow">&#8594;</div>' : '')
+             + '<div class="p-wf-box"><div class="p-wf-phase">' + (si+1) + '. ' + esc(s.phase) + '</div><div class="p-wf-items">' + items + '</div></div>';
+      }).join('');
+      wsHtml = '<div class="p-wf-wrap">' + wfBoxes + '</div>';
+    }
+
+    return '<div class="print-paper">'
+         + buildDocHeader('전기작업계획서', pg)
+         + procHtml
+         + '<div class="p-section"><div class="p-sec-title">5. 작업순서</div>' + (wsHtml || '<div style="color:#8FA3BC;font-size:9px;padding:8px;">미입력</div>') + '</div>'
+         + '<div class="p-section"><div class="p-sec-title">6. 절연보호구 착용</div>'
+         + '<table class="p-tbl"><colgroup><col style="width:80px"><col></colgroup>' + pRow1('착용 보호구', ppeList) + '</table></div>'
+         + '</div>';
+  }
+
+  function buildPage3(pg) {
+    var rows = STATE.accRows.map(function (r) {
+      return '<tr><td>' + esc(r.risk) + '</td><td>' + esc(r.occur) + '</td><td>' + esc(r.acc) + '</td><td>' + esc(r.meas) + '</td></tr>';
+    }).join('');
+    if (!rows) rows = '<tr><td colspan="4" style="text-align:center;color:#8FA3BC;padding:14px;">항목 없음</td></tr>';
+    var emrg = pChkList(['emrg_aed','emrg_kit','emrg_co2'], ['AED 위치 확인','구급함 위치 확인','CO2 소화기 비치']);
+
+    return '<div class="print-paper">'
+         + buildDocHeader('전기작업계획서', pg)
+         + '<div class="p-section"><div class="p-sec-title">7. 재해유형별 안전대책</div>'
+         + '<table class="p-acc-tbl"><colgroup><col style="width:90px"><col style="width:70px"><col style="width:70px"><col></colgroup>'
+         + '<thead><tr><th>위험요인</th><th>발생형태</th><th>재해유형</th><th>안전조치</th></tr></thead>'
+         + '<tbody>' + rows + '</tbody></table></div>'
+         + '<div class="p-section"><div class="p-sec-title">8. 비상대응 계획</div>'
+         + '<table class="p-tbl"><colgroup><col style="width:80px"><col></colgroup>'
+         + pRowTA('감전 응급처치', fv('emrg_shock'))
+         + pRowTA('화재 대응', fv('emrg_fire'))
+         + pRow1('비상 설비', emrg)
+         + '</table></div>'
+         + '<div class="p-section"><div class="p-sec-title">법령 근거</div>'
+         + '<div style="font-size:9.5px;color:#4A6280;padding:6px 0;line-height:1.7;">'
+         + '산업안전보건기준에 관한 규칙 제44조 (충전전로 근접 작업 시 보호조치) · 제319조 (정전작업 절차) · 제320조 (잔류전하 방전) · 제321조 (충전전로 방호구 설치)'
+         + '</div></div>'
+         + '<div class="p-sign-row">'
+         + '<div class="p-sign-cell">관리책임자</div><div class="p-sign-cell">작업지휘자</div><div class="p-sign-cell">전기 담당자</div><div class="p-sign-cell">확 인</div>'
+         + '</div>'
+         + '</div>';
+  }
+
+  function openPreview() {
+    var pages = [buildPage1('1 / 3'), buildPage2('2 / 3'), buildPage3('3 / 3')];
+    document.getElementById('preview-body').innerHTML = pages.join('');
+    document.getElementById('preview-overlay').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePreview() {
+    document.getElementById('preview-overlay').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+  function doPrint() { window.print(); }
+
+  /* ── 유틸 ── */
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
+  }
+  function toast(msg) {
+    var el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 2200);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closePreview();
+  });
+
+  /* ── 전기설비 배치 도면 ── */
+  var ELEC_SYM = {
+    panel:    { label: '분전반',     color: '#2C5282', shape: 'rect'    },
+    breaker:  { label: '차단기',     color: '#1E3A5F', shape: 'circle'  },
+    worker:   { label: '작업자',     color: '#3D8F67', shape: 'dot'     },
+    watcher:  { label: '감시인',     color: '#D97706', shape: 'diamond' },
+    danger:   { label: '위험구역',   color: '#B94040', shape: 'zone'    },
+    limit:    { label: '접근한계선', color: '#D97706', shape: 'zone'    },
+    workzone: { label: '작업구역',   color: '#2C5282', shape: 'zone'    }
+  };
+
+  var _edCanvas = null, _edCtx = null, _edBgImg = null;
+  var _edSelTool = '';
+  var _edDragging = false;
+  var _edDragStart = null;
+  var _edHoverPos = null;
+
+  function initElecDiag() {
+    _edCanvas = document.getElementById('elec-diag-canvas');
+    if (!_edCanvas) return;
+    _edCtx = _edCanvas.getContext('2d');
+    _edCanvas.addEventListener('mousedown', _edMouseDown);
+    _edCanvas.addEventListener('mousemove', _edMouseMove);
+    _edCanvas.addEventListener('mouseup',   _edMouseUp);
+    _edCanvas.addEventListener('mouseleave', function() { _edHoverPos = null; if (!_edDragging) _edRender(); });
+    if (STATE.elecDiagBg) {
+      var _bgImg = new Image();
+      _bgImg.onload = (function(img) { return function() { _edBgImg = img; _edRender(); }; })(_bgImg);
+      _bgImg.src = STATE.elecDiagBg;
+    } else {
+      _edRender();
+    }
+  }
+
+  function _edRatioPos(e) {
+    var rect = _edCanvas.getBoundingClientRect();
+    return { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
+  }
+
+  function _edMouseDown(e) {
+    if (!_edSelTool) return;
+    var pos = _edRatioPos(e);
+    var sym = ELEC_SYM[_edSelTool];
+    if (!sym) return;
+    if (sym.shape === 'zone') {
+      _edDragging = true;
+      _edDragStart = pos;
+    } else {
+      STATE.elecDiagItems.push({ type: _edSelTool, x: pos.x, y: pos.y });
+      _edRender();
+      autoSave();
+    }
+  }
+
+  function _edMouseMove(e) {
+    _edHoverPos = _edRatioPos(e);
+    _edRender();
+  }
+
+  function _edMouseUp(e) {
+    if (!_edDragging || !_edDragStart) return;
+    var pos = _edRatioPos(e);
+    var dx = Math.abs(pos.x - _edDragStart.x);
+    var dy = Math.abs(pos.y - _edDragStart.y);
+    if (dx > 0.015 || dy > 0.015) {
+      STATE.elecDiagItems.push({
+        type: _edSelTool,
+        x: Math.min(_edDragStart.x, pos.x),
+        y: Math.min(_edDragStart.y, pos.y),
+        w: Math.abs(pos.x - _edDragStart.x),
+        h: Math.abs(pos.y - _edDragStart.y)
+      });
+      autoSave();
+    }
+    _edDragging = false;
+    _edDragStart = null;
+    _edRender();
+  }
+
+  function _edRender() {
+    if (!_edCanvas || !_edCtx) return;
+    var W = _edCanvas.width, H = _edCanvas.height;
+    var gx, gy, i;
+    _edCtx.clearRect(0, 0, W, H);
+    if (_edBgImg) {
+      _edCtx.drawImage(_edBgImg, 0, 0, W, H);
+    } else {
+      _edCtx.fillStyle = '#F8FAFD';
+      _edCtx.fillRect(0, 0, W, H);
+      _edCtx.strokeStyle = '#E2E8F0';
+      _edCtx.lineWidth = 0.5;
+      for (gx = 0; gx <= W; gx += 40) {
+        _edCtx.beginPath(); _edCtx.moveTo(gx, 0); _edCtx.lineTo(gx, H); _edCtx.stroke();
+      }
+      for (gy = 0; gy <= H; gy += 40) {
+        _edCtx.beginPath(); _edCtx.moveTo(0, gy); _edCtx.lineTo(W, gy); _edCtx.stroke();
+      }
+    }
+    for (i = 0; i < STATE.elecDiagItems.length; i++) { _edDrawItem(STATE.elecDiagItems[i], W, H); }
+    if (_edDragging && _edDragStart && _edHoverPos) {
+      var dsym = ELEC_SYM[_edSelTool];
+      if (dsym && dsym.shape === 'zone') {
+        var dzx = Math.min(_edDragStart.x, _edHoverPos.x) * W;
+        var dzy = Math.min(_edDragStart.y, _edHoverPos.y) * H;
+        var dzw = Math.abs(_edHoverPos.x - _edDragStart.x) * W;
+        var dzh = Math.abs(_edHoverPos.y - _edDragStart.y) * H;
+        _edCtx.strokeStyle = dsym.color;
+        _edCtx.setLineDash([5, 3]);
+        _edCtx.lineWidth = 1.5;
+        _edCtx.strokeRect(dzx, dzy, dzw, dzh);
+        _edCtx.setLineDash([]);
+      }
+    } else if (!_edDragging && _edHoverPos && _edSelTool) {
+      var hsym = ELEC_SYM[_edSelTool];
+      if (hsym && hsym.shape !== 'zone') {
+        _edCtx.globalAlpha = 0.45;
+        _edDrawItem({ type: _edSelTool, x: _edHoverPos.x, y: _edHoverPos.y }, W, H);
+        _edCtx.globalAlpha = 1;
+      }
+    }
+  }
+
+  function _edDrawItem(item, W, H) {
+    var sym = ELEC_SYM[item.type];
+    if (!sym) return;
+    var x = item.x * W, y = item.y * H;
+    var c = sym.color;
+    _edCtx.textAlign = 'center';
+    _edCtx.textBaseline = 'alphabetic';
+    if (sym.shape === 'rect') {
+      _edCtx.fillStyle = c;
+      _edCtx.fillRect(x - 18, y - 11, 36, 22);
+      _edCtx.fillStyle = '#fff';
+      _edCtx.font = 'bold 9px sans-serif';
+      _edCtx.textBaseline = 'middle';
+      _edCtx.fillText(sym.label, x, y);
+      _edCtx.textBaseline = 'alphabetic';
+      _edCtx.fillStyle = c;
+      _edCtx.font = '10px sans-serif';
+      _edCtx.fillText(sym.label, x, y + 22);
+    } else if (sym.shape === 'circle') {
+      _edCtx.beginPath();
+      _edCtx.arc(x, y, 12, 0, Math.PI * 2);
+      _edCtx.fillStyle = c;
+      _edCtx.fill();
+      _edCtx.strokeStyle = '#fff';
+      _edCtx.lineWidth = 1;
+      _edCtx.stroke();
+      _edCtx.fillStyle = '#fff';
+      _edCtx.font = 'bold 8px sans-serif';
+      _edCtx.textBaseline = 'middle';
+      _edCtx.fillText('CB', x, y);
+      _edCtx.textBaseline = 'alphabetic';
+      _edCtx.fillStyle = c;
+      _edCtx.font = '10px sans-serif';
+      _edCtx.fillText(sym.label, x, y + 24);
+    } else if (sym.shape === 'dot') {
+      _edCtx.beginPath();
+      _edCtx.arc(x, y, 10, 0, Math.PI * 2);
+      _edCtx.fillStyle = c;
+      _edCtx.fill();
+      _edCtx.fillStyle = '#fff';
+      _edCtx.font = 'bold 11px sans-serif';
+      _edCtx.textBaseline = 'middle';
+      _edCtx.fillText('人', x, y);
+      _edCtx.textBaseline = 'alphabetic';
+      _edCtx.fillStyle = c;
+      _edCtx.font = '10px sans-serif';
+      _edCtx.fillText(sym.label, x, y + 22);
+    } else if (sym.shape === 'diamond') {
+      _edCtx.save();
+      _edCtx.translate(x, y);
+      _edCtx.rotate(Math.PI / 4);
+      _edCtx.fillStyle = c;
+      _edCtx.fillRect(-9, -9, 18, 18);
+      _edCtx.restore();
+      _edCtx.fillStyle = '#fff';
+      _edCtx.font = 'bold 10px sans-serif';
+      _edCtx.textBaseline = 'middle';
+      _edCtx.fillText('監', x, y);
+      _edCtx.textBaseline = 'alphabetic';
+      _edCtx.fillStyle = c;
+      _edCtx.font = '10px sans-serif';
+      _edCtx.fillText(sym.label, x, y + 22);
+    } else if (sym.shape === 'zone') {
+      var zx2 = item.x * W, zy2 = item.y * H;
+      var zw2 = (item.w || 0.1) * W, zh2 = (item.h || 0.05) * H;
+      _edCtx.globalAlpha = 0.15;
+      _edCtx.fillStyle = c;
+      _edCtx.fillRect(zx2, zy2, zw2, zh2);
+      _edCtx.globalAlpha = 1;
+      _edCtx.strokeStyle = c;
+      _edCtx.lineWidth = 1.5;
+      _edCtx.setLineDash([6, 3]);
+      _edCtx.strokeRect(zx2, zy2, zw2, zh2);
+      _edCtx.setLineDash([]);
+      _edCtx.fillStyle = c;
+      _edCtx.font = 'bold 11px sans-serif';
+      _edCtx.textBaseline = 'middle';
+      _edCtx.fillText(sym.label, zx2 + zw2 / 2, zy2 + zh2 / 2);
+      _edCtx.textBaseline = 'alphabetic';
+    }
+  }
+
+  function edSelTool(tool) {
+    _edSelTool = (_edSelTool === tool) ? '' : tool;
+    var btns = document.querySelectorAll('[id^="dtool-"]');
+    var i;
+    for (i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
+    if (_edSelTool) {
+      var ab = document.getElementById('dtool-' + _edSelTool);
+      if (ab) ab.classList.add('active');
+    }
+    var hint = document.getElementById('elec-diag-hint');
+    if (!hint) return;
+    var sym = ELEC_SYM[_edSelTool];
+    if (sym) {
+      if (sym.shape === 'zone') {
+        hint.textContent = '[' + sym.label + '] 캔버스에서 드래그하여 구역 범위를 지정합니다.';
+      } else {
+        hint.textContent = '[' + sym.label + '] 캔버스를 클릭하여 배치합니다.';
+      }
+    } else {
+      hint.textContent = '도구를 선택한 후 캔버스를 클릭(또는 드래그)하여 배치하세요.';
+    }
+  }
+
+  function edUndo() {
+    if (STATE.elecDiagItems.length > 0) {
+      STATE.elecDiagItems.pop();
+      _edRender();
+      autoSave();
+    }
+  }
+
+  function edClear() {
+    STATE.elecDiagItems = [];
+    STATE.elecDiagBg = null;
+    _edBgImg = null;
+    _edRender();
+    autoSave();
+  }
+
+  function edLoadBg(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var img = new Image();
+      img.onload = function() {
+        _edBgImg = img;
+        STATE.elecDiagBg = ev.target.result;
+        _edRender();
+        autoSave();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }
+
+  /* ── 부트 ── */
+  STATE.workSteps = DEFAULT_WORK_STEPS.map(function (s) { return { phase: s.phase, items: s.items.slice() }; });
+  STATE.accRows = DEFAULT_ACC_ROWS.map(function (r) { return Object.assign({}, r); });
+  loadFromStorage();
+  if (!STATE.accRows || !STATE.accRows.length) {
+    STATE.accRows = DEFAULT_ACC_ROWS.map(function (r) { return Object.assign({}, r); });
+  }
+  if (!STATE.workSteps || !STATE.workSteps.length) {
+    STATE.workSteps = DEFAULT_WORK_STEPS.map(function (s) { return { phase: s.phase, items: s.items.slice() }; });
+  }
+  renderAccRows();
+  renderWorkSteps();
+  goChapter(STATE.currentIdx || 0);
+  initElecDiag();
+</script>
+</body>
+</html>

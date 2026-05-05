@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF 표지 가져오기 — 무사이</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --navy:#2C5282; --steel:#7B9EE0; --bg:#F0F2F5; --card:#fff; --border:rgba(0,0,0,.10); --text:#1D1D1F; --muted:#6E6E73; }
+    html, body { min-height:100%; background:var(--bg); font-family:'Pretendard',-apple-system,sans-serif; color:var(--text); -webkit-font-smoothing:antialiased; }
+
+    header { background:var(--navy); color:#fff; padding:0 24px; height:52px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 6px rgba(0,0,0,.2); }
+    header a { color:rgba(255,255,255,.7); text-decoration:none; font-size:13px; }
+    header a:hover { color:#fff; }
+    .hd-title { font-size:15px; font-weight:700; }
+    .hd-sep { width:1px; height:20px; background:rgba(255,255,255,.25); }
+
+    .container { max-width:1200px; margin:0 auto; padding:28px 24px; }
+
+    /* step cards */
+    .step { background:var(--card); border-radius:14px; border:1px solid var(--border); padding:22px 24px; margin-bottom:20px; }
+    .step-title { font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin-bottom:14px; }
+
+    /* file drop */
+    #drop-area { border:2px dashed var(--border); border-radius:12px; padding:36px 24px; text-align:center; cursor:pointer; transition:.15s; }
+    #drop-area:hover, #drop-area.over { border-color:var(--navy); background:rgba(44,82,130,.04); }
+    #drop-area .ico { font-size:36px; margin-bottom:10px; line-height:1; }
+    #drop-area .main { font-size:15px; font-weight:600; color:var(--text); margin-bottom:4px; }
+    #drop-area .sub { font-size:12px; color:var(--muted); }
+    #file-input { display:none; }
+
+    /* settings row */
+    .settings-row { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+    .setting-group { display:flex; align-items:center; gap:10px; }
+    .setting-group label { font-size:13px; color:var(--muted); font-weight:600; white-space:nowrap; }
+    input[type=range] { width:120px; accent-color:var(--navy); cursor:pointer; }
+    .setting-val { font-size:13px; font-weight:700; color:var(--navy); min-width:30px; }
+    input[type=number].small { width:52px; padding:5px 8px; border:1.5px solid var(--border); border-radius:7px; font-family:inherit; font-size:13px; text-align:center; outline:none; }
+    input[type=number].small:focus { border-color:var(--navy); }
+    .btn { padding:8px 18px; border-radius:9px; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:background .15s; }
+    .btn-primary { background:var(--navy); color:#fff; }
+    .btn-primary:hover { background:#3a6db5; }
+    .btn-primary:disabled { background:#aaa; cursor:not-allowed; }
+    .btn-outline { background:#fff; color:var(--navy); border:1.5px solid var(--navy); }
+    .btn-outline:hover { background:rgba(44,82,130,.07); }
+    .btn-sm { padding:5px 12px; font-size:12px; }
+
+    /* progress */
+    #progress-wrap { display:none; margin-top:14px; }
+    #progress-bar-track { background:#e5e7eb; border-radius:4px; height:6px; overflow:hidden; }
+    #progress-bar { background:var(--navy); height:6px; border-radius:4px; width:0%; transition:width .2s; }
+    #progress-text { font-size:12px; color:var(--muted); margin-top:6px; }
+
+    /* pages grid */
+    #pages-section { display:none; }
+    #pages-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+    #pages-header h3 { font-size:15px; font-weight:700; }
+    .header-actions { display:flex; gap:8px; }
+    #pages-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+
+    /* page card */
+    .page-card { background:var(--card); border:1.5px solid var(--border); border-radius:12px; overflow:hidden; transition:.15s; }
+    .page-card.checked { border-color:var(--navy); box-shadow:0 0 0 2px rgba(44,82,130,.15); }
+    .page-thumb-wrap { position:relative; background:#e5e7eb; display:flex; align-items:center; justify-content:center; min-height:140px; }
+    .page-thumb-wrap canvas { display:block; max-width:100%; }
+    .page-check { position:absolute; top:8px; left:8px; width:22px; height:22px; accent-color:var(--navy); cursor:pointer; }
+    .page-info { padding:12px; }
+    .page-num { font-size:11px; color:var(--muted); margin-bottom:8px; }
+    .page-inputs { display:flex; flex-direction:column; gap:6px; }
+    .page-inputs input, .page-inputs select { width:100%; padding:6px 10px; border:1.5px solid var(--border); border-radius:7px; font-family:inherit; font-size:12px; color:var(--text); background:#fff; outline:none; }
+    .page-inputs input:focus, .page-inputs select:focus { border-color:var(--navy); }
+
+    /* split UI */
+    .split-row { display:flex; align-items:center; gap:6px; margin-top:8px; }
+    .split-row span { font-size:11px; color:var(--muted); }
+    .split-btn { padding:4px 10px; border-radius:6px; font-family:inherit; font-size:11px; font-weight:600; cursor:pointer; background:rgba(44,82,130,.08); border:1.5px solid rgba(44,82,130,.25); color:var(--navy); transition:.12s; }
+    .split-btn:hover { background:rgba(44,82,130,.18); }
+
+    /* cells grid (after split) */
+    .cells-grid { display:grid; gap:6px; margin-top:10px; padding:10px; background:#f8f9fb; border-top:1px solid var(--border); }
+    .cell-item { background:#fff; border:1.5px solid var(--border); border-radius:8px; overflow:hidden; }
+    .cell-item.checked { border-color:var(--navy); }
+    .cell-thumb { background:#e5e7eb; display:flex; align-items:center; justify-content:center; position:relative; }
+    .cell-thumb canvas { display:block; max-width:100%; }
+    .cell-thumb .cell-check { position:absolute; top:4px; left:4px; width:18px; height:18px; accent-color:var(--navy); cursor:pointer; }
+    .cell-inputs { padding:6px 8px; display:flex; flex-direction:column; gap:4px; }
+    .cell-inputs input, .cell-inputs select { width:100%; padding:4px 8px; border:1.5px solid var(--border); border-radius:6px; font-family:inherit; font-size:11px; color:var(--text); background:#fff; outline:none; }
+    .cell-inputs input:focus, .cell-inputs select:focus { border-color:var(--navy); }
+
+    /* output */
+    #output-section { display:none; }
+    #output-area { width:100%; min-height:200px; padding:14px; font-family:'Courier New',monospace; font-size:12px; border:1.5px solid var(--border); border-radius:10px; resize:vertical; outline:none; background:#fafafa; }
+    .output-actions { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+    #copy-feedback { font-size:12px; color:#16a34a; display:none; }
+
+    .info-box { background:rgba(44,82,130,.06); border:1px solid rgba(44,82,130,.15); border-radius:10px; padding:14px 16px; font-size:12px; color:var(--muted); line-height:1.7; }
+    .info-box strong { color:var(--text); }
+    code { background:#e5e7eb; padding:1px 5px; border-radius:4px; font-size:11px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="sign.html">← 안전표지 제작으로 돌아가기</a>
+  <div class="hd-sep"></div>
+  <span class="hd-title">PDF 표지 가져오기</span>
+</header>
+
+<div class="container">
+
+  <!-- STEP 1: 파일 선택 -->
+  <div class="step">
+    <div class="step-title">1단계 — PDF 파일 선택</div>
+    <div id="drop-area">
+      <div class="ico">📄</div>
+      <div class="main">PDF 파일을 여기에 드롭하거나 클릭하여 선택</div>
+      <div class="sub">안전보건표지 PDF 파일 (KOSHA 배포본)</div>
+    </div>
+    <input type="file" id="file-input" accept=".pdf">
+    <div id="progress-wrap">
+      <div id="progress-bar-track"><div id="progress-bar"></div></div>
+      <div id="progress-text">준비 중...</div>
+    </div>
+  </div>
+
+  <!-- STEP 2: 렌더링 설정 -->
+  <div class="step">
+    <div class="step-title">2단계 — 렌더링 설정</div>
+    <div class="settings-row">
+      <div class="setting-group">
+        <label>해상도 배율</label>
+        <input type="range" id="scale-slider" min="1" max="4" step="0.5" value="2">
+        <span class="setting-val" id="scale-val">2×</span>
+      </div>
+      <div class="setting-group">
+        <label>페이지 분할 (기본)</label>
+        <span style="font-size:12px;color:var(--muted);">행</span>
+        <input type="number" class="small" id="default-rows" value="1" min="1" max="20">
+        <span style="font-size:12px;color:var(--muted);">×</span>
+        <span style="font-size:12px;color:var(--muted);">열</span>
+        <input type="number" class="small" id="default-cols" value="1" min="1" max="20">
+      </div>
+      <button class="btn btn-primary" id="btn-render" disabled>페이지 렌더링</button>
+    </div>
+    <div class="info-box" style="margin-top:14px;">
+      <strong>분할 설정 안내</strong><br>
+      PDF 한 페이지에 표지가 여러 개 배치된 경우 행×열을 설정하면 자동으로 잘라냅니다.<br>
+      예: 한 페이지에 4행 × 2열 = 8개 표지 → 행 4, 열 2 입력
+    </div>
+  </div>
+
+  <!-- STEP 3: 페이지 선택 및 레이블 입력 -->
+  <div class="step" id="pages-section">
+    <div id="pages-header">
+      <h3 id="pages-heading">페이지 미리보기</h3>
+      <div class="header-actions">
+        <button class="btn btn-outline btn-sm" id="btn-select-all">전체 선택</button>
+        <button class="btn btn-outline btn-sm" id="btn-deselect-all">전체 해제</button>
+      </div>
+    </div>
+    <div id="pages-grid"></div>
+  </div>
+
+  <!-- STEP 4: sign-library.js 생성 -->
+  <div class="step" id="output-section">
+    <div class="step-title">4단계 — sign-library.js 생성</div>
+    <div class="settings-row" style="margin-bottom:14px;">
+      <button class="btn btn-primary" id="btn-generate">선택 항목으로 sign-library.js 생성</button>
+    </div>
+    <textarea id="output-area" readonly placeholder="생성 버튼을 누르면 여기에 코드가 나타납니다..."></textarea>
+    <div class="output-actions">
+      <button class="btn btn-outline" id="btn-copy">클립보드에 복사</button>
+      <button class="btn btn-primary" id="btn-download">파일로 다운로드 (sign-library.js)</button>
+      <span id="copy-feedback">복사되었습니다!</span>
+    </div>
+    <div class="info-box" style="margin-top:14px;">
+      <strong>다음 단계:</strong><br>
+      다운로드된 <code>sign-library.js</code>를 <code>C:\Users\82106\Desktop\Musaai\</code> 폴더에 넣으면 sign.html에 바로 표지 라이브러리가 표시됩니다.
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+'use strict';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+var pdfDoc = null;
+var renderScale = 2;
+
+/* ── 파일 선택 ── */
+var dropArea  = document.getElementById('drop-area');
+var fileInput = document.getElementById('file-input');
+
+dropArea.addEventListener('click', function() { fileInput.click(); });
+dropArea.addEventListener('dragover',  function(e) { e.preventDefault(); this.classList.add('over'); });
+dropArea.addEventListener('dragleave', function()  { this.classList.remove('over'); });
+dropArea.addEventListener('drop', function(e) {
+  e.preventDefault(); this.classList.remove('over');
+  var f = e.dataTransfer.files[0];
+  if (f && f.type === 'application/pdf') loadPDF(f);
+});
+fileInput.addEventListener('change', function() {
+  if (this.files[0]) loadPDF(this.files[0]);
+});
+
+document.getElementById('scale-slider').addEventListener('input', function() {
+  renderScale = parseFloat(this.value);
+  document.getElementById('scale-val').textContent = renderScale + '×';
+});
+
+/* ── PDF 로드 ── */
+function loadPDF(file) {
+  var progressWrap = document.getElementById('progress-wrap');
+  var progressBar  = document.getElementById('progress-bar');
+  var progressText = document.getElementById('progress-text');
+  progressWrap.style.display = 'block';
+  progressBar.style.width = '0%';
+  progressText.textContent = '파일 읽는 중...';
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    progressBar.style.width = '20%';
+    progressText.textContent = 'PDF 파싱 중...';
+    var typedArray = new Uint8Array(e.target.result);
+    pdfjsLib.getDocument({data: typedArray}).promise.then(function(pdf) {
+      pdfDoc = pdf;
+      progressBar.style.width = '50%';
+      progressText.textContent = pdf.numPages + '페이지 로드 완료. 렌더링 버튼을 누르세요.';
+      document.getElementById('btn-render').disabled = false;
+      dropArea.querySelector('.main').textContent = file.name + ' (' + pdf.numPages + '페이지)';
+    }).catch(function(err) {
+      progressText.textContent = '오류: ' + err.message;
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ── 렌더링 ── */
+document.getElementById('btn-render').addEventListener('click', function() {
+  if (!pdfDoc) return;
+  renderAllPages();
+});
+
+function renderAllPages() {
+  var grid        = document.getElementById('pages-grid');
+  var section     = document.getElementById('pages-section');
+  var progressBar = document.getElementById('progress-bar');
+  var progressText= document.getElementById('progress-text');
+  var defaultRows = parseInt(document.getElementById('default-rows').value) || 1;
+  var defaultCols = parseInt(document.getElementById('default-cols').value) || 1;
+
+  grid.innerHTML = '';
+  section.style.display = 'block';
+  document.getElementById('output-section').style.display = 'block';
+  document.getElementById('pages-heading').textContent = '페이지 미리보기 (총 ' + pdfDoc.numPages + '페이지)';
+
+  var total = pdfDoc.numPages;
+  var done  = 0;
+
+  function renderPage(pageNum) {
+    pdfDoc.getPage(pageNum).then(function(page) {
+      var viewport = page.getViewport({scale: renderScale});
+      var canvas   = document.createElement('canvas');
+      canvas.width  = Math.round(viewport.width);
+      canvas.height = Math.round(viewport.height);
+      var ctx = canvas.getContext('2d');
+
+      page.render({canvasContext: ctx, viewport: viewport}).promise.then(function() {
+        done++;
+        progressBar.style.width = Math.round(50 + done / total * 50) + '%';
+        progressText.textContent = done + ' / ' + total + ' 페이지 렌더링 완료';
+
+        var card = buildPageCard(canvas, pageNum, defaultRows, defaultCols);
+        grid.appendChild(card);
+
+        if (done === total) {
+          progressText.textContent = '렌더링 완료. 표지를 선택하고 레이블을 입력하세요.';
+        }
+      });
+    });
+  }
+
+  for (var p = 1; p <= total; p++) renderPage(p);
+}
+
+/* ── 페이지 카드 생성 ── */
+function buildPageCard(pageCanvas, pageNum, rows, cols) {
+  var card = document.createElement('div');
+  card.className = 'page-card';
+
+  /* 썸네일 */
+  var thumbWrap = document.createElement('div');
+  thumbWrap.className = 'page-thumb-wrap';
+
+  /* 썸네일 캔버스 (400px 너비로 축소) */
+  var thumbCanvas = document.createElement('canvas');
+  var thumbScale  = Math.min(1, 400 / pageCanvas.width);
+  thumbCanvas.width  = Math.round(pageCanvas.width  * thumbScale);
+  thumbCanvas.height = Math.round(pageCanvas.height * thumbScale);
+  thumbCanvas.getContext('2d').drawImage(pageCanvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+  thumbCanvas.style.cssText = 'display:block;max-width:100%;';
+
+  var chk = document.createElement('input');
+  chk.type = 'checkbox'; chk.checked = true; chk.className = 'page-check';
+  chk.addEventListener('change', function() {
+    card.classList.toggle('checked', chk.checked);
+  });
+  card.classList.add('checked');
+
+  thumbWrap.appendChild(thumbCanvas);
+  thumbWrap.appendChild(chk);
+  card.appendChild(thumbWrap);
+
+  /* 정보 영역 */
+  var info = document.createElement('div');
+  info.className = 'page-info';
+
+  var pnum = document.createElement('div');
+  pnum.className = 'page-num';
+  pnum.textContent = pageNum + '페이지';
+
+  /* 레이블 / 카테고리 입력 */
+  var inputs = document.createElement('div');
+  inputs.className = 'page-inputs';
+
+  var labelInput = document.createElement('input');
+  labelInput.type = 'text'; labelInput.placeholder = '표지 이름 (예: 출입금지)';
+  labelInput.value = pageNum + '페이지';
+
+  var catSelect = document.createElement('select');
+  ['금지','경고','지시','안내','기타'].forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    catSelect.appendChild(opt);
+  });
+
+  inputs.appendChild(labelInput);
+  inputs.appendChild(catSelect);
+
+  /* 분할 UI */
+  var splitRow = document.createElement('div');
+  splitRow.className = 'split-row';
+  splitRow.innerHTML = '<span>분할:</span>';
+
+  var rowsIn = document.createElement('input');
+  rowsIn.type = 'number'; rowsIn.className = 'small'; rowsIn.value = rows; rowsIn.min = 1; rowsIn.max = 20;
+  var xSpan = document.createElement('span'); xSpan.textContent = '행 ×';
+  var colsIn = document.createElement('input');
+  colsIn.type = 'number'; colsIn.className = 'small'; colsIn.value = cols; colsIn.min = 1; colsIn.max = 20;
+  var colSpan = document.createElement('span'); colSpan.textContent = '열';
+
+  var splitBtn = document.createElement('button');
+  splitBtn.className = 'split-btn'; splitBtn.textContent = '분할 적용';
+
+  splitRow.appendChild(rowsIn); splitRow.appendChild(xSpan);
+  splitRow.appendChild(colsIn); splitRow.appendChild(colSpan);
+  splitRow.appendChild(splitBtn);
+
+  /* 셀 그리드 영역 */
+  var cellsContainer = document.createElement('div');
+
+  splitBtn.addEventListener('click', function() {
+    var r = parseInt(rowsIn.value) || 1;
+    var c = parseInt(colsIn.value) || 1;
+    buildCellsGrid(pageCanvas, r, c, cellsContainer, catSelect.value);
+    chk.checked = false; card.classList.remove('checked');
+    inputs.style.opacity = '0.4';
+  });
+
+  info.appendChild(pnum);
+  info.appendChild(inputs);
+  info.appendChild(splitRow);
+  info.appendChild(cellsContainer);
+  card.appendChild(info);
+
+  /* 전체카드 체크박스 참조 저장 */
+  card._pageCanvas = pageCanvas;
+  card._chk        = chk;
+  card._labelInput = labelInput;
+  card._catSelect  = catSelect;
+  card._cells      = cellsContainer;
+
+  return card;
+}
+
+/* ── 셀 분할 ── */
+function buildCellsGrid(pageCanvas, rows, cols, container, defaultCat) {
+  container.innerHTML = '';
+  var cellW = Math.floor(pageCanvas.width  / cols);
+  var cellH = Math.floor(pageCanvas.height / rows);
+
+  var grid = document.createElement('div');
+  grid.className = 'cells-grid';
+  grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var cellCanvas = document.createElement('canvas');
+      cellCanvas.width  = cellW;
+      cellCanvas.height = cellH;
+      cellCanvas.getContext('2d').drawImage(
+        pageCanvas,
+        c * cellW, r * cellH, cellW, cellH,
+        0, 0, cellW, cellH
+      );
+
+      /* 썸네일 */
+      var thumbScale = Math.min(1, 120 / cellW);
+      var thumbCv = document.createElement('canvas');
+      thumbCv.width  = Math.round(cellW  * thumbScale);
+      thumbCv.height = Math.round(cellH  * thumbScale);
+      thumbCv.getContext('2d').drawImage(cellCanvas, 0, 0, thumbCv.width, thumbCv.height);
+
+      var cellItem = document.createElement('div');
+      cellItem.className = 'cell-item checked';
+
+      var thumbDiv = document.createElement('div');
+      thumbDiv.className = 'cell-thumb';
+      thumbDiv.style.height = Math.round(cellH * thumbScale) + 'px';
+
+      var cellChk = document.createElement('input');
+      cellChk.type = 'checkbox'; cellChk.checked = true; cellChk.className = 'cell-check';
+      cellChk.addEventListener('change', function() {
+        cellItem.classList.toggle('checked', cellChk.checked);
+      });
+
+      thumbDiv.appendChild(thumbCv); thumbDiv.appendChild(cellChk);
+
+      var cellInputs = document.createElement('div');
+      cellInputs.className = 'cell-inputs';
+
+      var cellLabel = document.createElement('input');
+      cellLabel.type = 'text';
+      cellLabel.placeholder = '이름';
+      cellLabel.value = (r * cols + c + 1) + '번 표지';
+
+      var cellCat = document.createElement('select');
+      ['금지','경고','지시','안내','기타'].forEach(function(ct) {
+        var opt = document.createElement('option');
+        opt.value = ct; opt.textContent = ct;
+        if (ct === defaultCat) opt.selected = true;
+        cellCat.appendChild(opt);
+      });
+
+      cellInputs.appendChild(cellLabel); cellInputs.appendChild(cellCat);
+      cellItem.appendChild(thumbDiv); cellItem.appendChild(cellInputs);
+
+      cellItem._canvas   = cellCanvas;
+      cellItem._chk      = cellChk;
+      cellItem._label    = cellLabel;
+      cellItem._cat      = cellCat;
+
+      grid.appendChild(cellItem);
+    }
+  }
+
+  container.appendChild(grid);
+}
+
+/* ── 전체 선택/해제 ── */
+document.getElementById('btn-select-all').addEventListener('click', function() {
+  document.querySelectorAll('.page-check, .cell-check').forEach(function(chk) {
+    chk.checked = true;
+    chk.dispatchEvent(new Event('change'));
+  });
+});
+document.getElementById('btn-deselect-all').addEventListener('click', function() {
+  document.querySelectorAll('.page-check, .cell-check').forEach(function(chk) {
+    chk.checked = false;
+    chk.dispatchEvent(new Event('change'));
+  });
+});
+
+/* ── 생성 ── */
+document.getElementById('btn-generate').addEventListener('click', function() {
+  var entries = [];
+  var idCounter = 1;
+
+  /* 페이지 카드 순회 */
+  var cards = document.querySelectorAll('.page-card');
+  cards.forEach(function(card) {
+    /* 분할 셀 */
+    var cellItems = card.querySelectorAll('.cell-item');
+    if (cellItems.length > 0) {
+      cellItems.forEach(function(ci) {
+        if (!ci._chk || !ci._chk.checked) return;
+        var dataUrl = ci._canvas.toDataURL('image/png');
+        entries.push({
+          id: 'sign_' + (idCounter++),
+          label: ci._label.value || ('표지 ' + idCounter),
+          cat:   ci._cat.value,
+          src:   dataUrl
+        });
+      });
+    } else {
+      /* 페이지 전체 */
+      if (!card._chk || !card._chk.checked) return;
+      var dataUrl = card._pageCanvas.toDataURL('image/png');
+      entries.push({
+        id: 'sign_' + (idCounter++),
+        label: card._labelInput.value || ('페이지 ' + idCounter),
+        cat:   card._catSelect.value,
+        src:   dataUrl
+      });
+    }
+  });
+
+  if (entries.length === 0) {
+    alert('선택된 항목이 없습니다.'); return;
+  }
+
+  var lines = [];
+  lines.push('/* 무사이 안전표지 라이브러리 — PDF에서 자동 생성 */');
+  lines.push('/* 생성일: ' + new Date().toLocaleString('ko-KR') + ' */');
+  lines.push('/* 총 ' + entries.length + '개 */');
+  lines.push('');
+  lines.push('var SIGN_LIBRARY = [');
+  entries.forEach(function(e, i) {
+    var comma = (i < entries.length - 1) ? ',' : '';
+    lines.push('  {');
+    lines.push('    id: "' + e.id + '",');
+    lines.push('    label: "' + e.label.replace(/"/g, '\\"') + '",');
+    lines.push('    cat: "' + e.cat + '",');
+    lines.push('    src: "' + e.src + '"');
+    lines.push('  }' + comma);
+  });
+  lines.push('];');
+
+  var content = lines.join('\n');
+  document.getElementById('output-area').value = content;
+  document.getElementById('output-section').style.display = 'block';
+  document.getElementById('output-section').scrollIntoView({behavior:'smooth'});
+});
+
+/* ── 복사 / 다운로드 ── */
+document.getElementById('btn-copy').addEventListener('click', function() {
+  var ta = document.getElementById('output-area');
+  ta.select();
+  document.execCommand('copy');
+  var fb = document.getElementById('copy-feedback');
+  fb.style.display = 'inline';
+  setTimeout(function() { fb.style.display = 'none'; }, 2000);
+});
+
+document.getElementById('btn-download').addEventListener('click', function() {
+  var content = document.getElementById('output-area').value;
+  if (!content) { alert('먼저 생성 버튼을 누르세요.'); return; }
+  var blob = new Blob([content], {type: 'text/javascript;charset=utf-8'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = 'sign-library.js'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+})();
+</script>
+</body>
+</html>

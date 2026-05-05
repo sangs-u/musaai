@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "PreToolUse": [{"matcher": "", "hooks": [{"type": "command", "command": ".claude/hooks/PreToolUse.sh"}]}],
+    "PostToolUse": [{"matcher": "", "hooks": [{"type": "command", "command": ".claude/hooks/PostToolUse.sh"}]}],
+    "SessionStart": [{"matcher": "", "hooks": [{"type": "command", "command": ".claude/hooks/SessionStart.sh"}]}]
+  }
+}

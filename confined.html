@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2C5282">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="무사이(Musai) — 밀폐공간 환기량 계산기. KOSHA GUIDE E-G-18-2026 기반.">
+  <title>무사이 · 밀폐공간 환기검토</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    /* =====================================================
+       confined.html — 밀폐공간 환기량 계산기
+       자체완결형 (외부 CSS 없음). 네이비 + 스틸블루 테마.
+       ===================================================== */
+    :root {
+      --p:       #2C5282;
+      --p-dk:    #1E3A5F;
+      --steel:   #7B9EE0;
+      --bg:      #F5F5F7;
+      --card:    #FFFFFF;
+      --border:  rgba(0,0,0,0.10);
+      --bord-s:  rgba(0,0,0,0.06);
+      --text:    #1D1D1F;
+      --text-s:  #3C3C43;
+      --text-m:  #6E6E73;
+      --text-l:  #86868B;
+      --ok:      #34C759;
+      --warn:    #FF9500;
+      --danger:  #FF3B30;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* ── 앱 컨테이너 ── */
+    .app {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    @media (min-width: 500px) {
+      .app {
+        background: #fff;
+        border: 0.5px solid var(--border);
+        border-radius: 18px;
+        min-height: auto;
+        margin: 24px 0 40px;
+        overflow: hidden;
+      }
+    }
+
+    /* ── 상단바 ── */
+    .topbar {
+      background: #fff;
+      border-bottom: 0.5px solid var(--border);
+      padding: env(safe-area-inset-top,0) 16px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 52px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar-left {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .btn-back {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.05);
+      border: none;
+      cursor: pointer;
+      color: var(--p-dk);
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none;
+    }
+    .topbar-logo { font-size: 17px; font-weight: 700; letter-spacing: -0.5px; color: var(--text); }
+    .topbar-logo em { color: var(--steel); font-style: normal; }
+    .topbar-sub { font-size: 11px; color: var(--text-l); letter-spacing: -0.1px; }
+    .topbar-badge {
+      font-size: 10px; font-weight: 600;
+      background: rgba(0,0,0,0.05); color: var(--text-m);
+      padding: 3px 9px; border-radius: 20px; letter-spacing: 0.05em;
+    }
+
+    /* ── 진행 표시 ── */
+    .prog-wrap { padding: 10px 20px 0; flex-shrink: 0; }
+    .prog-labels {
+      display: flex; justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .prog-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+      color: var(--text-l); text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .prog-label.on { color: var(--p); }
+    .prog {
+      height: 3px; border-radius: 2px;
+      background: rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .prog-fill {
+      height: 100%; background: var(--p); border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .prog-step {
+      font-size: 11px; color: var(--text-l);
+      margin-top: 5px; margin-bottom: 2px;
+      text-align: right;
+    }
+
+    /* ── 스크롤 영역 ── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 20px 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── 스텝 패널 ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .step-title {
+      font-size: 22px; font-weight: 700;
+      letter-spacing: -0.6px; color: var(--text);
+      margin-bottom: 4px;
+    }
+    .step-desc {
+      font-size: 13px; color: var(--text-m);
+      margin-bottom: 20px; line-height: 1.55;
+      word-break: keep-all;
+    }
+
+    /* ── 카드 ── */
+    .card {
+      background: #fff;
+      border: 0.5px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .card-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-m); letter-spacing: 0.05em;
+      text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    /* ── 선택 그리드 (공간 유형 / 형태) ── */
+    .sel-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .sel-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+    .sel-btn {
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .sel-btn .sel-icon {
+      display: flex; justify-content: center; align-items: center;
+      height: 28px; margin-bottom: 5px;
+      color: var(--p);
+    }
+    .sel-btn .sel-icon svg { width: 20px; height: 20px; display: block; }
+    .sel-btn .sel-name {
+      font-size: 12px; font-weight: 600;
+      color: var(--text-s); letter-spacing: -0.2px;
+    }
+    .sel-btn .sel-sub {
+      font-size: 10px; color: var(--text-l);
+      margin-top: 2px;
+    }
+    .sel-btn.on {
+      border-color: var(--p);
+      background: #EEF3FA;
+    }
+    .sel-btn.on .sel-name { color: var(--p); }
+
+    /* ── 치수 입력 ── */
+    .dim-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .dim-item {
+      min-width: 0;
+      overflow: hidden;
+    }
+    .dim-item label {
+      display: block;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-m); margin-bottom: 4px;
+      letter-spacing: 0.02em;
+    }
+    .dim-wrap {
+      display: flex; align-items: center;
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      min-width: 0;
+    }
+    .dim-wrap:focus-within { border-color: var(--p); }
+    .dim-inp {
+      flex: 1; min-width: 0; width: 0;
+      border: none; outline: none;
+      padding: 9px 6px;
+      font-size: 15px; font-weight: 300;
+      color: var(--text);
+      background: transparent;
+      font-family: inherit;
+    }
+    .dim-unit {
+      font-size: 11px; color: var(--text-l);
+      padding: 0 8px 0 2px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── 체적 결과 표시 ── */
+    .vol-box {
+      background: var(--p);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .vol-label { font-size: 12px; color: rgba(255,255,255,0.7); }
+    .vol-val {
+      font-size: 30px; font-weight: 300;
+      color: #fff; letter-spacing: -1px; flex: 1;
+    }
+    .vol-unit { font-size: 13px; color: rgba(255,255,255,0.8); }
+    .vol-hint { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+
+    /* ── 작업 종류 카드 (Step 2) ── */
+    .work-list { display: flex; flex-direction: column; gap: 8px; }
+    .work-btn {
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .work-icon {
+      flex-shrink: 0; width: 28px; height: 28px;
+      color: var(--p);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .work-icon svg { width: 18px; height: 18px; display: block; }
+    .work-info { flex: 1; min-width: 0; }
+    .work-name {
+      font-size: 14px; font-weight: 600;
+      color: var(--text); letter-spacing: -0.3px;
+    }
+    .work-sub {
+      font-size: 11px; color: var(--text-l);
+      margin-top: 2px;
+    }
+    .work-n {
+      font-size: 22px; font-weight: 300;
+      color: var(--text-l); letter-spacing: -1px;
+      flex-shrink: 0; text-align: right;
+    }
+    .work-n small { font-size: 10px; color: var(--text-l); }
+    .work-btn.on {
+      border-color: var(--p);
+      background: #EEF3FA;
+    }
+    .work-btn.on .work-name { color: var(--p); }
+    .work-btn.on .work-n { color: var(--p); }
+
+    /* ── 덕트 입력 (Step 3) ── */
+    .duct-input-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0;
+      border-bottom: 0.5px solid var(--bord-s);
+    }
+    .duct-input-row:last-of-type { border-bottom: none; }
+    .duct-row-label { font-size: 14px; font-weight: 500; color: var(--text); flex: 1; }
+    .duct-len-wrap {
+      display: flex; align-items: center;
+      border: 0.5px solid var(--border);
+      border-radius: 10px; overflow: hidden; background: #fff;
+      width: 110px; flex-shrink: 0;
+    }
+    .duct-len-wrap:focus-within { border-color: var(--p); }
+    .duct-len-inp {
+      flex: 1; min-width: 0; width: 0;
+      border: none; outline: none;
+      padding: 10px 8px;
+      font-size: 16px; font-weight: 300; color: var(--text);
+      background: transparent; font-family: inherit;
+    }
+    .duct-len-unit { font-size: 12px; color: var(--text-l); padding: 0 10px 0 2px; flex-shrink: 0; }
+    .bend-toggle { display: flex; gap: 6px; }
+    .bend-btn {
+      border: 0.5px solid var(--border); border-radius: 8px;
+      background: #fff; padding: 9px 16px;
+      font-family: inherit; font-size: 13px; font-weight: 500;
+      color: var(--text-m); cursor: pointer;
+      transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .bend-btn.on { background: #EEF3FA; border-color: var(--p); color: var(--p); font-weight: 600; }
+    .loss-result {
+      background: rgba(44,82,130,0.07);
+      border-radius: 10px; padding: 13px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 12px;
+    }
+    .loss-result-label { font-size: 12px; color: var(--text-m); }
+    .loss-result-val { font-size: 24px; font-weight: 300; color: var(--p); letter-spacing: -0.5px; }
+
+    /* ── 계산 요약 (Step 3) ── */
+    .calc-summary {
+      background: #fff;
+      border: 0.5px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .calc-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 0.5px solid var(--bord-s);
+    }
+    .calc-row:last-child { border-bottom: none; }
+    .calc-sym {
+      font-size: 14px; font-weight: 600;
+      color: var(--p); width: 24px; flex-shrink: 0;
+    }
+    .calc-expr {
+      flex: 1;
+      font-size: 12px; color: var(--text-m);
+      letter-spacing: -0.1px; line-height: 1.4;
+    }
+    .calc-val {
+      font-size: 20px; font-weight: 300;
+      color: var(--text); letter-spacing: -0.5px;
+      text-align: right;
+    }
+    .calc-val small { font-size: 11px; color: var(--text-l); }
+    .calc-row.highlight { background: #F0F4FA; }
+    .calc-row.highlight .calc-sym { color: var(--p-dk); }
+    .calc-row.highlight .calc-val { color: var(--p); font-weight: 600; }
+
+    /* ── 결과 화면 (Step 4) ── */
+    .fan-hero {
+      background: var(--p); border-radius: 14px;
+      padding: 18px; color: #fff; margin-bottom: 4px;
+    }
+    .fan-hero-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.6); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+    .fan-hero-spec { font-size: 21px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 10px; }
+    .fan-hero-row { display: flex; align-items: flex-end; justify-content: space-between; }
+    .fan-hero-count { font-size: 56px; font-weight: 300; letter-spacing: -3px; line-height: 1; }
+    .fan-hero-count span { font-size: 22px; font-weight: 400; letter-spacing: 0; margin-left: 2px; }
+    .fan-hero-sub { font-size: 11px; color: rgba(255,255,255,0.7); text-align: right; line-height: 1.55; }
+    .fan-hero-note { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 12px; padding-top: 10px; border-top: 0.5px solid rgba(255,255,255,0.2); }
+    .fan-alt-list { margin-top: 2px; }
+    .fan-alt {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 0.5px solid var(--bord-s);
+    }
+    .fan-alt:last-child { border-bottom: none; }
+    .fan-alt-spec { font-size: 13px; color: var(--text-m); }
+    .fan-alt-count { font-size: 16px; font-weight: 600; color: var(--text-m); }
+    .fan-footnote {
+      font-size: 10px; color: var(--text-l);
+      margin-top: 10px; padding-top: 10px;
+      border-top: 0.5px solid var(--bord-s);
+      line-height: 1.55; word-break: keep-all;
+    }
+
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .result-table tr { border-bottom: 0.5px solid var(--bord-s); }
+    .result-table tr:last-child { border-bottom: none; }
+    .result-table td { padding: 9px 0; vertical-align: top; }
+    .result-table td:first-child { color: var(--text-m); width: 80px; }
+    .result-table td:last-child { color: var(--text); font-weight: 500; text-align: right; }
+
+    .checklist { display: flex; flex-direction: column; gap: 0; }
+    .check-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0;
+      border-bottom: 0.5px solid var(--bord-s);
+    }
+    .check-item:last-child { border-bottom: none; }
+    .check-box {
+      width: 20px; height: 20px; flex-shrink: 0;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      margin-top: 1px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .check-box.checked { background: var(--ok); border-color: var(--ok); }
+    .check-box.checked::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+    .check-text {
+      font-size: 13px; color: var(--text-s);
+      line-height: 1.5; word-break: keep-all;
+    }
+    .check-text strong { color: var(--text); font-weight: 600; }
+
+    .gas-table {
+      width: 100%; border-collapse: collapse; font-size: 12px;
+    }
+    .gas-table th {
+      text-align: left; font-size: 10px; font-weight: 600;
+      color: var(--text-l); letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 0 0 6px; border-bottom: 0.5px solid var(--border);
+    }
+    .gas-table td { padding: 8px 0; border-bottom: 0.5px solid var(--bord-s); vertical-align: middle; }
+    .gas-table tr:last-child td { border-bottom: none; }
+    .gas-table td:first-child { color: var(--text-m); }
+    .gas-table td:nth-child(2) { text-align: right; font-weight: 600; color: var(--text); }
+    .gas-table td:last-child { text-align: right; }
+    .gas-badge {
+      display: inline-block;
+      font-size: 10px; font-weight: 600; padding: 2px 7px;
+      border-radius: 20px; letter-spacing: 0.03em;
+    }
+    .gas-badge.danger { background: rgba(255,59,48,0.12); color: var(--danger); }
+    .gas-badge.warn  { background: rgba(255,149,0,0.12);  color: var(--warn);   }
+    .gas-badge.ok    { background: rgba(52,199,89,0.12);   color: var(--ok);     }
+
+    .law-list { display: flex; flex-direction: column; gap: 4px; }
+    .law-item {
+      font-size: 12px; color: var(--text-m);
+      padding: 6px 0;
+      border-bottom: 0.5px solid var(--bord-s);
+      line-height: 1.45;
+    }
+    .law-item:last-child { border-bottom: none; }
+    .law-num { color: var(--p); font-weight: 600; }
+
+    /* ── 경고 박스 ── */
+    .alert-box {
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    .alert-box.warn {
+      background: rgba(255,149,0,0.10);
+      border: 0.5px solid rgba(255,149,0,0.3);
+      color: #7a4900;
+    }
+    .alert-box.danger {
+      background: rgba(255,59,48,0.08);
+      border: 0.5px solid rgba(255,59,48,0.25);
+      color: #8a0000;
+    }
+    .alert-box strong { font-weight: 700; }
+
+    /* ── 하단 내비게이션 ── */
+    .nav {
+      padding: 14px 20px;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom, 0));
+      background: #fff;
+      border-top: 0.5px solid var(--border);
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+      position: sticky;
+      bottom: 0;
+    }
+    .btn {
+      flex: 1;
+      height: 48px;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { opacity: 0.75; }
+    .btn-prev {
+      background: rgba(0,0,0,0.05);
+      color: var(--text-s);
+    }
+    .btn-next {
+      background: var(--p);
+      color: #fff;
+    }
+    .btn-next:disabled {
+      background: rgba(0,0,0,0.12);
+      color: rgba(0,0,0,0.3);
+      cursor: not-allowed;
+    }
+    .btn-reset {
+      background: rgba(0,0,0,0.05);
+      color: var(--text-s);
+      flex: 0.5;
+    }
+    .btn-print {
+      background: var(--p);
+      color: #fff;
+    }
+
+    /* ── print ── */
+    @media print {
+      .topbar, .nav, .prog-wrap, .btn-back { display: none !important; }
+      body { background: #fff; }
+      .app { border: none; }
+      .panel { display: none !important; }
+      .panel.active { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+<!-- ── SVG 아이콘 스프라이트 ── -->
+<svg aria-hidden="true" style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 공간 유형 -->
+  <symbol id="s-tank" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <ellipse cx="10" cy="5" rx="6" ry="2"/><line x1="4" y1="5" x2="4" y2="15"/><line x1="16" y1="5" x2="16" y2="15"/><ellipse cx="10" cy="15" rx="6" ry="2"/>
+  </symbol>
+  <symbol id="s-manhole" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <circle cx="10" cy="10" r="7.5"/><circle cx="10" cy="10" r="2.5"/>
+  </symbol>
+  <symbol id="s-tunnel" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <path d="M2 18 L2 10.5 A8 8 0 0 1 18 10.5 L18 18"/><line x1="1" y1="18" x2="19" y2="18"/>
+  </symbol>
+  <symbol id="s-pit" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2.5" y="2.5" width="15" height="15" rx="1.5"/><line x1="2.5" y1="10" x2="17.5" y2="10"/><line x1="10" y1="10" x2="10" y2="17.5"/>
+  </symbol>
+  <symbol id="s-ship" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <circle cx="10" cy="4.5" r="1.8"/><line x1="10" y1="6.3" x2="10" y2="16"/><line x1="5.5" y1="10" x2="14.5" y2="10"/><path d="M5.5 16 Q10 18.5 14.5 16"/>
+  </symbol>
+  <symbol id="s-misc" viewBox="0 0 20 20">
+    <circle cx="4.5" cy="10" r="1.8" fill="currentColor"/><circle cx="10" cy="10" r="1.8" fill="currentColor"/><circle cx="15.5" cy="10" r="1.8" fill="currentColor"/>
+  </symbol>
+  <!-- 공간 형태 -->
+  <symbol id="s-box" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 8 L10 4 L17 8 L17 14 L10 18 L3 14 Z"/><line x1="3" y1="8" x2="17" y2="8"/><line x1="10" y1="4" x2="10" y2="18"/>
+  </symbol>
+  <symbol id="s-cylV" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <ellipse cx="10" cy="5" rx="6" ry="2"/><line x1="4" y1="5" x2="4" y2="15"/><line x1="16" y1="5" x2="16" y2="15"/><ellipse cx="10" cy="15" rx="6" ry="2"/>
+  </symbol>
+  <symbol id="s-cylH" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <ellipse cx="5" cy="10" rx="2" ry="6"/><ellipse cx="15" cy="10" rx="2" ry="6"/><line x1="5" y1="4" x2="15" y2="4"/><line x1="5" y1="16" x2="15" y2="16"/>
+  </symbol>
+  <symbol id="s-sphere" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <circle cx="10" cy="10" r="7.5"/><ellipse cx="10" cy="10" rx="3.5" ry="7.5"/><line x1="2.5" y1="10" x2="17.5" y2="10"/>
+  </symbol>
+  <symbol id="s-irreg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 2 L17 6 L17.5 12 L13 17 L6.5 17 L2.5 11 L5 5 Z"/>
+  </symbol>
+  <!-- 작업 종류 -->
+  <symbol id="s-inspect" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <circle cx="8.5" cy="8.5" r="5.5"/><line x1="13" y1="13" x2="17.5" y2="17.5"/>
+  </symbol>
+  <symbol id="s-weld" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 17 C6.5 14 6.5 9 9 7 C8.5 10.5 11 11 11.5 9 C13.5 12 12.5 15.5 10 17Z"/><line x1="7" y1="18.5" x2="13" y2="18.5"/>
+  </symbol>
+  <symbol id="s-paint" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 3.5 L13.5 12.5"/><path d="M13.5 12.5 L15.5 14.5 Q17.5 17 15.5 18 Q13.5 19 11.5 17 L9.5 15 Z"/>
+  </symbol>
+  <symbol id="s-chem" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 2 L8 9 L3 15.5 Q2 17.5 4 17.5 L16 17.5 Q18 17.5 17 15.5 L12 9 L12 2"/><line x1="7" y1="2" x2="13" y2="2"/><line x1="7.5" y1="12" x2="12.5" y2="12"/>
+  </symbol>
+  <symbol id="s-gas" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="2" y1="10" x2="7" y2="10"/><line x1="13" y1="10" x2="18" y2="10"/><rect x="7" y="7" width="6" height="6" rx="1"/><line x1="10" y1="4.5" x2="10" y2="7"/><line x1="8" y1="4.5" x2="12" y2="4.5"/>
+  </symbol>
+  <symbol id="s-hazard" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 2 L18.5 17 H1.5 Z"/><line x1="10" y1="8" x2="10" y2="13"/><circle cx="10" cy="15.5" r="0.9" fill="currentColor" stroke="none"/>
+  </symbol>
+</svg>
+<div class="app">
+
+  <!-- 상단바 -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="index.html" class="btn-back">‹</a>
+      <div>
+        <div class="topbar-logo">무사<em>이</em></div>
+        <div class="topbar-sub">밀폐공간 환기검토</div>
+      </div>
+    </div>
+    <div class="topbar-badge">E-G-18-2026</div>
+  </div>
+
+  <!-- 진행 표시 -->
+  <div class="prog-wrap">
+    <div class="prog-labels">
+      <span class="prog-label on" id="lbl1">공간정보</span>
+      <span class="prog-label" id="lbl2">작업조건</span>
+      <span class="prog-label" id="lbl3">환기량</span>
+      <span class="prog-label" id="lbl4">결과</span>
+    </div>
+    <div class="prog"><div class="prog-fill" id="progFill" style="width:25%"></div></div>
+    <div class="prog-step" id="progStep">Step 1 / 4</div>
+  </div>
+
+  <!-- 컨텐츠 영역 -->
+  <div class="content">
+
+    <!-- ================================ STEP 1: 공간 정보 ================================ -->
+    <div class="panel active" id="panel1">
+      <div class="step-title">공간 정보</div>
+      <div class="step-desc">밀폐공간 유형과 형태를 선택하고 치수를 입력하세요. 체적이 자동 계산됩니다.</div>
+
+      <!-- 공간 유형 -->
+      <div class="card">
+        <div class="card-label">공간 유형</div>
+        <div class="sel-grid cols3" id="typeGrid">
+          <button class="sel-btn" data-type="탱크" onclick="selType(this)">
+            <span class="sel-icon"><svg><use href="#s-tank"/></svg></span>
+            <span class="sel-name">탱크</span>
+            <span class="sel-sub">저장·반응조</span>
+          </button>
+          <button class="sel-btn" data-type="맨홀" onclick="selType(this)">
+            <span class="sel-icon"><svg><use href="#s-manhole"/></svg></span>
+            <span class="sel-name">맨홀</span>
+            <span class="sel-sub">점검구·집수정</span>
+          </button>
+          <button class="sel-btn" data-type="터널" onclick="selType(this)">
+            <span class="sel-icon"><svg><use href="#s-tunnel"/></svg></span>
+            <span class="sel-name">터널</span>
+            <span class="sel-sub">관로·갱</span>
+          </button>
+          <button class="sel-btn" data-type="지하실" onclick="selType(this)">
+            <span class="sel-icon"><svg><use href="#s-pit"/></svg></span>
+            <span class="sel-name">지하실</span>
+            <span class="sel-sub">피트·지하층</span>
+          </button>
+          <button class="sel-btn" data-type="선박" onclick="selType(this)">
+            <span class="sel-icon"><svg><use href="#s-ship"/></svg></span>
+            <span class="sel-name">선박</span>
+            <span class="sel-sub">화물창·기관실</span>
+          </button>
+          <button class="sel-btn" data-type="기타" onclick="selType(this)">
+            <span class="sel-icon"><svg><use href="#s-misc"/></svg></span>
+            <span class="sel-name">기타</span>
+            <span class="sel-sub">사일로·기타</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 공간 형태 -->
+      <div class="card">
+        <div class="card-label">공간 형태</div>
+        <div class="sel-grid" id="shapeGrid">
+          <button class="sel-btn" data-shape="box" onclick="selShape(this)">
+            <span class="sel-icon"><svg><use href="#s-box"/></svg></span>
+            <span class="sel-name">직육면체</span>
+            <span class="sel-sub">가로×세로×높이</span>
+          </button>
+          <button class="sel-btn" data-shape="cylV" onclick="selShape(this)">
+            <span class="sel-icon"><svg><use href="#s-cylV"/></svg></span>
+            <span class="sel-name">원통(수직)</span>
+            <span class="sel-sub">지름×높이</span>
+          </button>
+          <button class="sel-btn" data-shape="cylH" onclick="selShape(this)">
+            <span class="sel-icon"><svg><use href="#s-cylH"/></svg></span>
+            <span class="sel-name">원통(수평)</span>
+            <span class="sel-sub">지름×길이</span>
+          </button>
+          <button class="sel-btn" data-shape="sphere" onclick="selShape(this)">
+            <span class="sel-icon"><svg><use href="#s-sphere"/></svg></span>
+            <span class="sel-name">구형</span>
+            <span class="sel-sub">지름</span>
+          </button>
+          <button class="sel-btn" data-shape="irreg" onclick="selShape(this)">
+            <span class="sel-icon"><svg><use href="#s-irreg"/></svg></span>
+            <span class="sel-name">불규칙</span>
+            <span class="sel-sub">체적 직접 입력</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 치수 입력 -->
+      <div class="card" id="dimCard">
+        <div class="card-label">치수 입력</div>
+        <div id="dimInputs">
+          <div style="color: var(--text-l); font-size: 13px; text-align: center; padding: 12px 0;">형태를 먼저 선택하세요</div>
+        </div>
+        <!-- 체적 결과 -->
+        <div class="vol-box" style="margin-top:14px;">
+          <div style="flex:1">
+            <div class="vol-label">계산된 체적 (V)</div>
+            <div style="display:flex; align-items:baseline; gap:6px;">
+              <div class="vol-val" id="volVal">—</div>
+              <div class="vol-unit" id="volUnit">m³</div>
+            </div>
+            <div class="vol-hint" id="volHint">형태와 치수를 입력하면 자동 계산됩니다</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================ STEP 2: 작업 조건 ================================ -->
+    <div class="panel" id="panel2">
+      <div class="step-title">작업 조건</div>
+      <div class="step-desc">수행할 작업 종류를 선택하세요. 유해인자 수준에 따라 환기 횟수(N)가 결정됩니다.</div>
+
+      <div class="card">
+        <div class="card-label">작업 종류 선택</div>
+        <div class="work-list" id="workList">
+          <button class="work-btn" data-n="20" data-name="일반 출입·점검" onclick="selWork(this)">
+            <span class="work-icon"><svg><use href="#s-inspect"/></svg></span>
+            <div class="work-info">
+              <div class="work-name">일반 출입·점검</div>
+              <div class="work-sub">단순 점검·청소·정비 등 법적 최소 기준 적용</div>
+            </div>
+            <div class="work-n">20<br><small>회/hr</small></div>
+          </button>
+          <button class="work-btn" data-n="30" data-name="용접·절단·연삭" onclick="selWork(this)">
+            <span class="work-icon"><svg><use href="#s-weld"/></svg></span>
+            <div class="work-info">
+              <div class="work-name">용접·절단·연삭</div>
+              <div class="work-sub">흄·일산화탄소(CO) 다량 발생</div>
+            </div>
+            <div class="work-n">30<br><small>회/hr</small></div>
+          </button>
+          <button class="work-btn" data-n="40" data-name="도장·방수(유기용제)" onclick="selWork(this)">
+            <span class="work-icon"><svg><use href="#s-paint"/></svg></span>
+            <div class="work-info">
+              <div class="work-name">도장·방수 (유기용제)</div>
+              <div class="work-sub">유기증기 고농도 발생 — 최고 환기 기준 적용</div>
+            </div>
+            <div class="work-n">40<br><small>회/hr</small></div>
+          </button>
+          <button class="work-btn" data-n="30" data-name="화학물질 취급" onclick="selWork(this)">
+            <span class="work-icon"><svg><use href="#s-chem"/></svg></span>
+            <div class="work-info">
+              <div class="work-name">화학물질 취급</div>
+              <div class="work-sub">산·알칼리·기타 화학물질 작업</div>
+            </div>
+            <div class="work-n">30<br><small>회/hr</small></div>
+          </button>
+          <button class="work-btn" data-n="30" data-name="가스 배관·용기 작업" onclick="selWork(this)">
+            <span class="work-icon"><svg><use href="#s-gas"/></svg></span>
+            <div class="work-info">
+              <div class="work-name">가스 배관·용기 작업</div>
+              <div class="work-sub">LPG·O₂ 배관, 압력용기 유지보수</div>
+            </div>
+            <div class="work-n">30<br><small>회/hr</small></div>
+          </button>
+          <button class="work-btn" data-n="25" data-name="기타 유해작업" onclick="selWork(this)">
+            <span class="work-icon"><svg><use href="#s-hazard"/></svg></span>
+            <div class="work-info">
+              <div class="work-name">기타 유해작업</div>
+              <div class="work-sub">위 항목에 해당하지 않는 유해 작업</div>
+            </div>
+            <div class="work-n">25<br><small>회/hr</small></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================ STEP 3: 환기량 계산 ================================ -->
+    <div class="panel" id="panel3">
+      <div class="step-title">환기량 계산</div>
+      <div class="step-desc">덕트 구성에 따른 손실률을 선택하면 필요 환기량(Q)과 팬 선정용량(Qf)이 계산됩니다.</div>
+
+      <div class="card">
+        <div class="card-label">덕트 연결 정보</div>
+        <div class="duct-input-row">
+          <span class="duct-row-label">덕트 길이</span>
+          <div class="duct-len-wrap">
+            <input class="duct-len-inp" id="ductLenInp" type="number" min="0" step="1" placeholder="0" oninput="onDuctChange()">
+            <span class="duct-len-unit">m</span>
+          </div>
+        </div>
+        <div class="duct-input-row">
+          <span class="duct-row-label">굴곡·분기</span>
+          <div class="bend-toggle">
+            <button class="bend-btn on" id="bendNo" onclick="selBend(false)">없음</button>
+            <button class="bend-btn" id="bendYes" onclick="selBend(true)">있음</button>
+          </div>
+        </div>
+        <div class="loss-result">
+          <span class="loss-result-label">계산된 덕트 손실률</span>
+          <span class="loss-result-val" id="lossResultVal">0%</span>
+        </div>
+      </div>
+
+      <!-- 계산 요약 -->
+      <div class="calc-summary" id="calcSummary">
+        <div class="calc-row">
+          <div class="calc-sym">V</div>
+          <div class="calc-expr">공간 체적</div>
+          <div class="calc-val"><span id="s3V">—</span> <small>m³</small></div>
+        </div>
+        <div class="calc-row">
+          <div class="calc-sym">N</div>
+          <div class="calc-expr">환기 횟수 (작업 조건)</div>
+          <div class="calc-val"><span id="s3N">—</span> <small>회/hr</small></div>
+        </div>
+        <div class="calc-row">
+          <div class="calc-sym">Q</div>
+          <div class="calc-expr">필요 환기량 = V × N ÷ 60</div>
+          <div class="calc-val"><span id="s3Q">—</span> <small>m³/min</small></div>
+        </div>
+        <div class="calc-row">
+          <div class="calc-sym">η</div>
+          <div class="calc-expr">덕트 손실률</div>
+          <div class="calc-val"><span id="s3Loss">—</span></div>
+        </div>
+        <div class="calc-row highlight">
+          <div class="calc-sym">Qf</div>
+          <div class="calc-expr">팬 선정 용량 = Q × (1 + η)</div>
+          <div class="calc-val"><span id="s3Qf">—</span> <small>m³/min</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================ STEP 4: 결과 ================================ -->
+    <div class="panel" id="panel4">
+      <div class="step-title">검토 결과</div>
+      <div class="step-desc">팬 선정 및 작업 전 필수 확인사항을 점검하세요.</div>
+
+      <!-- 팬 선정 옵션 -->
+      <div class="card" id="fanOptionsCard">
+        <div class="card-label" id="fanCardLabel">팬 선정 옵션</div>
+        <div id="fanOptionsList"></div>
+        <div class="fan-footnote">* 정격 풍량은 무부하(자유토출) 기준 대표값 — 덕트 연결 시 실제 유량은 20~30% 감소 가능. 필요 대수 = ⌈Qf ÷ 정격풍량⌉ 기준이며, 구매 전 제품 사양서 확인 필요.</div>
+      </div>
+
+      <!-- 계산 요약 -->
+      <div class="card">
+        <div class="card-label">계산 요약</div>
+        <table class="result-table" id="resultTable">
+          <tr><td>공간 유형</td><td id="rType">—</td></tr>
+          <tr><td>형태</td><td id="rShape">—</td></tr>
+          <tr><td>체적 V</td><td id="rVol">—</td></tr>
+          <tr><td>작업 종류</td><td id="rWork">—</td></tr>
+          <tr><td>N (환기횟수)</td><td id="rN">—</td></tr>
+          <tr><td>Q (필요 환기량)</td><td id="rQ">—</td></tr>
+          <tr><td>덕트 손실률</td><td id="rLoss">—</td></tr>
+          <tr><td>Qf (팬 선정용량)</td><td id="rQf">—</td></tr>
+        </table>
+      </div>
+
+      <!-- 유해가스 기준 -->
+      <div class="card">
+        <div class="card-label">유해가스 측정 기준</div>
+        <table class="gas-table">
+          <thead>
+            <tr>
+              <th>가스</th>
+              <th style="text-align:right">기준</th>
+              <th style="text-align:right">판정기준</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>산소 (O₂)</td>
+              <td>18% 이상</td>
+              <td><span class="gas-badge ok">작업 가능 조건</span></td>
+            </tr>
+            <tr>
+              <td>황화수소 (H₂S)</td>
+              <td>10 ppm 미만</td>
+              <td><span class="gas-badge danger">초과 시 즉시 대피</span></td>
+            </tr>
+            <tr>
+              <td>일산화탄소 (CO)</td>
+              <td>30 ppm 미만</td>
+              <td><span class="gas-badge danger">초과 시 즉시 대피</span></td>
+            </tr>
+            <tr>
+              <td>가연성 가스</td>
+              <td>폭발하한 10% 미만</td>
+              <td><span class="gas-badge warn">화기 작업 금지</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 작업 전 필수 체크리스트 -->
+      <div class="card">
+        <div class="card-label">작업 전 필수 확인사항</div>
+        <div class="checklist" id="checklist">
+          <div class="check-item">
+            <div class="check-box" onclick="toggleCheck(this)"></div>
+            <div class="check-text"><strong>산소 농도 18% 이상</strong> 확인 (산소 농도계 사용, 작업 전·중 측정)</div>
+          </div>
+          <div class="check-item">
+            <div class="check-box" onclick="toggleCheck(this)"></div>
+            <div class="check-text"><strong>H₂S 10ppm / CO 30ppm 미만</strong> 확인 (복합가스측정기 사용)</div>
+          </div>
+          <div class="check-item">
+            <div class="check-box" onclick="toggleCheck(this)"></div>
+            <div class="check-text"><strong>감시인 1명 이상</strong> 외부에 상시 배치, 연락 수단 확보</div>
+          </div>
+          <div class="check-item">
+            <div class="check-box" onclick="toggleCheck(this)"></div>
+            <div class="check-text"><strong>공기호흡기 또는 송기마스크</strong> 현장 비치 및 작동 확인</div>
+          </div>
+          <div class="check-item">
+            <div class="check-box" onclick="toggleCheck(this)"></div>
+            <div class="check-text"><strong>입출입 명부</strong> 작성, 관리감독자 사전 승인 확인</div>
+          </div>
+          <div class="check-item">
+            <div class="check-box" onclick="toggleCheck(this)"></div>
+            <div class="check-text"><strong>환기 팬 가동 후</strong> 산소·유해가스 재측정, 기준 충족 시 입장</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 법령 근거 -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-label">관련 법령 근거</div>
+        <div class="law-list">
+          <div class="law-item"><span class="law-num">규칙 제619조</span> — 밀폐공간 작업 프로그램 수립·시행</div>
+          <div class="law-item"><span class="law-num">규칙 제620조</span> — 밀폐공간 작업 시작 전 산소 농도 등 확인</div>
+          <div class="law-item"><span class="law-num">규칙 제621조</span> — 인원 점검 및 출입 관리</div>
+          <div class="law-item"><span class="law-num">규칙 제625조</span> — 환기 (산소 18% 이상 유지 의무)</div>
+          <div class="law-item"><span class="law-num">규칙 제628조</span> — 보호구 (공기호흡기·송기마스크 지급)</div>
+          <div class="law-item"><span class="law-num">별표18</span> — 밀폐공간 18종 목록 (산업안전보건기준에 관한 규칙)</div>
+          <div class="law-item"><span class="law-num">KOSHA GUIDE E-G-18-2026</span> — 밀폐공간 작업 프로그램 수립 및 시행에 관한 기술지원 규정</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- 하단 내비게이션 -->
+  <div class="nav">
+    <button class="btn btn-prev" id="btnPrev" onclick="prevStep()" style="display:none">이전</button>
+    <button class="btn btn-next" id="btnNext" onclick="nextStep()" disabled>다음</button>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+  var step = 1;
+  var state = {
+    type: '', shape: '',
+    dims: {},
+    vol: null,
+    workN: null, workName: '',
+    ductLoss: 0, ductLen: 0, hasBend: false
+  };
+
+  /* ──── 진행바 업데이트 ──── */
+  function updateProg() {
+    var pct = (step / 4) * 100;
+    document.getElementById('progFill').style.width = pct + '%';
+    document.getElementById('progStep').textContent = 'Step ' + step + ' / 4';
+    var lbls = ['lbl1','lbl2','lbl3','lbl4'];
+    for (var i = 0; i < lbls.length; i++) {
+      var el = document.getElementById(lbls[i]);
+      if (i < step) el.classList.add('on');
+      else el.classList.remove('on');
+    }
+  }
+
+  /* ──── 스텝 전환 ──── */
+  function showStep(n) {
+    for (var i = 1; i <= 4; i++) {
+      document.getElementById('panel' + i).classList.toggle('active', i === n);
+    }
+    document.getElementById('btnPrev').style.display = n > 1 ? 'block' : 'none';
+    document.getElementById('btnNext').textContent = n === 4 ? '인쇄' : '다음';
+    document.getElementById('btnNext').className = 'btn ' + (n === 4 ? 'btn-print' : 'btn-next');
+    step = n;
+    updateProg();
+    validateStep();
+    if (n === 3) {
+      updateStep3();
+      document.getElementById('ductLenInp').value = state.ductLen || '';
+      document.getElementById('bendNo').classList.toggle('on', !state.hasBend);
+      document.getElementById('bendYes').classList.toggle('on', state.hasBend);
+      document.getElementById('lossResultVal').textContent = Math.round(state.ductLoss * 100) + '%';
+    }
+    if (n === 4) updateStep4();
+    document.querySelector('.content').scrollTop = 0;
+  }
+
+  function nextStep() {
+    if (step === 4) { window.print(); return; }
+    if (!canAdvance()) return;
+    showStep(step + 1);
+  }
+  function prevStep() {
+    if (step > 1) showStep(step - 1);
+  }
+
+  /* ──── 유효성 검사 ──── */
+  function canAdvance() {
+    if (step === 1) return state.type && state.shape && state.vol !== null && state.vol > 0;
+    if (step === 2) return state.workN !== null;
+    if (step === 3) return true;
+    return true;
+  }
+  function validateStep() {
+    var ok = canAdvance();
+    var btn = document.getElementById('btnNext');
+    btn.disabled = !ok;
+  }
+
+  /* ──── Step 1: 공간 유형 선택 (형태 자동 연동) ──── */
+  var TYPE_SHAPE_DEFAULT = {
+    '탱크': 'cylV', '맨홀': 'cylV', '터널': 'box',
+    '지하실': 'box', '선박': 'box', '기타': null
+  };
+  function selType(btn) {
+    var btns = document.querySelectorAll('#typeGrid .sel-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('on');
+    btn.classList.add('on');
+    state.type = btn.dataset.type;
+    var autoShape = TYPE_SHAPE_DEFAULT[state.type];
+    if (autoShape) {
+      var shapeBtn = document.querySelector('#shapeGrid [data-shape="' + autoShape + '"]');
+      if (shapeBtn) selShape(shapeBtn);
+    }
+    validateStep();
+  }
+
+  /* ──── Step 1: 형태 선택 ──── */
+  function selShape(btn) {
+    var btns = document.querySelectorAll('#shapeGrid .sel-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('on');
+    btn.classList.add('on');
+    state.shape = btn.dataset.shape;
+    state.dims = {};
+    state.vol = null;
+    renderDimInputs();
+    updateVol();
+    validateStep();
+  }
+
+  /* ──── 치수 입력 렌더링 ──── */
+  var DIM_CONFIG = {
+    box:    [{key:'L', label:'가로 (L)', hint:'m'}, {key:'W', label:'세로 (W)', hint:'m'}, {key:'H', label:'높이 (H)', hint:'m'}],
+    cylV:   [{key:'D', label:'지름 (D)', hint:'m'}, {key:'H', label:'높이 (H)', hint:'m'}],
+    cylH:   [{key:'D', label:'지름 (D)', hint:'m'}, {key:'Len', label:'길이 (L)', hint:'m'}],
+    sphere: [{key:'D', label:'지름 (D)', hint:'m'}],
+    irreg:  [{key:'V', label:'체적 (V)', hint:'m³'}]
+  };
+
+  function renderDimInputs() {
+    var cfg = DIM_CONFIG[state.shape];
+    if (!cfg) return;
+    var cols = cfg.length === 1 ? 'grid-template-columns:1fr;' : '';
+    var html = '<div class="dim-grid" style="' + cols + '">';
+    for (var i = 0; i < cfg.length; i++) {
+      var c = cfg[i];
+      html += '<div class="dim-item">';
+      html += '<label>' + c.label + '</label>';
+      html += '<div class="dim-wrap">';
+      html += '<input class="dim-inp" type="number" min="0" step="0.01" placeholder="0.00" ';
+      html += 'data-key="' + c.key + '" oninput="onDimInput(this)">';
+      html += '<span class="dim-unit">' + c.hint + '</span>';
+      html += '</div></div>';
+    }
+    html += '</div>';
+    document.getElementById('dimInputs').innerHTML = html;
+  }
+
+  function onDimInput(inp) {
+    var val = parseFloat(inp.value);
+    state.dims[inp.dataset.key] = isNaN(val) || val < 0 ? null : val;
+    updateVol();
+    validateStep();
+  }
+
+  /* ──── 체적 계산 ──── */
+  function calcVol() {
+    var d = state.dims;
+    if (state.shape === 'irreg') return d.V;
+    if (state.shape === 'box') {
+      if (d.L && d.W && d.H) return d.L * d.W * d.H;
+    }
+    if (state.shape === 'cylV') {
+      if (d.D && d.H) return Math.PI * Math.pow(d.D / 2, 2) * d.H;
+    }
+    if (state.shape === 'cylH') {
+      if (d.D && d.Len) return Math.PI * Math.pow(d.D / 2, 2) * d.Len;
+    }
+    if (state.shape === 'sphere') {
+      if (d.D) return (4 / 3) * Math.PI * Math.pow(d.D / 2, 3);
+    }
+    return null;
+  }
+
+  function updateVol() {
+    var v = calcVol();
+    state.vol = v;
+    var el = document.getElementById('volVal');
+    var hint = document.getElementById('volHint');
+    if (v !== null && v > 0) {
+      el.textContent = fmt2(v);
+      hint.textContent = state.shape === 'irreg' ? '직접 입력된 체적' : '자동 계산된 체적';
+    } else {
+      el.textContent = '—';
+      hint.textContent = '형태와 치수를 입력하면 자동 계산됩니다';
+    }
+  }
+
+  /* ──── Step 2: 작업 종류 선택 ──── */
+  function selWork(btn) {
+    var btns = document.querySelectorAll('#workList .work-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('on');
+    btn.classList.add('on');
+    state.workN = parseInt(btn.dataset.n);
+    state.workName = btn.dataset.name;
+    validateStep();
+  }
+
+  /* ──── Step 3: 덕트 길이·굴곡 → 손실률 자동 계산 ──── */
+  function calcDuctLoss(len, bend) {
+    if (len <= 0)  return 0;
+    if (len <= 10) return bend ? 0.2 : 0.1;
+    if (len <= 20) return bend ? 0.3 : 0.2;
+    if (len <= 40) return bend ? 0.4 : 0.3;
+    return 0.4;
+  }
+
+  function onDuctChange() {
+    state.ductLen = parseFloat(document.getElementById('ductLenInp').value) || 0;
+    applyDuctLoss();
+  }
+
+  function selBend(hasBend) {
+    state.hasBend = hasBend;
+    document.getElementById('bendNo').classList.toggle('on', !hasBend);
+    document.getElementById('bendYes').classList.toggle('on', hasBend);
+    applyDuctLoss();
+  }
+
+  function applyDuctLoss() {
+    state.ductLoss = calcDuctLoss(state.ductLen, state.hasBend);
+    document.getElementById('lossResultVal').textContent = Math.round(state.ductLoss * 100) + '%';
+    updateStep3();
+  }
+
+  function updateStep3() {
+    if (state.vol === null || state.workN === null) return;
+    var Q  = state.vol * state.workN / 60;
+    var Qf = Q * (1 + state.ductLoss);
+    document.getElementById('s3V').textContent    = fmt2(state.vol);
+    document.getElementById('s3N').textContent    = state.workN;
+    document.getElementById('s3Q').textContent    = fmt2(Q);
+    document.getElementById('s3Loss').textContent = Math.round(state.ductLoss * 100) + '%';
+    document.getElementById('s3Qf').textContent   = fmt2(Qf);
+  }
+
+  /* ──── 팬 규격 테이블 (실제 제품 기준 대표값) ──── */
+  var FAN_SVG = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="2"/><path d="M10 8 C9 5 5.5 4.5 5 7 C5.5 9 8 9 10 8Z"/><path d="M11.7 10.9 C14.5 12 16 15.5 14 17 C12 17 11 14.5 11.7 10.9Z"/><path d="M8.3 11.1 C5.5 12 4 15.5 6 17 C8 17 9 14.5 8.3 11.1Z"/></svg>';
+  var FAN_TIERS = [
+    { icon: FAN_SVG, label: '소형',  spec: 'φ200mm급',    flow: 20,  example: 'DTV-200 등',           power: '약 160W',       note: '맨홀·소형 탱크' },
+    { icon: FAN_SVG, label: '중형',  spec: 'φ300mm급',    flow: 55,  example: 'DTV-300, TFT-30 등',   power: '약 510~540W',   note: '일반 현장 범용' },
+    { icon: FAN_SVG, label: '대형',  spec: 'φ500mm급',    flow: 160, example: 'DTV-500, SMP-50 등',   power: '약 700~1,225W', note: '대형 탱크·터널' }
+  ];
+
+  function renderFanOptions(Qf) {
+    var recIdx = FAN_TIERS.length - 1;
+    for (var i = 0; i < FAN_TIERS.length; i++) {
+      if (Math.ceil(Qf / FAN_TIERS[i].flow) <= 2) { recIdx = i; break; }
+    }
+    var rec = FAN_TIERS[recIdx];
+    var recCount = Math.ceil(Qf / rec.flow);
+    var html = '<div class="fan-hero">';
+    html += '<div class="fan-hero-label">권장 팬</div>';
+    html += '<div class="fan-hero-spec">' + rec.spec + '</div>';
+    html += '<div class="fan-hero-row">';
+    html += '<div class="fan-hero-count">' + recCount + '<span>대</span></div>';
+    html += '<div class="fan-hero-sub">' + rec.example + '<br>' + rec.power + ' · ' + rec.flow + ' m³/min/대</div>';
+    html += '</div>';
+    html += '<div class="fan-hero-note">' + rec.note + ' 작업에 적합</div>';
+    html += '</div>';
+    html += '<div class="fan-alt-list">';
+    for (var j = 0; j < FAN_TIERS.length; j++) {
+      if (j === recIdx) continue;
+      var t = FAN_TIERS[j];
+      var cnt = Math.ceil(Qf / t.flow);
+      html += '<div class="fan-alt">';
+      html += '<span class="fan-alt-spec">' + t.spec + ' · ' + t.flow + ' m³/min/대</span>';
+      html += '<span class="fan-alt-count">' + cnt + '대</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  /* ──── Step 4: 결과 업데이트 ──── */
+  function updateStep4() {
+    var Q  = state.vol * state.workN / 60;
+    var Qf = Q * (1 + state.ductLoss);
+
+    var shapeNames = {box:'직육면체', cylV:'원통(수직)', cylH:'원통(수평)', sphere:'구형', irreg:'불규칙'};
+
+    document.getElementById('rType').textContent  = state.type;
+    document.getElementById('rShape').textContent = shapeNames[state.shape] || state.shape;
+    document.getElementById('rVol').textContent   = fmt2(state.vol) + ' m³';
+    document.getElementById('rWork').textContent  = state.workName;
+    document.getElementById('rN').textContent     = state.workN + ' 회/hr';
+    document.getElementById('rQ').textContent     = fmt2(Q) + ' m³/min';
+    document.getElementById('rLoss').textContent  = (state.ductLoss * 100) + '%';
+    document.getElementById('rQf').textContent    = fmt2(Qf) + ' m³/min';
+
+    /* 팬 선정 */
+    document.getElementById('fanCardLabel').textContent = 'Qf = ' + fmt2(Qf) + ' m³/min 기준 팬 선정';
+    document.getElementById('fanOptionsList').innerHTML = renderFanOptions(Qf);
+  }
+
+  /* ──── 체크리스트 토글 ──── */
+  function toggleCheck(box) {
+    box.classList.toggle('checked');
+  }
+
+  /* ──── 숫자 포맷 ──── */
+  function fmt2(n) {
+    if (n === null || isNaN(n)) return '—';
+    return parseFloat(n.toFixed(2)).toString();
+  }
+
+  /* ──── 초기화 ──── */
+  updateProg();
+</script>
+</body>
+</html>
