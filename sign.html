@@ -198,6 +198,19 @@
     .csw { width:18px; height:18px; border-radius:50%; border:1.5px solid rgba(55,53,47,.18); cursor:pointer; padding:0; transition:transform .1s, border-color .1s; flex-shrink:0; }
     .csw:hover { transform:scale(1.2); border-color:rgba(55,53,47,.4); }
     .csw[data-color="#FFFFFF"] { border-color:rgba(55,53,47,.25); }
+    /* LAYER LIST */
+    .layer-item { display:flex; align-items:center; gap:5px; padding:5px 7px; border-radius:5px; border:1px solid transparent; cursor:pointer; font-size:12px; color:var(--text); transition:.1s; user-select:none; }
+    .layer-item:hover { background:var(--hover); }
+    .layer-item.selected { background:var(--active); border-color:rgba(35,131,226,.2); }
+    .layer-item.dragging-over { border-top:2px solid var(--accent); }
+    .layer-drag-handle { cursor:grab; color:var(--text-l); flex-shrink:0; display:flex; align-items:center; }
+    .layer-drag-handle:active { cursor:grabbing; }
+    .layer-item-icon { width:14px; height:14px; flex-shrink:0; opacity:.7; }
+    .layer-item-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11.5px; }
+    .layer-item-lock { width:13px; height:13px; flex-shrink:0; color:var(--text-l); cursor:pointer; opacity:.7; }
+    .layer-item-lock:hover { opacity:1; }
+    #layers-list::-webkit-scrollbar { width:4px; }
+    #layers-list::-webkit-scrollbar-thumb { background:rgba(55,53,47,.12); border-radius:2px; }
     .prop-toggle-label { font-size:13px; color:var(--text); cursor:pointer; user-select:none; display:flex; align-items:center; gap:5px; }
     .prop-toggle-label input { accent-color:var(--accent); width:14px; height:14px; cursor:pointer; }
 
@@ -420,13 +433,21 @@
         <div class="panel-section-title">용지 크기</div>
         <div class="paper-select-wrap">
           <select class="paper-select" id="paper-select">
-            <option value="a4p">A4 세로 (210×297mm)</option>
-            <option value="a4l">A4 가로 (297×210mm)</option>
-            <option value="a3p">A3 세로 (297×420mm)</option>
-            <option value="a3l">A3 가로 (420×297mm)</option>
-            <option value="b31">현수막 3:1</option>
-            <option value="b41">현수막 4:1</option>
-            <option value="b81">현수막 8:1</option>
+            <optgroup label="── 안전표지 (정방형) ──">
+              <option value="s150">소형 150×150mm</option>
+              <option value="s210">중소형 210×210mm</option>
+              <option value="s300" selected>중형 300×300mm</option>
+              <option value="s450">대형 450×450mm</option>
+            </optgroup>
+            <optgroup label="── 일반 용지 ──">
+              <option value="a4p">A4 세로 (210×297mm)</option>
+              <option value="a4l">A4 가로 (297×210mm)</option>
+              <option value="a3p">A3 세로 (297×420mm)</option>
+              <option value="a3l">A3 가로 (420×297mm)</option>
+              <option value="b31">현수막 3:1</option>
+              <option value="b41">현수막 4:1</option>
+              <option value="b81">현수막 8:1</option>
+            </optgroup>
             <option value="custom">사용자 정의</option>
           </select>
           <div class="paper-custom-row" id="paper-custom-row">
@@ -513,6 +534,14 @@
             <span class="tool-btn-sub">Nano Banana · Gemini</span>
           </div>
         </button>
+      </div>
+
+      <div class="panel-section" id="layers-panel-section">
+        <div class="panel-section-title">
+          레이어
+          <span style="margin-left:auto;font-size:10px;color:var(--text-l);font-weight:400;" id="layers-count"></span>
+        </div>
+        <div id="layers-list" style="display:flex;flex-direction:column;gap:1px;max-height:220px;overflow-y:auto;"></div>
       </div>
 
       <div class="panel-section">
@@ -629,10 +658,14 @@
           <button class="prop-btn dup" id="btn-crop-start" style="width:100%;font-size:12px;">자르기 모드 시작</button>
         </div>
         <div id="crop-active-row" style="display:none;">
-          <div style="font-size:11px;color:var(--text-m);margin-bottom:8px;">드래그하여 자를 영역을 선택하세요</div>
-          <div style="display:flex;gap:6px;">
-            <button class="prop-btn" id="btn-crop-cancel" style="flex:1;font-size:12px;background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.15);color:var(--text-m);">취소</button>
-            <button class="prop-btn dup" id="btn-crop-apply" style="flex:1;font-size:12px;" disabled>적용</button>
+          <div id="crop-hint-draw" style="font-size:11px;color:var(--text-m);margin-bottom:8px;">드래그하여 자를 영역을 그리세요</div>
+          <div id="crop-hint-adjust" style="font-size:11px;color:var(--text-m);margin-bottom:8px;display:none;">핸들로 크기·이동 조정 후 적용</div>
+          <div style="display:flex;gap:6px;margin-bottom:6px;">
+            <button class="prop-btn" id="btn-crop-cancel" style="flex:1;font-size:12px;background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.15);color:var(--text-m);">취소 (Esc)</button>
+            <button class="prop-btn dup" id="btn-crop-apply" style="flex:1;font-size:12px;" disabled>적용 (↵)</button>
+          </div>
+          <div style="font-size:10px;color:var(--text-l);line-height:1.5;">
+            Shift 드래그: 1:1 비율 · 핸들 드래그: 크기 조정 · 영역 안 드래그: 이동
           </div>
         </div>
       </div>
@@ -1101,10 +1134,14 @@
 
 /* ── PAPER PRESETS ── */
 var PAPERS = {
-  a4p:{w:794,h:1123,  mw:210,mh:297},
-  a4l:{w:1123,h:794,  mw:297,mh:210},
-  a3p:{w:1123,h:1587, mw:297,mh:420},
-  a3l:{w:1587,h:1123, mw:420,mh:297},
+  s150:{w:567,h:567,   mw:150,mh:150},  /* 안전표지 소형 */
+  s300:{w:1134,h:1134, mw:300,mh:300},  /* 안전표지 중형 */
+  s450:{w:1701,h:1701, mw:450,mh:450},  /* 안전표지 대형 */
+  s210:{w:794,h:794,   mw:210,mh:210},  /* 안전표지 A4정방형 */
+  a4p:{w:794,h:1123,   mw:210,mh:297},
+  a4l:{w:1123,h:794,   mw:297,mh:210},
+  a3p:{w:1123,h:1587,  mw:297,mh:420},
+  a3l:{w:1587,h:1123,  mw:420,mh:297},
   b31:{w:2700,h:900},
   b41:{w:3600,h:900},
   b81:{w:4800,h:600},
@@ -1222,7 +1259,7 @@ function getSigns() {
 }
 
 /* ── STATE ── */
-var DOC_W = 794, DOC_H = 1123, docKey = 'a4p';
+var DOC_W = 1134, DOC_H = 1134, docKey = 's300';
 var docBg = '#FFFFFF';
 var items = [];
 var selectedIds = [];           /* 다중 선택 */
@@ -1250,8 +1287,15 @@ var _eraserHistory = [];
 
 /* crop state */
 var cropMode = false;
-var cropRect = null;       /* {x,y,w,h} 도큐먼트 좌표 */
-var cropDragStart = null;  /* {x,y} 도큐먼트 좌표 */
+var cropRect = null;        /* {x,y,w,h} 도큐먼트 좌표 */
+var cropDragStart = null;   /* legacy — no longer used */
+var cropDragOp = null;      /* {type:'draw'|'move'|handle, origPt:{x,y}, origRect:{x,y,w,h}} */
+var cropItemBounds = null;  /* 이미지 아이템 경계 (클램프 용) */
+var CROP_CURSORS = {
+  nw:'nwse-resize', ne:'nesw-resize', se:'nwse-resize', sw:'nesw-resize',
+  n:'ns-resize', s:'ns-resize', e:'ew-resize', w:'ew-resize',
+  move:'move', draw:'crosshair'
+};
 
 /* cursor overlay */
 var cursorPos = {sx: 0, sy: 0, visible: false};
@@ -1278,11 +1322,12 @@ Object.defineProperty(window, '_selectedId_compat', {
 });
 function getSelectedId() { return selectedIds.length === 1 ? selectedIds[0] : null; }
 function selectOne(id)   { selectedIds = (id == null) ? [] : [id]; }
-function clearSelection(){ selectedIds = []; }
+function clearSelection(){ selectedIds = []; renderLayerPanel(); }
 function isSelected(id)  { return selectedIds.indexOf(id) !== -1; }
 function toggleSelection(id) {
   var i = selectedIds.indexOf(id);
   if (i === -1) selectedIds.push(id); else selectedIds.splice(i, 1);
+  renderLayerPanel();
 }
 /* selectedId 별칭 — 기존 코드(eraser, BG removal 등)에서 사용 */
 Object.defineProperty(window, 'selectedId', {
@@ -1464,24 +1509,48 @@ function render() {
   /* 자르기 모드 오버레이 */
   if (cropMode) {
     ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,.48)';
-    if (cropRect && cropRect.w > 1 && cropRect.h > 1) {
+    ctx.setLineDash([]);
+    if (cropRect && cropRect.w > 4 && cropRect.h > 4) {
       var cr = cropRect;
-      /* 크롭 영역 제외한 4개 어두운 사각형 */
+      /* 바깥 어두운 영역 */
+      ctx.fillStyle = 'rgba(0,0,0,.52)';
       ctx.fillRect(0, 0, DOC_W, cr.y);
       ctx.fillRect(0, cr.y + cr.h, DOC_W, DOC_H - cr.y - cr.h);
       ctx.fillRect(0, cr.y, cr.x, cr.h);
       ctx.fillRect(cr.x + cr.w, cr.y, DOC_W - cr.x - cr.w, cr.h);
-      /* 크롭 테두리 */
-      ctx.strokeStyle = '#fff';
+      /* 3분할 그리드 */
+      ctx.strokeStyle = 'rgba(255,255,255,.35)';
+      ctx.lineWidth = 0.8 / zoom;
+      var dx3 = cr.w / 3, dy3 = cr.h / 3;
+      for (var gi = 1; gi <= 2; gi++) {
+        ctx.beginPath(); ctx.moveTo(cr.x + dx3*gi, cr.y); ctx.lineTo(cr.x + dx3*gi, cr.y+cr.h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cr.x, cr.y + dy3*gi); ctx.lineTo(cr.x+cr.w, cr.y + dy3*gi); ctx.stroke();
+      }
+      /* 외곽 테두리 */
+      ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.5 / zoom;
-      ctx.setLineDash([]);
       ctx.strokeRect(cr.x, cr.y, cr.w, cr.h);
-      ctx.strokeStyle = 'rgba(0,0,0,.6)';
-      ctx.lineWidth = 0.5 / zoom;
-      ctx.setLineDash([5/zoom, 5/zoom]);
-      ctx.strokeRect(cr.x, cr.y, cr.w, cr.h);
+      /* 핸들 */
+      var hs = 5 / zoom;
+      var hpts = [
+        [cr.x,          cr.y         ],
+        [cr.x+cr.w/2,   cr.y         ],
+        [cr.x+cr.w,     cr.y         ],
+        [cr.x,          cr.y+cr.h/2  ],
+        [cr.x+cr.w,     cr.y+cr.h/2  ],
+        [cr.x,          cr.y+cr.h    ],
+        [cr.x+cr.w/2,   cr.y+cr.h    ],
+        [cr.x+cr.w,     cr.y+cr.h    ]
+      ];
+      hpts.forEach(function(h) {
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = 'rgba(0,0,0,.55)';
+        ctx.lineWidth = 1 / zoom;
+        ctx.beginPath(); ctx.rect(h[0]-hs, h[1]-hs, hs*2, hs*2);
+        ctx.fill(); ctx.stroke();
+      });
     } else {
+      ctx.fillStyle = 'rgba(0,0,0,.52)';
       ctx.fillRect(0, 0, DOC_W, DOC_H);
     }
     ctx.restore();
@@ -2074,9 +2143,11 @@ function addImageFromSrc(src, opts) {
   img.src = src;
 
   function finishAdd(srcF, nw, nh) {
-    var maxDim = Math.min(DOC_W, DOC_H) * 0.5;
+    /* 라이브러리 픽토그램 → 캔버스의 75%까지 채움; 일반 이미지 → 50% */
+    var fillRatio = opts.cropPictogram ? 0.75 : 0.5;
+    var maxDim = Math.min(DOC_W, DOC_H) * fillRatio;
     var w = nw, h = nh;
-    if (w > maxDim || h > maxDim) {
+    if (w > maxDim || h > maxDim || opts.cropPictogram) {
       if (w >= h) { h = Math.round(h * maxDim/w); w = Math.round(maxDim); }
       else        { w = Math.round(w * maxDim/h); h = Math.round(maxDim); }
     }
@@ -2590,9 +2661,18 @@ canvas.addEventListener('mousedown', function(e) {
 
   /* ── 자르기 모드 ── */
   if (cropMode && e.button === 0) {
-    cropDragStart = { x: pt.x, y: pt.y };
-    cropRect = { x: pt.x, y: pt.y, w: 0, h: 0 };
-    document.getElementById('btn-crop-apply').disabled = true;
+    var cropHit = cropHandleAt(pt.x, pt.y);
+    if (cropHit === 'draw' || !cropRect) {
+      /* 새로 그리기 */
+      cropDragOp = { type: 'draw', origPt: {x: pt.x, y: pt.y}, origRect: null };
+      cropRect = { x: pt.x, y: pt.y, w: 0, h: 0 };
+      document.getElementById('btn-crop-apply').disabled = true;
+      document.getElementById('crop-hint-draw').style.display = '';
+      document.getElementById('crop-hint-adjust').style.display = 'none';
+    } else {
+      /* 기존 rect 핸들/이동 */
+      cropDragOp = { type: cropHit, origPt: {x: pt.x, y: pt.y}, origRect: {x:cropRect.x,y:cropRect.y,w:cropRect.w,h:cropRect.h} };
+    }
     e.preventDefault(); return;
   }
 
@@ -2708,15 +2788,10 @@ document.addEventListener('mousemove', function(e) {
   }
 
   /* 자르기 드래그 */
-  if (cropMode && cropDragStart) {
+  if (cropMode && cropDragOp) {
     var cpt = screenToDoc(sx, sy);
-    cropRect = {
-      x: Math.min(cropDragStart.x, cpt.x),
-      y: Math.min(cropDragStart.y, cpt.y),
-      w: Math.abs(cpt.x - cropDragStart.x),
-      h: Math.abs(cpt.y - cropDragStart.y)
-    };
-    var canApply = cropRect.w > 4 && cropRect.h > 4;
+    applyCropDrag(cpt, e.shiftKey);
+    var canApply = cropRect && cropRect.w > 4 && cropRect.h > 4;
     document.getElementById('btn-crop-apply').disabled = !canApply;
     render();
     e.preventDefault(); return;
@@ -2862,6 +2937,16 @@ document.addEventListener('mousemove', function(e) {
 
 document.addEventListener('mouseup', function() {
   if (eraserDragging) eraserDragging = false;
+  if (cropMode && cropDragOp) {
+    cropDragOp = null;
+    /* 유효한 rect가 있으면 adjust 힌트로 전환 */
+    if (cropRect && cropRect.w > 4 && cropRect.h > 4) {
+      document.getElementById('crop-hint-draw').style.display = 'none';
+      document.getElementById('crop-hint-adjust').style.display = '';
+      document.getElementById('btn-crop-apply').disabled = false;
+    }
+    render(); return;
+  }
   if (drag.type === 'rubber') drag.rubberBand = null;
   drag.active = false; drag.type = null; drag.dir = null;
   isPanning = false;
@@ -2876,6 +2961,15 @@ canvas.addEventListener('mousemove', function(e) {
   cursorPos.sx = sx; cursorPos.sy = sy; cursorPos.visible = true;
 
   if (eraserMode) { render(); return; }
+
+  if (cropMode) {
+    if (!cropDragOp) {
+      var pt2 = screenToDoc(sx, sy);
+      var ch = cropHandleAt(pt2.x, pt2.y);
+      canvas.style.cursor = CROP_CURSORS[ch] || 'crosshair';
+    }
+    return;
+  }
 
   if (drag.active || isPanning) return;
   if (spaceDown) { canvas.style.cursor = 'grab'; return; }
@@ -2982,7 +3076,7 @@ document.addEventListener('keydown', function(e) {
   /* 모달이 열려있을 때 Esc 처리만 */
   if (e.key === 'Escape') {
     if (closeAnyModal()) { e.preventDefault(); return; }
-    if (cropMode) { setCropMode(false); e.preventDefault(); return; }
+    if (cropMode) { setCropMode(false); render(); e.preventDefault(); return; }
     if (pendingShape) {
       pendingShape = null;
       document.querySelectorAll('.shape-btn').forEach(function(b){ b.classList.remove('active'); });
@@ -2993,6 +3087,29 @@ document.addEventListener('keydown', function(e) {
   }
 
   if (inField) return;
+
+  /* 자르기 모드 전용 단축키 */
+  if (cropMode) {
+    if (e.key === 'Enter') { applyCrop(); e.preventDefault(); return; }
+    var ck = e.key;
+    var isArrow = (ck === 'ArrowLeft' || ck === 'ArrowRight' || ck === 'ArrowUp' || ck === 'ArrowDown');
+    if (isArrow && cropRect) {
+      var nd = e.shiftKey ? 10 : 1;
+      var cdx = 0, cdy = 0;
+      if (ck === 'ArrowLeft')  cdx = -nd;
+      if (ck === 'ArrowRight') cdx = nd;
+      if (ck === 'ArrowUp')    cdy = -nd;
+      if (ck === 'ArrowDown')  cdy = nd;
+      var nx2 = cropRect.x + cdx, ny2 = cropRect.y + cdy;
+      if (cropItemBounds) {
+        nx2 = Math.max(cropItemBounds.x, Math.min(cropItemBounds.x + cropItemBounds.w - cropRect.w, nx2));
+        ny2 = Math.max(cropItemBounds.y, Math.min(cropItemBounds.y + cropItemBounds.h - cropRect.h, ny2));
+      }
+      cropRect = {x: nx2, y: ny2, w: cropRect.w, h: cropRect.h};
+      render(); e.preventDefault(); return;
+    }
+    e.preventDefault(); return;
+  }
 
   /* Space 패닝 */
   if (e.code === 'Space') {
@@ -3474,18 +3591,83 @@ function setEraserActive(active) {
 }
 
 /* ── CROP MODE ── */
+function cropHandleAt(px, py) {
+  if (!cropRect || cropRect.w < 4 || cropRect.h < 4) return 'draw';
+  var cr = cropRect;
+  var hs = Math.max(8, 8/zoom); /* hit target — larger than visual */
+  var handles = {
+    nw:[cr.x,cr.y], n:[cr.x+cr.w/2,cr.y], ne:[cr.x+cr.w,cr.y],
+    w:[cr.x,cr.y+cr.h/2], e:[cr.x+cr.w,cr.y+cr.h/2],
+    sw:[cr.x,cr.y+cr.h], s:[cr.x+cr.w/2,cr.y+cr.h], se:[cr.x+cr.w,cr.y+cr.h]
+  };
+  for (var k in handles) {
+    var h = handles[k];
+    if (Math.abs(px-h[0]) <= hs && Math.abs(py-h[1]) <= hs) return k;
+  }
+  if (px >= cr.x && px <= cr.x+cr.w && py >= cr.y && py <= cr.y+cr.h) return 'move';
+  return 'draw';
+}
+
+function applyCropDrag(pt, shiftKey) {
+  if (!cropDragOp) return;
+  var op = cropDragOp;
+  var dx = pt.x - op.origPt.x, dy = pt.y - op.origPt.y;
+  var nx, ny, nw, nh;
+
+  if (op.type === 'draw') {
+    var sx = op.origPt.x, sy2 = op.origPt.y;
+    nx = Math.min(sx, pt.x); ny = Math.min(sy2, pt.y);
+    nw = Math.abs(pt.x - sx); nh = Math.abs(pt.y - sy2);
+    if (shiftKey) { var side = Math.max(nw, nh); nw = side; nh = side; }
+  } else {
+    var or = op.origRect;
+    nx = or.x; ny = or.y; nw = or.w; nh = or.h;
+    if (op.type === 'move') { nx = or.x + dx; ny = or.y + dy; }
+    else {
+      if (op.type.indexOf('e') !== -1) nw = or.w + dx;
+      if (op.type.indexOf('s') !== -1) nh = or.h + dy;
+      if (op.type.indexOf('w') !== -1) { nx = or.x + dx; nw = or.w - dx; }
+      if (op.type.indexOf('n') !== -1) { ny = or.y + dy; nh = or.h - dy; }
+      if (nw < 0) { nx += nw; nw = -nw; }
+      if (nh < 0) { ny += nh; nh = -nh; }
+      if (shiftKey && or.w > 0 && or.h > 0) {
+        var ar = or.w / or.h;
+        if (op.type === 'n' || op.type === 's') nw = nh * ar;
+        else if (op.type === 'e' || op.type === 'w') nh = nw / ar;
+        else nh = nw / ar;
+      }
+    }
+  }
+
+  /* 이미지 경계로 클램프 */
+  if (cropItemBounds) {
+    var ib = cropItemBounds;
+    if (nx < ib.x) nx = ib.x;
+    if (ny < ib.y) ny = ib.y;
+    if (nx + nw > ib.x + ib.w) nw = ib.x + ib.w - nx;
+    if (ny + nh > ib.y + ib.h) nh = ib.y + ib.h - ny;
+  }
+  nw = Math.max(4, nw); nh = Math.max(4, nh);
+  cropRect = {x: Math.round(nx), y: Math.round(ny), w: Math.round(nw), h: Math.round(nh)};
+}
+
 function setCropMode(active) {
   cropMode = active;
+  cropDragOp = null;
   var idleRow   = document.getElementById('crop-idle-row');
   var activeRow = document.getElementById('crop-active-row');
   if (active) {
     cropRect = null; cropDragStart = null;
+    var item = getItem(selectedId);
+    cropItemBounds = item ? {x: item.x, y: item.y, w: item.w, h: item.h} : null;
     idleRow.style.display = 'none';
     activeRow.style.display = 'block';
+    document.getElementById('crop-hint-draw').style.display = '';
+    document.getElementById('crop-hint-adjust').style.display = 'none';
     document.getElementById('btn-crop-apply').disabled = true;
     canvas.style.cursor = 'crosshair';
   } else {
-    cropRect = null; cropDragStart = null;
+    cropRect = null; cropDragStart = null; cropItemBounds = null;
     idleRow.style.display = 'block';
     activeRow.style.display = 'none';
     canvas.style.cursor = 'default';
@@ -4385,6 +4567,103 @@ document.getElementById('btn-zoom-in').addEventListener('click',  function() { z
 document.getElementById('btn-zoom-out').addEventListener('click', function() { zoomAt(1/1.25, canvas.width/2, canvas.height/2); });
 document.getElementById('btn-fit').addEventListener('click', fitToScreen);
 
+/* ── LAYER PANEL ── */
+var layerDragSrc = null;
+
+function renderLayerPanel() {
+  var list = document.getElementById('layers-list');
+  var countEl = document.getElementById('layers-count');
+  if (!list) return;
+  /* 위 → 아래 순서 (items 배열 역순: 마지막이 가장 위) */
+  var ordered = items.slice().reverse();
+  countEl.textContent = ordered.length + '개';
+  list.innerHTML = '';
+  ordered.forEach(function(item, idx) {
+    var realIdx = items.length - 1 - idx; /* items 배열의 실제 인덱스 */
+    var isSelected = selectedIds.indexOf(item.id) !== -1;
+    var row = document.createElement('div');
+    row.className = 'layer-item' + (isSelected ? ' selected' : '');
+    row.dataset.id = item.id;
+    row.draggable = true;
+
+    /* 드래그 핸들 아이콘 */
+    var handleEl = document.createElement('span');
+    handleEl.className = 'layer-drag-handle';
+    handleEl.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect y="2" width="12" height="1.5" rx=".75" fill="currentColor"/><rect y="5.25" width="12" height="1.5" rx=".75" fill="currentColor"/><rect y="8.5" width="12" height="1.5" rx=".75" fill="currentColor"/></svg>';
+    row.appendChild(handleEl);
+
+    /* 타입 아이콘 */
+    var typeEl = document.createElement('span');
+    typeEl.className = 'layer-item-icon';
+    if (item.type === 'image') typeEl.innerHTML = '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="1" width="12" height="12" rx="1.5"/><circle cx="4.5" cy="4.5" r="1.2"/><path d="M1 9.5l3.5-3 3 2.5 2-2 3 3.5"/></svg>';
+    else if (item.type === 'text') typeEl.innerHTML = '<svg viewBox="0 0 14 14" fill="currentColor"><path d="M2 3h10v1.5H8.5v7H5.5v-7H2V3z"/></svg>';
+    else typeEl.innerHTML = '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="2" width="10" height="10" rx="1.5"/></svg>';
+    row.appendChild(typeEl);
+
+    /* 이름 */
+    var nameEl = document.createElement('span');
+    nameEl.className = 'layer-item-name';
+    if (item.type === 'text') nameEl.textContent = (item.content || '').replace(/\n/g,' ').substring(0,20) || '텍스트';
+    else if (item.type === 'image') nameEl.textContent = item._label || ('이미지 ' + item.id);
+    else nameEl.textContent = ({ rect:'사각형', ellipse:'원', tri:'삼각형', line:'선', arrow:'화살표' }[item.shape] || '도형');
+    row.appendChild(nameEl);
+
+    /* 잠금 버튼 */
+    var lockEl = document.createElement('span');
+    lockEl.className = 'layer-item-lock';
+    lockEl.title = item.locked ? '잠금 해제' : '잠금';
+    lockEl.innerHTML = item.locked
+      ? '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="6" width="8" height="6" rx="1"/><path d="M5 6V4.5a2 2 0 014 0V6"/></svg>'
+      : '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".35"><rect x="3" y="6" width="8" height="6" rx="1"/><path d="M5 6V4.5a2 2 0 014 0V6"/></svg>';
+    lockEl.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      pushHistory(); item.locked = !item.locked; render(); save(); renderLayerPanel();
+    });
+    row.appendChild(lockEl);
+
+    /* 클릭 선택 */
+    row.addEventListener('click', function() {
+      selectedIds = [item.id]; updateProps(); render(); renderLayerPanel();
+    });
+
+    /* 드래그 재정렬 */
+    row.addEventListener('dragstart', function(ev) {
+      layerDragSrc = item.id;
+      ev.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragover', function(ev) {
+      ev.preventDefault(); ev.dataTransfer.dropEffect = 'move';
+      list.querySelectorAll('.layer-item').forEach(function(r){ r.classList.remove('dragging-over'); });
+      row.classList.add('dragging-over');
+    });
+    row.addEventListener('dragleave', function() { row.classList.remove('dragging-over'); });
+    row.addEventListener('drop', function(ev) {
+      ev.preventDefault(); row.classList.remove('dragging-over');
+      if (layerDragSrc === item.id) return;
+      /* 아이템 배열에서 순서 교환 */
+      var srcIdx = -1, dstIdx = -1;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].id === layerDragSrc) srcIdx = i;
+        if (items[i].id === item.id) dstIdx = i;
+      }
+      if (srcIdx === -1 || dstIdx === -1) return;
+      pushHistory();
+      var moved = items.splice(srcIdx, 1)[0];
+      var newDst = dstIdx > srcIdx ? dstIdx - 1 : dstIdx;
+      items.splice(newDst, 0, moved);
+      render(); save(); renderLayerPanel();
+    });
+    row.addEventListener('dragend', function() {
+      list.querySelectorAll('.layer-item').forEach(function(r){ r.classList.remove('dragging-over'); });
+      layerDragSrc = null;
+    });
+
+    list.appendChild(row);
+  });
+}
+
+/* 레이어 패널은 save() 후 자동 갱신 (너무 잦은 호출 방지) */
+
 /* ── PERSISTENCE ── */
 var LS_KEY = 'musai_sign_v3';
 
@@ -4407,6 +4686,7 @@ function save() {
       showGrid: showGrid, snapEnabled: snapEnabled, pictogramOnly: pictogramOnly
     }));
   } catch(e) {}
+  renderLayerPanel();
 }
 
 function load() {
@@ -4463,6 +4743,7 @@ document.getElementById('btn-snap').classList.toggle('active', snapEnabled);
 historyStack = [snapshotState()]; historyIndex = 0;
 updateUndoRedoUI();
 updateProps();
+renderLayerPanel();
 
 var hint = document.getElementById('canvas-hint');
 setTimeout(function() { hint.classList.add('hidden'); }, 6000);
