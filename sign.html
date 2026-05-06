@@ -306,6 +306,12 @@
     .lib-edit-form .row:last-child { margin-bottom:0; }
     .lib-edit-form input, .lib-edit-form select { flex:1; }
 
+    /* template items */
+    .tmpl-item { position:relative; cursor:pointer; border-radius:6px; border:1.5px solid var(--border); overflow:hidden; display:flex; flex-direction:column; background:var(--bg-panel); transition:.12s; }
+    .tmpl-item:hover { border-color:var(--accent); box-shadow:var(--shadow-s); transform:translateY(-1px); }
+    .tmpl-thumb { flex:1; display:flex; align-items:center; justify-content:center; font-size:26px; min-height:54px; }
+    .tmpl-lbl { font-size:9px; text-align:center; color:var(--text-m); padding:3px 2px 4px; background:var(--bg-panel); border-top:1px solid var(--border-s); line-height:1.3; word-break:keep-all; }
+
     @media print {
       #toolbar, #left-panel, #right-panel, #canvas-hint, #status-bar, .modal-overlay { display:none !important; }
       #canvas-area { background:#fff !important; overflow:visible !important; position:static !important; }
@@ -501,6 +507,12 @@
         </div>
       </div>
 
+      <div class="panel-section" id="templates-section">
+        <div class="panel-section-title">템플릿</div>
+        <div class="sign-cat-row" id="tmpl-cat-row"></div>
+        <div id="tmpl-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;"></div>
+      </div>
+
       <div class="panel-section">
         <div class="panel-section-title">도형</div>
         <div class="shape-grid" id="shape-grid">
@@ -670,6 +682,43 @@
         </div>
       </div>
       <div class="prop-section">
+        <label class="prop-label">테두리</label>
+        <div class="prop-color-row" style="margin-bottom:6px;">
+          <input class="prop-color" type="color" id="prop-img-border-color" value="#1D1D1F" title="테두리 색상">
+          <label class="prop-toggle-label"><input type="checkbox" id="prop-img-border-on"> 테두리 사용</label>
+        </div>
+        <div class="prop-range-row" id="img-border-w-row" style="display:none;">
+          <input class="prop-range" type="range" id="prop-img-border-w" min="1" max="60" value="4">
+          <span class="prop-range-val" id="prop-img-border-w-val">4px</span>
+        </div>
+        <div class="color-swatches" data-for="prop-img-border-color">
+          <button class="csw" data-color="#1D1D1F" style="background:#1D1D1F" title="검정"></button>
+          <button class="csw" data-color="#FFFFFF" style="background:#FFFFFF" title="흰색"></button>
+          <button class="csw" data-color="#E8222E" style="background:#E8222E" title="금지빨강"></button>
+          <button class="csw" data-color="#FFD100" style="background:#FFD100" title="경고노랑"></button>
+          <button class="csw" data-color="#005DAA" style="background:#005DAA" title="지시파랑"></button>
+          <button class="csw" data-color="#007A4D" style="background:#007A4D" title="안전녹색"></button>
+        </div>
+      </div>
+      <div class="prop-section">
+        <label class="prop-label">이미지 보정</label>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div>
+            <div style="font-size:10px;color:var(--text-l);margin-bottom:3px;display:flex;justify-content:space-between;"><span>밝기</span><span id="prop-img-brightness-val">100%</span></div>
+            <input class="prop-range" type="range" id="prop-img-brightness" min="0" max="200" value="100">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text-l);margin-bottom:3px;display:flex;justify-content:space-between;"><span>대비</span><span id="prop-img-contrast-val">100%</span></div>
+            <input class="prop-range" type="range" id="prop-img-contrast" min="0" max="200" value="100">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text-l);margin-bottom:3px;display:flex;justify-content:space-between;"><span>채도</span><span id="prop-img-saturation-val">100%</span></div>
+            <input class="prop-range" type="range" id="prop-img-saturation" min="0" max="200" value="100">
+          </div>
+          <button class="prop-btn dup" id="prop-img-filter-reset" style="font-size:11px;height:26px;">보정 초기화</button>
+        </div>
+      </div>
+      <div class="prop-section">
         <label class="prop-label">레이어 순서</label>
         <div class="layer-row">
           <button class="layer-btn" id="prop-img-front">맨 앞으로</button>
@@ -757,6 +806,41 @@
           <button class="csw" data-color="#E8222E" style="background:#E8222E" title="빨강"></button>
           <button class="csw" data-color="#FFD100" style="background:#FFD100" title="노랑"></button>
           <button class="csw" data-color="#005DAA" style="background:#005DAA" title="파랑"></button>
+        </div>
+      </div>
+      <div class="prop-section">
+        <label class="prop-label">그림자</label>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <label class="prop-toggle-label"><input type="checkbox" id="prop-text-shadow-on"> 그림자 사용</label>
+          <input class="prop-color" type="color" id="prop-text-shadow-color" value="#000000" style="margin-left:auto;">
+        </div>
+        <div id="text-shadow-opts" style="display:none;">
+          <div style="font-size:10px;color:var(--text-l);margin-bottom:3px;display:flex;justify-content:space-between;"><span>흐림</span><span id="prop-text-shadow-blur-val">4px</span></div>
+          <input class="prop-range" type="range" id="prop-text-shadow-blur" min="0" max="30" value="4" style="margin-bottom:8px;">
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;">
+              <div style="font-size:10px;color:var(--text-l);margin-bottom:3px;display:flex;justify-content:space-between;"><span>X</span><span id="prop-text-shadow-ox-val">0px</span></div>
+              <input class="prop-range" type="range" id="prop-text-shadow-ox" min="-20" max="20" value="0">
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:10px;color:var(--text-l);margin-bottom:3px;display:flex;justify-content:space-between;"><span>Y</span><span id="prop-text-shadow-oy-val">2px</span></div>
+              <input class="prop-range" type="range" id="prop-text-shadow-oy" min="-20" max="20" value="2">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="prop-section">
+        <label class="prop-label">줄 간격</label>
+        <div class="prop-range-row">
+          <input class="prop-range" type="range" id="prop-text-lh" min="80" max="300" step="5" value="135">
+          <span class="prop-range-val" id="prop-text-lh-val">1.35</span>
+        </div>
+      </div>
+      <div class="prop-section">
+        <label class="prop-label">자간</label>
+        <div class="prop-range-row">
+          <input class="prop-range" type="range" id="prop-text-ls" min="-10" max="30" value="0">
+          <span class="prop-range-val" id="prop-text-ls-val">0px</span>
         </div>
       </div>
       <div class="prop-section">
@@ -875,6 +959,13 @@
         <div class="prop-range-row">
           <input class="prop-range" type="range" id="prop-shape-opacity" min="0" max="100" value="100">
           <span class="prop-range-val" id="prop-shape-opacity-val">100%</span>
+        </div>
+      </div>
+      <div class="prop-section" id="shape-cornerr-row">
+        <label class="prop-label">모서리 둥글기</label>
+        <div class="prop-range-row">
+          <input class="prop-range" type="range" id="prop-shape-cornerr" min="0" max="300" value="0">
+          <span class="prop-range-val" id="prop-shape-cornerr-val">0px</span>
         </div>
       </div>
       <div class="prop-section">
@@ -1702,7 +1793,22 @@ function drawImageItem(c, item, zv) {
     c.strokeRect(item.x, item.y, item.w, item.h);
     return;
   }
+  /* 이미지 보정 필터 */
+  var br = (item.brightness !== undefined) ? item.brightness : 100;
+  var ct = (item.contrast  !== undefined) ? item.contrast  : 100;
+  var st = (item.saturation !== undefined) ? item.saturation : 100;
+  if (br !== 100 || ct !== 100 || st !== 100) {
+    c.filter = 'brightness(' + br + '%) contrast(' + ct + '%) saturate(' + st + '%)';
+  }
   c.drawImage(source, item.x, item.y, item.w, item.h);
+  c.filter = 'none';
+  /* 이미지 테두리 */
+  if (item.borderOn && item.borderW) {
+    var bw = item.borderW;
+    c.strokeStyle = item.borderColor || '#1D1D1F';
+    c.lineWidth = bw;
+    c.strokeRect(item.x + bw/2, item.y + bw/2, item.w - bw, item.h - bw);
+  }
 }
 
 function drawTextItem(c, item, zv) {
@@ -1715,7 +1821,13 @@ function drawTextItem(c, item, zv) {
   c.textBaseline = 'top';
   var align = item.textAlign || 'left';
   var lines = item.content.split('\n');
-  var lineH = item.fontSize * 1.35;
+  var lhRatio = (item.lineHeight !== undefined) ? item.lineHeight : 1.35;
+  var lineH = item.fontSize * lhRatio;
+  if (item.letterSpacing) {
+    try { c.letterSpacing = item.letterSpacing + 'px'; } catch(e) {}
+  } else {
+    try { c.letterSpacing = '0px'; } catch(e) {}
+  }
   var maxW = 0, li;
   for (li = 0; li < lines.length; li++) {
     var lw = c.measureText(lines[li]).width;
@@ -1748,6 +1860,7 @@ function drawTextItem(c, item, zv) {
     }
     c.fillText(lines[li], drawX, item.y + li * lineH);
   }
+  try { c.letterSpacing = '0px'; } catch(e) {}
   c.restore();
 }
 
@@ -3398,6 +3511,23 @@ function syncImageProps(item) {
   var op = Math.round((item.opacity !== undefined ? item.opacity : 1) * 100);
   propImgOpacity.value = op;
   propImgOpacityVal.textContent = op + '%';
+  /* 테두리 */
+  document.getElementById('prop-img-border-on').checked = !!item.borderOn;
+  document.getElementById('prop-img-border-color').value = item.borderColor || '#1D1D1F';
+  var bw = item.borderW || 4;
+  document.getElementById('prop-img-border-w').value = bw;
+  document.getElementById('prop-img-border-w-val').textContent = bw + 'px';
+  document.getElementById('img-border-w-row').style.display = item.borderOn ? '' : 'none';
+  /* 보정 */
+  var br = (item.brightness !== undefined) ? item.brightness : 100;
+  var ct = (item.contrast  !== undefined) ? item.contrast  : 100;
+  var st = (item.saturation !== undefined) ? item.saturation : 100;
+  document.getElementById('prop-img-brightness').value = br;
+  document.getElementById('prop-img-brightness-val').textContent = br + '%';
+  document.getElementById('prop-img-contrast').value = ct;
+  document.getElementById('prop-img-contrast-val').textContent = ct + '%';
+  document.getElementById('prop-img-saturation').value = st;
+  document.getElementById('prop-img-saturation-val').textContent = st + '%';
 }
 
 function syncTextProps(item) {
@@ -3426,6 +3556,27 @@ function syncTextProps(item) {
   document.getElementById('prop-text-stroke-w').value = item.textStrokeW || 2;
   document.getElementById('prop-text-stroke-w-val').textContent = (item.textStrokeW || 2) + 'px';
   document.getElementById('text-stroke-width-row').style.display = strokeOn ? '' : 'none';
+  /* 그림자 */
+  var shadowOn = !!item.shadow;
+  document.getElementById('prop-text-shadow-on').checked = shadowOn;
+  document.getElementById('prop-text-shadow-color').value = item.shadowColor || '#000000';
+  var sblur = (item.shadowBlur !== undefined) ? item.shadowBlur : 4;
+  var sox   = (item.shadowOX   !== undefined) ? item.shadowOX   : 0;
+  var soy   = (item.shadowOY   !== undefined) ? item.shadowOY   : 2;
+  document.getElementById('prop-text-shadow-blur').value = sblur;
+  document.getElementById('prop-text-shadow-blur-val').textContent = sblur + 'px';
+  document.getElementById('prop-text-shadow-ox').value = sox;
+  document.getElementById('prop-text-shadow-ox-val').textContent = sox + 'px';
+  document.getElementById('prop-text-shadow-oy').value = soy;
+  document.getElementById('prop-text-shadow-oy-val').textContent = soy + 'px';
+  document.getElementById('text-shadow-opts').style.display = shadowOn ? '' : 'none';
+  /* 줄간격 / 자간 */
+  var lh = (item.lineHeight !== undefined) ? item.lineHeight : 1.35;
+  document.getElementById('prop-text-lh').value = Math.round(lh * 100);
+  document.getElementById('prop-text-lh-val').textContent = lh.toFixed(2);
+  var ls = (item.letterSpacing !== undefined) ? item.letterSpacing : 0;
+  document.getElementById('prop-text-ls').value = ls;
+  document.getElementById('prop-text-ls-val').textContent = ls + 'px';
 }
 
 function syncShapeProps(item) {
@@ -3443,6 +3594,11 @@ function syncShapeProps(item) {
   var op = Math.round((item.opacity !== undefined ? item.opacity : 1) * 100);
   propShapeOpacity.value = op;
   propShapeOpacityVal.textContent = op + '%';
+  /* 모서리 둥글기 */
+  var cr = item.cornerR || 0;
+  document.getElementById('prop-shape-cornerr').value = cr;
+  document.getElementById('prop-shape-cornerr-val').textContent = cr + 'px';
+  document.getElementById('shape-cornerr-row').style.display = (item.shape === 'rect') ? '' : 'none';
 }
 
 /* ── ERASER ── */
@@ -3904,6 +4060,44 @@ document.getElementById('prop-img-rmbg').addEventListener('click', function() {
     }
   }, 20);
 });
+/* 이미지 테두리 이벤트 */
+document.getElementById('prop-img-border-on').addEventListener('change', function() {
+  var item = getItem(selectedId); if (!item) return;
+  item.borderOn = this.checked;
+  document.getElementById('img-border-w-row').style.display = this.checked ? '' : 'none';
+  render(); save();
+});
+document.getElementById('prop-img-border-color').addEventListener('input', function() {
+  var item = getItem(selectedId); if (!item) return;
+  item.borderColor = this.value; render(); save();
+});
+document.getElementById('prop-img-border-w').addEventListener('input', function() {
+  var item = getItem(selectedId); if (!item) return;
+  item.borderW = +this.value;
+  document.getElementById('prop-img-border-w-val').textContent = this.value + 'px';
+  render(); save();
+});
+/* 이미지 보정 이벤트 */
+['brightness','contrast','saturation'].forEach(function(prop) {
+  document.getElementById('prop-img-' + prop).addEventListener('input', function() {
+    var item = getItem(selectedId); if (!item) return;
+    item[prop] = +this.value;
+    document.getElementById('prop-img-' + prop + '-val').textContent = this.value + '%';
+    render(); save();
+  });
+});
+document.getElementById('prop-img-filter-reset').addEventListener('click', function() {
+  var item = getItem(selectedId); if (!item) return;
+  pushHistory();
+  item.brightness = 100; item.contrast = 100; item.saturation = 100;
+  document.getElementById('prop-img-brightness').value = 100;
+  document.getElementById('prop-img-brightness-val').textContent = '100%';
+  document.getElementById('prop-img-contrast').value = 100;
+  document.getElementById('prop-img-contrast-val').textContent = '100%';
+  document.getElementById('prop-img-saturation').value = 100;
+  document.getElementById('prop-img-saturation-val').textContent = '100%';
+  render(); save();
+});
 document.getElementById('prop-img-restore').addEventListener('click', function() {
   var item = getItem(selectedId); if (!item || item.type !== 'image') return;
   if (!item._origSrc) return;
@@ -4006,6 +4200,49 @@ alignBtns.forEach(function(btn) {
     render(); save();
   });
 });
+/* 텍스트 그림자 이벤트 */
+document.getElementById('prop-text-shadow-on').addEventListener('change', function() {
+  var item = getItem(selectedId); if (!item) return;
+  item.shadow = this.checked;
+  document.getElementById('text-shadow-opts').style.display = this.checked ? '' : 'none';
+  render(); save();
+});
+document.getElementById('prop-text-shadow-color').addEventListener('input', function() {
+  var item = getItem(selectedId); if (!item) return;
+  item.shadowColor = this.value; render(); save();
+});
+document.getElementById('prop-text-shadow-blur').addEventListener('input', function() {
+  var item = getItem(selectedId); if (!item) return;
+  item.shadowBlur = +this.value;
+  document.getElementById('prop-text-shadow-blur-val').textContent = this.value + 'px';
+  render(); save();
+});
+document.getElementById('prop-text-shadow-ox').addEventListener('input', function() {
+  var item = getItem(selectedId); if (!item) return;
+  item.shadowOX = +this.value;
+  document.getElementById('prop-text-shadow-ox-val').textContent = this.value + 'px';
+  render(); save();
+});
+document.getElementById('prop-text-shadow-oy').addEventListener('input', function() {
+  var item = getItem(selectedId); if (!item) return;
+  item.shadowOY = +this.value;
+  document.getElementById('prop-text-shadow-oy-val').textContent = this.value + 'px';
+  render(); save();
+});
+/* 줄간격 이벤트 */
+document.getElementById('prop-text-lh').addEventListener('input', function() {
+  var item = getItem(selectedId); if (!item) return;
+  item.lineHeight = this.value / 100;
+  document.getElementById('prop-text-lh-val').textContent = item.lineHeight.toFixed(2);
+  render(); save();
+});
+/* 자간 이벤트 */
+document.getElementById('prop-text-ls').addEventListener('input', function() {
+  var item = getItem(selectedId); if (!item) return;
+  item.letterSpacing = +this.value;
+  document.getElementById('prop-text-ls-val').textContent = this.value + 'px';
+  render(); save();
+});
 document.getElementById('prop-text-front').addEventListener('click', bringToFront);
 document.getElementById('prop-text-fwd').addEventListener('click',   bringForward);
 document.getElementById('prop-text-bwd').addEventListener('click',   sendBackward);
@@ -4067,6 +4304,13 @@ propShapeOpacity.addEventListener('input', function() {
   var it = getItem(getSelectedId()); if (!it) return;
   it.opacity = this.value / 100;
   propShapeOpacityVal.textContent = this.value + '%';
+  render(); save();
+});
+/* 모서리 둥글기 이벤트 */
+document.getElementById('prop-shape-cornerr').addEventListener('input', function() {
+  var it = getItem(getSelectedId()); if (!it) return;
+  it.cornerR = +this.value;
+  document.getElementById('prop-shape-cornerr-val').textContent = this.value + 'px';
   render(); save();
 });
 document.getElementById('prop-shape-front').addEventListener('click', bringToFront);
@@ -4728,10 +4972,161 @@ function load() {
   } catch(e) {}
 }
 
+/* ── TEMPLATES ── */
+var TEMPLATES = [
+  { id:'blank-sq',   cat:'',            label:'빈 정방형',   emoji:'⬜', bg:'#ffffff', paper:'s300',
+    build: function() { return []; }
+  },
+  { id:'blank-a4',   cat:'',            label:'빈 A4',       emoji:'📄', bg:'#f5f5f5', paper:'a4p',
+    build: function() { return []; }
+  },
+  { id:'prohibition-base', cat:'prohibition', label:'금지표지\n기본형', emoji:'🚫', bg:'#fee2e2', paper:'s300',
+    build: function() {
+      var cx = DOC_W/2, cy = DOC_H/2, r = DOC_W * 0.44;
+      return [
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(cy-r), w:Math.round(r*2), h:Math.round(r*2), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.82), w:Math.round(r*2*0.82), h:Math.round(r*2*0.82), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.13), w:Math.round(r*2*0.82), h:Math.round(r*0.26), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:45 },
+        { type:'text', content:'금지', x:Math.round(cx-100), y:Math.round(cy+r+20), fontSize:Math.round(DOC_W*0.08), color:'#1D1D1F', bold:true, textAlign:'center', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'warning-base', cat:'warning', label:'경고표지\n기본형', emoji:'⚠️', bg:'#fef9c3', paper:'s300',
+    build: function() {
+      var cx = DOC_W/2, cy = DOC_H/2, r = DOC_W * 0.44;
+      var side = r * 2;
+      return [
+        { type:'shape', shape:'tri', x:Math.round(cx-side/2), y:Math.round(cy-r*0.9), w:Math.round(side), h:Math.round(side*0.87), fill:'#FFD100', fillOn:true, strokeOn:true, stroke:'#1D1D1F', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
+        { type:'text', content:'경고', x:Math.round(cx-80), y:Math.round(cy+r*0.8), fontSize:Math.round(DOC_W*0.08), color:'#1D1D1F', bold:true, textAlign:'center', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'mandatory-base', cat:'mandatory', label:'지시표지\n기본형', emoji:'🔵', bg:'#dbeafe', paper:'s300',
+    build: function() {
+      var cx = DOC_W/2, cy = DOC_H/2, r = DOC_W * 0.44;
+      return [
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(cy-r), w:Math.round(r*2), h:Math.round(r*2), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'지시', x:Math.round(cx-100), y:Math.round(cy+r+20), fontSize:Math.round(DOC_W*0.08), color:'#1D1D1F', bold:true, textAlign:'center', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'info-base', cat:'info', label:'안내표지\n기본형', emoji:'🟢', bg:'#dcfce7', paper:'s300',
+    build: function() {
+      var pad = DOC_W * 0.06;
+      return [
+        { type:'shape', shape:'rect', x:Math.round(pad), y:Math.round(pad), w:Math.round(DOC_W-pad*2), h:Math.round(DOC_H-pad*2), fill:'#007A4D', fillOn:true, strokeOn:false, opacity:1, rotation:0, cornerR:Math.round(DOC_W*0.04) },
+        { type:'text', content:'안내', x:Math.round(DOC_W/2-100), y:Math.round(DOC_H/2-30), fontSize:Math.round(DOC_W*0.1), color:'#FFFFFF', bold:true, textAlign:'center', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'banner-h', cat:'banner', label:'현수막 3:1', emoji:'📢', bg:'#f0fdf4', paper:'b31',
+    build: function() {
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'현장 안전 제일', x:Math.round(DOC_W*0.05), y:Math.round(DOC_H*0.2), fontSize:Math.round(DOC_H*0.4), color:'#FFD100', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'무사이 안전관리', x:Math.round(DOC_W*0.05), y:Math.round(DOC_H*0.62), fontSize:Math.round(DOC_H*0.22), color:'#FFFFFF', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'prohibition-no-entry', cat:'prohibition', label:'출입금지\n완성형', emoji:'⛔', bg:'#fee2e2', paper:'s300',
+    build: function() {
+      var cx = DOC_W/2, cy = DOC_H/2, r = DOC_W * 0.44;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#E8222E', strokeW:Math.round(DOC_W*0.03), opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(DOC_H*0.07), w:Math.round(r*2), h:Math.round(r*2), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.82), y:Math.round(DOC_H*0.07+r*0.18), w:Math.round(r*2*0.82), h:Math.round(r*2*0.82), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.82), y:Math.round(DOC_H*0.07+r-r*0.13), w:Math.round(r*2*0.82), h:Math.round(r*0.26), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:45 },
+        { type:'text', content:'출  입  금  지', x:Math.round(cx-DOC_W*0.36), y:Math.round(DOC_H*0.07+r*2+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#E8222E', bold:true, textAlign:'center', opacity:1, rotation:0 },
+        { type:'text', content:'관계자 외 출입을 금합니다', x:Math.round(cx-DOC_W*0.36), y:Math.round(DOC_H*0.07+r*2+DOC_H*0.18), fontSize:Math.round(DOC_W*0.055), color:'#1D1D1F', bold:false, textAlign:'center', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'hard-hat', cat:'mandatory', label:'안전모 착용\n지시표지', emoji:'⛑️', bg:'#dbeafe', paper:'s300',
+    build: function() {
+      var cx = DOC_W/2, r = DOC_W * 0.44;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#005DAA', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(DOC_H*0.06), w:Math.round(r*2), h:Math.round(r*2), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'안전모 착용', x:Math.round(cx-DOC_W*0.36), y:Math.round(DOC_H*0.06+r*2+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#005DAA', bold:true, textAlign:'center', opacity:1, rotation:0 },
+        { type:'text', content:'Safety Helmet Required', x:Math.round(cx-DOC_W*0.36), y:Math.round(DOC_H*0.06+r*2+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0 }
+      ];
+    }
+  }
+];
+
+var currentTmplCat = '';
+
+function renderTemplatePanel() {
+  var catRow = document.getElementById('tmpl-cat-row');
+  var grid   = document.getElementById('tmpl-grid');
+  if (!catRow || !grid) return;
+  var cats = [
+    {v:'', l:'전체'},
+    {v:'prohibition', l:'금지'},
+    {v:'warning', l:'경고'},
+    {v:'mandatory', l:'지시'},
+    {v:'info', l:'안내'},
+    {v:'banner', l:'현수막'}
+  ];
+  catRow.innerHTML = '';
+  cats.forEach(function(c) {
+    var btn = document.createElement('button');
+    btn.className = 'sign-cat-btn' + (c.v === currentTmplCat ? ' active' : '');
+    btn.textContent = c.l;
+    btn.addEventListener('click', function() {
+      currentTmplCat = c.v;
+      renderTemplatePanel();
+    });
+    catRow.appendChild(btn);
+  });
+  grid.innerHTML = '';
+  TEMPLATES.filter(function(t) {
+    return !currentTmplCat || t.cat === currentTmplCat;
+  }).forEach(function(tmpl) {
+    var div = document.createElement('div');
+    div.className = 'tmpl-item';
+    var thumb = document.createElement('div');
+    thumb.className = 'tmpl-thumb';
+    thumb.style.background = tmpl.bg || '#f5f5f5';
+    thumb.textContent = tmpl.emoji || '📋';
+    var lbl = document.createElement('div');
+    lbl.className = 'tmpl-lbl';
+    lbl.textContent = tmpl.label;
+    div.appendChild(thumb);
+    div.appendChild(lbl);
+    div.title = tmpl.label + ' 템플릿 적용';
+    (function(t) {
+      div.addEventListener('click', function() {
+        applyTemplate(t);
+      });
+    })(tmpl);
+    grid.appendChild(div);
+  });
+}
+
+function applyTemplate(tmpl) {
+  pushHistory();
+  /* 용지 변경 */
+  var p = PAPERS[tmpl.paper];
+  if (p) { DOC_W = p.w; DOC_H = p.h; docKey = tmpl.paper; applyPaper(tmpl.paper, p.w, p.h); }
+  /* 캔버스 초기화 */
+  items = []; selectedIds = [];
+  /* 아이템 추가 */
+  var defs = tmpl.build();
+  defs.forEach(function(def) {
+    var it = { id: nextId++ };
+    for (var k in def) it[k] = def[k];
+    items.push(it);
+  });
+  updateProps(); render(); save();
+  fitToScreen();
+}
+
 /* ── INIT ── */
 loadLibOverrides();
 load();
 renderSignLibrary();
+renderTemplatePanel();
 resizeCanvas();
 fitToScreen();
 
