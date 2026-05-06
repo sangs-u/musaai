@@ -322,7 +322,8 @@
     /* template items */
     .tmpl-item { position:relative; cursor:pointer; border-radius:6px; border:1.5px solid var(--border); overflow:hidden; display:flex; flex-direction:column; background:var(--bg-panel); transition:.12s; }
     .tmpl-item:hover { border-color:var(--accent); box-shadow:var(--shadow-s); transform:translateY(-1px); }
-    .tmpl-thumb { flex:1; display:flex; align-items:center; justify-content:center; font-size:26px; min-height:54px; }
+    .tmpl-thumb { flex:1; display:flex; align-items:center; justify-content:center; font-size:26px; min-height:68px; overflow:hidden; background:#f0f0f0; }
+    .tmpl-thumb canvas { display:block; width:100%; height:100%; object-fit:contain; }
     .tmpl-lbl { font-size:9px; text-align:center; color:var(--text-m); padding:3px 2px 4px; background:var(--bg-panel); border-top:1px solid var(--border-s); line-height:1.3; word-break:keep-all; }
 
     @media print {
@@ -463,9 +464,21 @@
               <option value="a4l">A4 가로 (297×210mm)</option>
               <option value="a3p">A3 세로 (297×420mm)</option>
               <option value="a3l">A3 가로 (420×297mm)</option>
-              <option value="b31">현수막 3:1</option>
-              <option value="b41">현수막 4:1</option>
-              <option value="b81">현수막 8:1</option>
+              <option value="b2p">B2 포스터 (515×728mm)</option>
+              <option value="b1p">B1 포스터 (728×1030mm)</option>
+            </optgroup>
+            <optgroup label="── 현수막 ──">
+              <option value="b21">현수막 2:1 (900×450mm)</option>
+              <option value="b31">현수막 3:1 (900×300mm)</option>
+              <option value="b41">현수막 4:1 (900×225mm)</option>
+              <option value="b51">현수막 5:1 (900×180mm)</option>
+              <option value="b61">현수막 6:1 (900×150mm)</option>
+              <option value="b81">현수막 8:1 (900×113mm)</option>
+            </optgroup>
+            <optgroup label="── 간판 ──">
+              <option value="sign-l">간판 가로형 (1000×250mm)</option>
+              <option value="sign-m">간판 중형 (600×400mm)</option>
+              <option value="sign-sq">간판 정방형 (600×600mm)</option>
             </optgroup>
             <option value="custom">사용자 정의</option>
           </select>
@@ -962,6 +975,40 @@
           <button class="csw" data-color="#1D1D1F" style="background:#1D1D1F" title="검정"></button>
         </div>
       </div>
+      <div class="prop-section" id="shape-grad-section">
+        <label class="prop-label">그라디언트</label>
+        <div class="align-row" id="shape-grad-btns" style="margin-bottom:7px;">
+          <button class="align-btn active" data-grad="none" title="없음">없음</button>
+          <button class="align-btn" data-grad="v" title="위→아래">↕</button>
+          <button class="align-btn" data-grad="h" title="왼→오른">↔</button>
+          <button class="align-btn" data-grad="d" title="대각">↗</button>
+          <button class="align-btn" data-grad="radial" title="원형">○</button>
+        </div>
+        <div id="shape-grad-colors" style="display:none;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;color:var(--text-m);min-width:28px;">시작</span>
+            <input class="prop-color" type="color" id="prop-shape-grad1" value="#2383E2">
+            <div class="color-swatches" data-for="prop-shape-grad1" style="margin-top:0;gap:3px;">
+              <button class="csw" data-color="#2383E2" style="background:#2383E2;width:14px;height:14px"></button>
+              <button class="csw" data-color="#E8222E" style="background:#E8222E;width:14px;height:14px"></button>
+              <button class="csw" data-color="#FFD100" style="background:#FFD100;width:14px;height:14px"></button>
+              <button class="csw" data-color="#007A4D" style="background:#007A4D;width:14px;height:14px"></button>
+              <button class="csw" data-color="#FFFFFF" style="background:#FFFFFF;width:14px;height:14px"></button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;color:var(--text-m);min-width:28px;">끝</span>
+            <input class="prop-color" type="color" id="prop-shape-grad2" value="#1E3A5F">
+            <div class="color-swatches" data-for="prop-shape-grad2" style="margin-top:0;gap:3px;">
+              <button class="csw" data-color="#1E3A5F" style="background:#1E3A5F;width:14px;height:14px"></button>
+              <button class="csw" data-color="#7B0000" style="background:#7B0000;width:14px;height:14px"></button>
+              <button class="csw" data-color="#B45309" style="background:#B45309;width:14px;height:14px"></button>
+              <button class="csw" data-color="#064e3b" style="background:#064e3b;width:14px;height:14px"></button>
+              <button class="csw" data-color="#1D1D1F" style="background:#1D1D1F;width:14px;height:14px"></button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="prop-section">
         <label class="prop-label">테두리</label>
         <div class="prop-color-row" style="margin-bottom:8px;">
@@ -1260,9 +1307,17 @@ var PAPERS = {
   a4l:{w:1123,h:794,   mw:297,mh:210},
   a3p:{w:1123,h:1587,  mw:297,mh:420},
   a3l:{w:1587,h:1123,  mw:420,mh:297},
-  b31:{w:2700,h:900},
-  b41:{w:3600,h:900},
-  b81:{w:4800,h:600},
+  b21:{w:1701,h:851,  mw:900,mh:450},
+  b31:{w:2700,h:900,  mw:900,mh:300},
+  b41:{w:3600,h:900,  mw:900,mh:225},
+  b51:{w:4500,h:900,  mw:900,mh:180},
+  b61:{w:5400,h:900,  mw:900,mh:150},
+  b81:{w:4800,h:600,  mw:900,mh:113},
+  'sign-l':{w:3780,h:945,  mw:1000,mh:250},
+  'sign-m':{w:2268,h:1512, mw:600, mh:400},
+  'sign-sq':{w:2268,h:2268,mw:600, mh:600},
+  b2p:{w:1947,h:2751, mw:515, mh:728},
+  b1p:{w:2751,h:3891, mw:728, mh:1030},
   custom:null
 };
 function paperSizeText(key, w, h) {
@@ -2003,13 +2058,32 @@ function drawShapeItem(c, item, zv) {
   c.save();
   var fillOn = item.fillOn !== false && item.fill;
   var strokeOn = item.strokeOn !== false && item.stroke;
-  if (fillOn) c.fillStyle = item.fill;
+  var x = item.x, y = item.y, w = item.w, h = item.h;
+  if (fillOn) {
+    if (item.gradType && item.gradType !== 'none') {
+      var grd;
+      if (item.gradType === 'radial') {
+        grd = c.createRadialGradient(x+w/2,y+h/2,0,x+w/2,y+h/2,Math.max(w,h)*0.6);
+      } else {
+        var gx1=x,gy1=y,gx2,gy2;
+        if (item.gradType==='h'){gx2=x+w;gy2=y;}
+        else if (item.gradType==='d'){gx2=x+w;gy2=y+h;}
+        else if (item.gradType==='dr'){gx2=x;gy2=y+h;}
+        else {gx2=x;gy2=y+h;}
+        grd = c.createLinearGradient(gx1,gy1,gx2,gy2);
+      }
+      grd.addColorStop(0, item.gradColor1 || item.fill || '#ffffff');
+      grd.addColorStop(1, item.gradColor2 || '#000000');
+      c.fillStyle = grd;
+    } else {
+      c.fillStyle = item.fill;
+    }
+  }
   if (strokeOn) {
     c.strokeStyle = item.stroke;
     c.lineWidth = item.strokeW || 3;
     c.lineJoin = 'round'; c.lineCap = 'round';
   }
-  var x = item.x, y = item.y, w = item.w, h = item.h;
   var sk = item.shape;
   if (sk === 'rect') {
     var r = item.cornerR || 0;
@@ -3755,6 +3829,19 @@ function syncShapeProps(item) {
   document.getElementById('prop-shape-cornerr').value = cr;
   document.getElementById('prop-shape-cornerr-val').textContent = cr + 'px';
   document.getElementById('shape-cornerr-row').style.display = (item.shape === 'rect') ? '' : 'none';
+  /* 그라디언트 */
+  var gt = item.gradType || 'none';
+  document.querySelectorAll('#shape-grad-btns .align-btn').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-grad') === gt);
+  });
+  var gcd = document.getElementById('shape-grad-colors');
+  if (gcd) {
+    gcd.style.display = (gt !== 'none') ? 'flex' : 'none';
+    var g1 = document.getElementById('prop-shape-grad1');
+    var g2 = document.getElementById('prop-shape-grad2');
+    if (g1) g1.value = item.gradColor1 || item.fill || '#2383E2';
+    if (g2) g2.value = item.gradColor2 || '#1E3A5F';
+  }
 }
 
 /* ── ERASER ── */
@@ -4469,6 +4556,28 @@ document.getElementById('prop-shape-cornerr').addEventListener('input', function
   document.getElementById('prop-shape-cornerr-val').textContent = this.value + 'px';
   render(); save();
 });
+/* 그라디언트 버튼 */
+document.querySelectorAll('#shape-grad-btns .align-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var it = getItem(getSelectedId()); if (!it || it.type !== 'shape') return;
+    var gt = this.getAttribute('data-grad');
+    pushHistory();
+    it.gradType = gt;
+    document.querySelectorAll('#shape-grad-btns .align-btn').forEach(function(b){ b.classList.remove('active'); });
+    this.classList.add('active');
+    var gcd = document.getElementById('shape-grad-colors');
+    if (gcd) gcd.style.display = (gt !== 'none') ? 'flex' : 'none';
+    render(); save();
+  });
+});
+document.getElementById('prop-shape-grad1').addEventListener('input', function() {
+  var it = getItem(getSelectedId()); if (!it || it.type !== 'shape') return;
+  it.gradColor1 = this.value; render(); save();
+});
+document.getElementById('prop-shape-grad2').addEventListener('input', function() {
+  var it = getItem(getSelectedId()); if (!it || it.type !== 'shape') return;
+  it.gradColor2 = this.value; render(); save();
+});
 document.getElementById('prop-shape-front').addEventListener('click', bringToFront);
 document.getElementById('prop-shape-fwd').addEventListener('click',   bringForward);
 document.getElementById('prop-shape-bwd').addEventListener('click',   sendBackward);
@@ -5160,81 +5269,385 @@ function load() {
 
 /* ── TEMPLATES ── */
 var TEMPLATES = [
-  { id:'blank-sq',   cat:'',            label:'빈 정방형',   emoji:'⬜', bg:'#ffffff', paper:'s300',
-    build: function() { return []; }
-  },
-  { id:'blank-a4',   cat:'',            label:'빈 A4',       emoji:'📄', bg:'#f5f5f5', paper:'a4p',
-    build: function() { return []; }
-  },
-  { id:'prohibition-base', cat:'prohibition', label:'금지표지\n기본형', emoji:'🚫', bg:'#fee2e2', paper:'s300',
+
+  /* ── 빈 캔버스 ── */
+  { id:'blank-sq',  cat:'blank', label:'빈 캔버스\n정방형', bg:'#ffffff', paper:'s300', build:function(){return [];} },
+  { id:'blank-a4p', cat:'blank', label:'빈 A4\n세로',       bg:'#ffffff', paper:'a4p',  build:function(){return [];} },
+  { id:'blank-a4l', cat:'blank', label:'빈 A4\n가로',       bg:'#ffffff', paper:'a4l',  build:function(){return [];} },
+  { id:'blank-b31', cat:'blank', label:'빈 현수막\n3:1',    bg:'#f9fafb', paper:'b31',  build:function(){return [];} },
+  { id:'blank-sign',cat:'blank', label:'빈 간판\n가로형',   bg:'#f9fafb', paper:'sign-l', build:function(){return [];} },
+
+  /* ── 금지 표지 ── */
+  { id:'prohibition-no-entry', cat:'prohibition', label:'출입금지', bg:'#fff5f5', paper:'s300',
     build: function() {
-      var cx = DOC_W/2, cy = DOC_H/2, r = DOC_W * 0.44;
+      var cx=DOC_W/2, cy=DOC_H*0.43, r=DOC_W*0.38;
       return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#E8222E', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
         { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(cy-r), w:Math.round(r*2), h:Math.round(r*2), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
         { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.82), w:Math.round(r*2*0.82), h:Math.round(r*2*0.82), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.13), w:Math.round(r*2*0.82), h:Math.round(r*0.26), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:45 },
-        { type:'text', content:'금지', x:Math.round(cx-100), y:Math.round(cy+r+20), fontSize:Math.round(DOC_W*0.08), color:'#1D1D1F', bold:true, textAlign:'center', opacity:1, rotation:0 }
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.125), w:Math.round(r*2*0.82), h:Math.round(r*0.25), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:45 },
+        { type:'text', content:'출  입  금  지', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#E8222E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'관계자 외 출입을 금합니다', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.18), fontSize:Math.round(DOC_W*0.055), color:'#1D1D1F', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
       ];
     }
   },
-  { id:'warning-base', cat:'warning', label:'경고표지\n기본형', emoji:'⚠️', bg:'#fef9c3', paper:'s300',
+  { id:'prohibition-no-smoking', cat:'prohibition', label:'금연구역', bg:'#fff5f5', paper:'s300',
     build: function() {
-      var cx = DOC_W/2, cy = DOC_H/2, r = DOC_W * 0.44;
-      var side = r * 2;
+      var cx=DOC_W/2, cy=DOC_H*0.41, r=DOC_W*0.38;
       return [
-        { type:'shape', shape:'tri', x:Math.round(cx-side/2), y:Math.round(cy-r*0.9), w:Math.round(side), h:Math.round(side*0.87), fill:'#FFD100', fillOn:true, strokeOn:true, stroke:'#1D1D1F', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
-        { type:'text', content:'경고', x:Math.round(cx-80), y:Math.round(cy+r*0.8), fontSize:Math.round(DOC_W*0.08), color:'#1D1D1F', bold:true, textAlign:'center', opacity:1, rotation:0 }
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#E8222E', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(cy-r), w:Math.round(r*2), h:Math.round(r*2), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.82), w:Math.round(r*2*0.82), h:Math.round(r*2*0.82), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.5), y:Math.round(cy-r*0.09), w:Math.round(r*1.0), h:Math.round(r*0.18), fill:'#555', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx+r*0.35), y:Math.round(cy-r*0.22), w:Math.round(r*0.18), h:Math.round(r*0.42), fill:'#ccc', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.125), w:Math.round(r*2*0.82), h:Math.round(r*0.25), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:45 },
+        { type:'text', content:'금  연  구  역', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#E8222E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'No Smoking Area', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.18), fontSize:Math.round(DOC_W*0.055), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
       ];
     }
   },
-  { id:'mandatory-base', cat:'mandatory', label:'지시표지\n기본형', emoji:'🔵', bg:'#dbeafe', paper:'s300',
+  { id:'prohibition-no-fire', cat:'prohibition', label:'화기금지', bg:'#fff5f5', paper:'s300',
     build: function() {
-      var cx = DOC_W/2, cy = DOC_H/2, r = DOC_W * 0.44;
+      var cx=DOC_W/2, cy=DOC_H*0.41, r=DOC_W*0.38;
       return [
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(cy-r), w:Math.round(r*2), h:Math.round(r*2), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'text', content:'지시', x:Math.round(cx-100), y:Math.round(cy+r+20), fontSize:Math.round(DOC_W*0.08), color:'#1D1D1F', bold:true, textAlign:'center', opacity:1, rotation:0 }
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FEF2F2', fillOn:true, strokeOn:true, stroke:'#E8222E', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(cy-r), w:Math.round(r*2), h:Math.round(r*2), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.82), w:Math.round(r*2*0.82), h:Math.round(r*2*0.82), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.2), y:Math.round(cy-r*0.55), w:Math.round(r*0.4), h:Math.round(r*0.7), fill:'#FF6B00', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.28), y:Math.round(cy-r*0.28), w:Math.round(r*0.56), h:Math.round(r*0.56), fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.125), w:Math.round(r*2*0.82), h:Math.round(r*0.25), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:45 },
+        { type:'text', content:'화  기  금  지', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#E8222E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'No Open Fire', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.18), fontSize:Math.round(DOC_W*0.055), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
       ];
     }
   },
-  { id:'info-base', cat:'info', label:'안내표지\n기본형', emoji:'🟢', bg:'#dcfce7', paper:'s300',
+
+  /* ── 경고 표지 ── */
+  { id:'warning-electricity', cat:'warning', label:'고압전기경고', bg:'#fffde7', paper:'s300',
     build: function() {
-      var pad = DOC_W * 0.06;
+      var cx=DOC_W/2, r=DOC_W*0.44, side=r*2, triH=side*0.87, top=DOC_H*0.06;
       return [
-        { type:'shape', shape:'rect', x:Math.round(pad), y:Math.round(pad), w:Math.round(DOC_W-pad*2), h:Math.round(DOC_H-pad*2), fill:'#007A4D', fillOn:true, strokeOn:false, opacity:1, rotation:0, cornerR:Math.round(DOC_W*0.04) },
-        { type:'text', content:'안내', x:Math.round(DOC_W/2-100), y:Math.round(DOC_H/2-30), fontSize:Math.round(DOC_W*0.1), color:'#FFFFFF', bold:true, textAlign:'center', opacity:1, rotation:0 }
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFDE7', fillOn:true, strokeOn:true, stroke:'#FFD100', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 },
+        { type:'shape', shape:'tri', x:Math.round(cx-side/2), y:Math.round(top), w:Math.round(side), h:Math.round(triH), fill:'#FFD100', fillOn:true, strokeOn:true, stroke:'#1D1D1F', strokeW:Math.round(DOC_W*0.018), opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-side*0.065), y:Math.round(top+triH*0.18), w:Math.round(side*0.2), h:Math.round(triH*0.32), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:-20 },
+        { type:'shape', shape:'rect', x:Math.round(cx-side*0.13), y:Math.round(top+triH*0.42), w:Math.round(side*0.2), h:Math.round(triH*0.3), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:-20 },
+        { type:'text', content:'고압전기 경고', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.04), fontSize:Math.round(DOC_W*0.088), color:'#1D1D1F', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'High Voltage · Danger', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
       ];
     }
   },
-  { id:'banner-h', cat:'banner', label:'현수막 3:1', emoji:'📢', bg:'#f0fdf4', paper:'b31',
+  { id:'warning-fall', cat:'warning', label:'추락위험경고', bg:'#fffde7', paper:'s300',
     build: function() {
+      var cx=DOC_W/2, r=DOC_W*0.44, side=r*2, triH=side*0.87, top=DOC_H*0.06;
       return [
-        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'text', content:'현장 안전 제일', x:Math.round(DOC_W*0.05), y:Math.round(DOC_H*0.2), fontSize:Math.round(DOC_H*0.4), color:'#FFD100', bold:true, textAlign:'left', opacity:1, rotation:0 },
-        { type:'text', content:'무사이 안전관리', x:Math.round(DOC_W*0.05), y:Math.round(DOC_H*0.62), fontSize:Math.round(DOC_H*0.22), color:'#FFFFFF', bold:false, textAlign:'left', opacity:1, rotation:0 }
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFDE7', fillOn:true, strokeOn:true, stroke:'#FFD100', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 },
+        { type:'shape', shape:'tri', x:Math.round(cx-side/2), y:Math.round(top), w:Math.round(side), h:Math.round(triH), fill:'#FFD100', fillOn:true, strokeOn:true, stroke:'#1D1D1F', strokeW:Math.round(DOC_W*0.018), opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-side*0.1), y:Math.round(top+triH*0.1), w:Math.round(side*0.2), h:Math.round(side*0.2), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-side*0.12), y:Math.round(top+triH*0.3), w:Math.round(side*0.24), h:Math.round(triH*0.22), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:28 },
+        { type:'text', content:'추 락 위 험', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#1D1D1F', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'Fall Hazard · Danger', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
       ];
     }
   },
-  { id:'prohibition-no-entry', cat:'prohibition', label:'출입금지\n완성형', emoji:'⛔', bg:'#fee2e2', paper:'s300',
+  { id:'warning-chemicals', cat:'warning', label:'위험물질경고', bg:'#fffde7', paper:'s300',
     build: function() {
-      var cx = DOC_W/2, cy = DOC_H/2, r = DOC_W * 0.44;
+      var cx=DOC_W/2, r=DOC_W*0.44, side=r*2, triH=side*0.87, top=DOC_H*0.06;
       return [
-        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#E8222E', strokeW:Math.round(DOC_W*0.03), opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(DOC_H*0.07), w:Math.round(r*2), h:Math.round(r*2), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.82), y:Math.round(DOC_H*0.07+r*0.18), w:Math.round(r*2*0.82), h:Math.round(r*2*0.82), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-r*0.82), y:Math.round(DOC_H*0.07+r-r*0.13), w:Math.round(r*2*0.82), h:Math.round(r*0.26), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:45 },
-        { type:'text', content:'출  입  금  지', x:Math.round(cx-DOC_W*0.36), y:Math.round(DOC_H*0.07+r*2+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#E8222E', bold:true, textAlign:'center', opacity:1, rotation:0 },
-        { type:'text', content:'관계자 외 출입을 금합니다', x:Math.round(cx-DOC_W*0.36), y:Math.round(DOC_H*0.07+r*2+DOC_H*0.18), fontSize:Math.round(DOC_W*0.055), color:'#1D1D1F', bold:false, textAlign:'center', opacity:1, rotation:0 }
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFDE7', fillOn:true, strokeOn:true, stroke:'#FFD100', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 },
+        { type:'shape', shape:'tri', x:Math.round(cx-side/2), y:Math.round(top), w:Math.round(side), h:Math.round(triH), fill:'#FFD100', fillOn:true, strokeOn:true, stroke:'#1D1D1F', strokeW:Math.round(DOC_W*0.018), opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-side*0.14), y:Math.round(top+triH*0.13), w:Math.round(side*0.28), h:Math.round(side*0.26), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-side*0.07), y:Math.round(top+triH*0.38), w:Math.round(side*0.14), h:Math.round(triH*0.14), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-side*0.18), y:Math.round(top+triH*0.42), w:Math.round(side*0.36), h:Math.round(triH*0.08), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:18 },
+        { type:'text', content:'위험물질 경고', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.04), fontSize:Math.round(DOC_W*0.088), color:'#1D1D1F', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'Hazardous Materials', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
       ];
     }
   },
-  { id:'hard-hat', cat:'mandatory', label:'안전모 착용\n지시표지', emoji:'⛑️', bg:'#dbeafe', paper:'s300',
+
+  /* ── 지시 표지 ── */
+  { id:'mandatory-hard-hat', cat:'mandatory', label:'안전모 착용', bg:'#eff6ff', paper:'s300',
     build: function() {
-      var cx = DOC_W/2, r = DOC_W * 0.44;
+      var cx=DOC_W/2, r=DOC_W*0.38, top=DOC_H*0.06;
       return [
         { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#005DAA', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(DOC_H*0.06), w:Math.round(r*2), h:Math.round(r*2), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'text', content:'안전모 착용', x:Math.round(cx-DOC_W*0.36), y:Math.round(DOC_H*0.06+r*2+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#005DAA', bold:true, textAlign:'center', opacity:1, rotation:0 },
-        { type:'text', content:'Safety Helmet Required', x:Math.round(cx-DOC_W*0.36), y:Math.round(DOC_H*0.06+r*2+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0 }
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(top), w:Math.round(r*2), h:Math.round(r*2), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.55), y:Math.round(top+r*0.2), w:Math.round(r*1.1), h:Math.round(r*0.88), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.62), y:Math.round(top+r*0.96), w:Math.round(r*1.24), h:Math.round(r*0.16), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'안전모 착용', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#005DAA', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'Safety Helmet Required', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
+      ];
+    }
+  },
+  { id:'mandatory-safety-vest', cat:'mandatory', label:'안전조끼 착용', bg:'#eff6ff', paper:'s300',
+    build: function() {
+      var cx=DOC_W/2, r=DOC_W*0.38, top=DOC_H*0.06;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#005DAA', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(top), w:Math.round(r*2), h:Math.round(r*2), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.21), y:Math.round(top+r*0.12), w:Math.round(r*0.42), h:Math.round(r*0.42), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.38), y:Math.round(top+r*0.5), w:Math.round(r*0.76), h:Math.round(r*0.88), fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.04), y:Math.round(top+r*0.5), w:Math.round(r*0.08), h:Math.round(r*0.88), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'안전조끼 착용', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.04), fontSize:Math.round(DOC_W*0.088), color:'#005DAA', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'Safety Vest Required', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
+      ];
+    }
+  },
+  { id:'mandatory-safety-belt', cat:'mandatory', label:'안전대 착용', bg:'#eff6ff', paper:'s300',
+    build: function() {
+      var cx=DOC_W/2, r=DOC_W*0.38, top=DOC_H*0.06;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#005DAA', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(top), w:Math.round(r*2), h:Math.round(r*2), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.21), y:Math.round(top+r*0.1), w:Math.round(r*0.42), h:Math.round(r*0.42), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.08), y:Math.round(top+r*0.5), w:Math.round(r*0.16), h:Math.round(r*0.72), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.5), y:Math.round(top+r*0.5), w:Math.round(r), h:Math.round(r*0.14), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.5), y:Math.round(top+r*0.88), w:Math.round(r*0.42), h:Math.round(r*0.32), fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx+r*0.08), y:Math.round(top+r*0.88), w:Math.round(r*0.42), h:Math.round(r*0.32), fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'안전대 착용', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#005DAA', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'Safety Harness Required', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.18), fontSize:Math.round(DOC_W*0.048), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
+      ];
+    }
+  },
+
+  /* ── 안내 표지 ── */
+  { id:'info-fire-exit', cat:'info', label:'비상구', bg:'#f0fdf4', paper:'s300',
+    build: function() {
+      var cx=DOC_W/2, p=DOC_W*0.05;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#007A4D', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx+DOC_W*0.06), y:Math.round(DOC_H*0.24), w:Math.round(DOC_W*0.24), h:Math.round(DOC_H*0.38), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'ellipse', x:Math.round(cx-DOC_W*0.24), y:Math.round(DOC_H*0.2), w:Math.round(DOC_W*0.18), h:Math.round(DOC_W*0.18), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-DOC_W*0.2), y:Math.round(DOC_H*0.36), w:Math.round(DOC_W*0.12), h:Math.round(DOC_H*0.24), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:-14 },
+        { type:'shape', shape:'rect', x:Math.round(cx-DOC_W*0.04), y:Math.round(DOC_H*0.44), w:Math.round(DOC_W*0.16), h:Math.round(DOC_H*0.08), fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'비  상  구', x:Math.round(p), y:Math.round(DOC_H*0.70), fontSize:Math.round(DOC_W*0.13), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.9) },
+        { type:'text', content:'Emergency Exit', x:Math.round(p), y:Math.round(DOC_H*0.83), fontSize:Math.round(DOC_W*0.065), color:'rgba(255,255,255,0.72)', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.9) }
+      ];
+    }
+  },
+  { id:'info-first-aid', cat:'info', label:'응급처치', bg:'#f0fdf4', paper:'s300',
+    build: function() {
+      var cx=DOC_W/2, cy=DOC_H*0.4, r=DOC_W*0.32;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#007A4D', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r), y:Math.round(cy-r), w:Math.round(r*2), h:Math.round(r*2), fill:'#007A4D', fillOn:true, strokeOn:false, opacity:1, rotation:0, cornerR:Math.round(r*0.14) },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.18), y:Math.round(cy-r*0.68), w:Math.round(r*0.36), h:Math.round(r*1.36), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(cx-r*0.68), y:Math.round(cy-r*0.18), w:Math.round(r*1.36), h:Math.round(r*0.36), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'응  급  처  치', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#007A4D', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'First Aid Station', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.18), fontSize:Math.round(DOC_W*0.055), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
+      ];
+    }
+  },
+
+  /* ── 현수막 ── */
+  { id:'banner-safety-navy', cat:'banner', label:'안전제일 파랑\n3:1', bg:'#1a365d', paper:'b31',
+    build: function() {
+      var h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#1a365d', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:Math.round(h*0.06), fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:Math.round(h*0.94), w:DOC_W, h:Math.round(h*0.06), fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'현장 안전 제일', x:Math.round(DOC_W*0.05), y:Math.round(h*0.12), fontSize:Math.round(h*0.44), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'무사이 안전관리 · 안전은 선택이 아닌 필수입니다', x:Math.round(DOC_W*0.05), y:Math.round(h*0.66), fontSize:Math.round(h*0.15), color:'#FFD100', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'banner-caution-yellow', cat:'banner', label:'경고 노랑\n3:1', bg:'#FFD100', paper:'b31',
+    build: function() {
+      var h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:Math.round(h*0.07), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:Math.round(h*0.93), w:DOC_W, h:Math.round(h*0.07), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'⚠  주  의  사  항', x:Math.round(DOC_W*0.04), y:Math.round(h*0.13), fontSize:Math.round(h*0.4), color:'#1D1D1F', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'안전수칙을 반드시 준수하고 안전사고를 예방합시다', x:Math.round(DOC_W*0.04), y:Math.round(h*0.65), fontSize:Math.round(h*0.155), color:'#1D1D1F', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'banner-red-forbidden', cat:'banner', label:'출입금지 빨강\n4:1', bg:'#E8222E', paper:'b41',
+    build: function() {
+      var h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#C01820', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:Math.round(h*0.055), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:0.9, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:Math.round(h*0.945), w:DOC_W, h:Math.round(h*0.055), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:0.9, rotation:0 },
+        { type:'text', content:'출  입  금  지', x:Math.round(DOC_W*0.04), y:Math.round(h*0.1), fontSize:Math.round(h*0.46), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'관계자 외 출입을 엄금합니다 — 위반 시 법적 책임을 묻습니다', x:Math.round(DOC_W*0.04), y:Math.round(h*0.66), fontSize:Math.round(h*0.14), color:'rgba(255,255,255,0.85)', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'banner-green-safe', cat:'banner', label:'안전문화 녹색\n3:1', bg:'#064e3b', paper:'b31',
+    build: function() {
+      var h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#064e3b', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:Math.round(DOC_W*0.007), h:DOC_H, fill:'#34d399', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(DOC_W*0.993), y:0, w:Math.round(DOC_W*0.007), h:DOC_H, fill:'#34d399', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'안전으로 시작해서 행복으로 마무리', x:Math.round(DOC_W*0.04), y:Math.round(h*0.1), fontSize:Math.round(h*0.32), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'Safety First · 무사이 안전관리', x:Math.round(DOC_W*0.04), y:Math.round(h*0.72), fontSize:Math.round(h*0.14), color:'#34d399', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'banner-dark-modern', cat:'banner', label:'다크 모던\n4:1', bg:'#0a0a0a', paper:'b41',
+    build: function() {
+      var h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#0a0a0a', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:Math.round(DOC_W*0.005), h:DOC_H, fill:'#2383E2', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(DOC_W*0.05), y:Math.round(h*0.5), w:Math.round(DOC_W*0.9), h:Math.round(h*0.022), fill:'rgba(255,255,255,0.1)', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'NO ENTRY ZONE', x:Math.round(DOC_W*0.05), y:Math.round(h*0.08), fontSize:Math.round(h*0.34), color:'#FFFFFF', bold:true, fontFamily:'"Bebas Neue", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'접근 금지 구역  ·  승인된 인원 외 출입 불가', x:Math.round(DOC_W*0.05), y:Math.round(h*0.6), fontSize:Math.round(h*0.14), color:'rgba(255,255,255,0.55)', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'banner-orange-construction', cat:'banner', label:'공사중 주황\n3:1', bg:'#FF6B00', paper:'b31',
+    build: function() {
+      var h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FF6B00', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:Math.round(DOC_W*0.055), h:DOC_H, fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(DOC_W*0.945), y:0, w:Math.round(DOC_W*0.055), h:DOC_H, fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'공  사  중', x:Math.round(DOC_W*0.09), y:Math.round(h*0.09), fontSize:Math.round(h*0.46), color:'#1D1D1F', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'UNDER CONSTRUCTION  ·  통행 시 각별히 주의하십시오', x:Math.round(DOC_W*0.09), y:Math.round(h*0.67), fontSize:Math.round(h*0.15), color:'#FFFFFF', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'banner-white-split', cat:'banner', label:'투톤 화이트\n3:1', bg:'#ffffff', paper:'b31',
+    build: function() {
+      var h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#E5E5E5', strokeW:3, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:Math.round(DOC_W*0.2), h:DOC_H, fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'안\n전', x:Math.round(DOC_W*0.038), y:Math.round(h*0.07), fontSize:Math.round(h*0.38), color:'#FFD100', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.125) },
+        { type:'text', content:'안전작업 수칙을 반드시 준수합니다', x:Math.round(DOC_W*0.23), y:Math.round(h*0.18), fontSize:Math.round(h*0.24), color:'#1D1D1F', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'Safety First  ·  현장 안전을 최우선으로', x:Math.round(DOC_W*0.23), y:Math.round(h*0.62), fontSize:Math.round(h*0.14), color:'#787774', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+
+  /* ── 간판 ── */
+  { id:'sign-dark-corporate', cat:'sign', label:'기업형 다크\n간판', bg:'#1a1a1a', paper:'a4l',
+    build: function() {
+      var h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#111111', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:Math.round(DOC_W*0.012), h:DOC_H, fill:'#2383E2', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(DOC_W*0.74), y:0, w:Math.round(DOC_W*0.26), h:DOC_H, fill:'#1e3a5f', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'회사명 / 부서명', x:Math.round(DOC_W*0.04), y:Math.round(h*0.26), fontSize:Math.round(h*0.24), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'Company / Department', x:Math.round(DOC_W*0.04), y:Math.round(h*0.58), fontSize:Math.round(h*0.12), color:'rgba(255,255,255,0.45)', bold:false, textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'연락처', x:Math.round(DOC_W*0.77), y:Math.round(h*0.3), fontSize:Math.round(h*0.13), color:'rgba(255,255,255,0.5)', bold:false, textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'000-0000', x:Math.round(DOC_W*0.76), y:Math.round(h*0.5), fontSize:Math.round(h*0.14), color:'#FFD100', bold:true, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'sign-white-minimal', cat:'sign', label:'미니멀 화이트\n간판', bg:'#ffffff', paper:'a4l',
+    build: function() {
+      var h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#E5E5E5', strokeW:2, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:Math.round(h*0.1), fill:'#2383E2', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'상  호  명', x:Math.round(DOC_W*0.06), y:Math.round(h*0.24), fontSize:Math.round(h*0.32), color:'#1D1D1F', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'부서명  ·  연락처  ·  위치 안내', x:Math.round(DOC_W*0.06), y:Math.round(h*0.66), fontSize:Math.round(h*0.12), color:'#787774', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'sign-safety-board', cat:'sign', label:'안전관리 현황판', bg:'#1e3a5f', paper:'a4l',
+    build: function() {
+      var h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#1e3a5f', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:Math.round(h*0.2), fill:'#2383E2', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'안전관리 현황판', x:Math.round(DOC_W*0.04), y:Math.round(h*0.04), fontSize:Math.round(h*0.12), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(DOC_W*0.04), y:Math.round(h*0.26), w:Math.round(DOC_W*0.28), h:Math.round(h*0.6), fill:'rgba(255,255,255,0.07)', fillOn:true, strokeOn:true, stroke:'rgba(255,255,255,0.14)', strokeW:1, opacity:1, rotation:0, cornerR:6 },
+        { type:'shape', shape:'rect', x:Math.round(DOC_W*0.36), y:Math.round(h*0.26), w:Math.round(DOC_W*0.28), h:Math.round(h*0.6), fill:'rgba(255,255,255,0.07)', fillOn:true, strokeOn:true, stroke:'rgba(255,255,255,0.14)', strokeW:1, opacity:1, rotation:0, cornerR:6 },
+        { type:'shape', shape:'rect', x:Math.round(DOC_W*0.68), y:Math.round(h*0.26), w:Math.round(DOC_W*0.28), h:Math.round(h*0.6), fill:'rgba(255,255,255,0.07)', fillOn:true, strokeOn:true, stroke:'rgba(255,255,255,0.14)', strokeW:1, opacity:1, rotation:0, cornerR:6 },
+        { type:'text', content:'무재해', x:Math.round(DOC_W*0.08), y:Math.round(h*0.32), fontSize:Math.round(h*0.1), color:'#FFD100', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'0 일', x:Math.round(DOC_W*0.08), y:Math.round(h*0.48), fontSize:Math.round(h*0.2), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'안전교육', x:Math.round(DOC_W*0.40), y:Math.round(h*0.32), fontSize:Math.round(h*0.1), color:'#FFD100', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'월 2회', x:Math.round(DOC_W*0.40), y:Math.round(h*0.48), fontSize:Math.round(h*0.18), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'투입인원', x:Math.round(DOC_W*0.72), y:Math.round(h*0.32), fontSize:Math.round(h*0.1), color:'#FFD100', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'00 명', x:Math.round(DOC_W*0.72), y:Math.round(h*0.48), fontSize:Math.round(h*0.2), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'sign-store-simple', cat:'sign', label:'매장 간판\n가로형', bg:'#ffffff', paper:'sign-l',
+    build: function() {
+      var h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:Math.round(h*0.85), w:DOC_W, h:Math.round(h*0.15), fill:'#2383E2', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'상호명 / BRAND NAME', x:Math.round(DOC_W*0.04), y:Math.round(h*0.22), fontSize:Math.round(h*0.36), color:'#FFFFFF', bold:true, fontFamily:'"Bebas Neue", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'업종  ·  주소  ·  연락처', x:Math.round(DOC_W*0.04), y:Math.round(h*0.65), fontSize:Math.round(h*0.14), color:'rgba(255,255,255,0.45)', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+
+  /* ── 공지/포스터 ── */
+  { id:'poster-safety-notice', cat:'poster', label:'안전공지 포스터\nA4', bg:'#ffffff', paper:'a4p',
+    build: function() {
+      var w=DOC_W, h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:w, h:h, fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:w, h:Math.round(h*0.22), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'안전공지사항', x:Math.round(w*0.07), y:Math.round(h*0.04), fontSize:Math.round(h*0.1), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'Safety Notice', x:Math.round(w*0.07), y:Math.round(h*0.155), fontSize:Math.round(h*0.038), color:'rgba(255,255,255,0.68)', bold:false, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.05), y:Math.round(h*0.27), w:Math.round(w*0.9), h:Math.round(h*0.1), fill:'#FEF2F2', fillOn:true, strokeOn:true, stroke:'#FECACA', strokeW:1, opacity:1, rotation:0, cornerR:Math.round(w*0.014) },
+        { type:'text', content:'① 개인보호구 착용 철저', x:Math.round(w*0.09), y:Math.round(h*0.296), fontSize:Math.round(h*0.044), color:'#E8222E', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.05), y:Math.round(h*0.40), w:Math.round(w*0.9), h:Math.round(h*0.1), fill:'#FEF2F2', fillOn:true, strokeOn:true, stroke:'#FECACA', strokeW:1, opacity:1, rotation:0, cornerR:Math.round(w*0.014) },
+        { type:'text', content:'② 위험요소 사전 확인', x:Math.round(w*0.09), y:Math.round(h*0.426), fontSize:Math.round(h*0.044), color:'#E8222E', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.05), y:Math.round(h*0.53), w:Math.round(w*0.9), h:Math.round(h*0.1), fill:'#FEF2F2', fillOn:true, strokeOn:true, stroke:'#FECACA', strokeW:1, opacity:1, rotation:0, cornerR:Math.round(w*0.014) },
+        { type:'text', content:'③ 이상 시 즉시 작업 중단', x:Math.round(w*0.09), y:Math.round(h*0.556), fontSize:Math.round(h*0.044), color:'#E8222E', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.05), y:Math.round(h*0.66), w:Math.round(w*0.9), h:Math.round(h*0.1), fill:'#FEF2F2', fillOn:true, strokeOn:true, stroke:'#FECACA', strokeW:1, opacity:1, rotation:0, cornerR:Math.round(w*0.014) },
+        { type:'text', content:'④ 작업 후 정리정돈 실시', x:Math.round(w*0.09), y:Math.round(h*0.686), fontSize:Math.round(h*0.044), color:'#E8222E', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:Math.round(h*0.92), w:w, h:Math.round(h*0.08), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'무사이 안전관리  ·  작업장 안전을 위해 협력합니다', x:Math.round(w*0.06), y:Math.round(h*0.937), fontSize:Math.round(h*0.024), color:'rgba(255,255,255,0.65)', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'poster-emergency', cat:'poster', label:'비상연락처\nA4', bg:'#1e3a5f', paper:'a4p',
+    build: function() {
+      var w=DOC_W, h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:w, h:h, fill:'#1e3a5f', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:w, h:Math.round(h*0.15), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'긴급연락처', x:Math.round(w*0.07), y:Math.round(h*0.024), fontSize:Math.round(h*0.078), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'Emergency Contacts', x:Math.round(w*0.07), y:Math.round(h*0.108), fontSize:Math.round(h*0.028), color:'rgba(255,255,255,0.65)', bold:false, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.05), y:Math.round(h*0.18), w:Math.round(w*0.9), h:Math.round(h*0.11), fill:'rgba(255,255,255,0.07)', fillOn:true, strokeOn:true, stroke:'rgba(255,255,255,0.14)', strokeW:1, opacity:1, rotation:0, cornerR:7 },
+        { type:'text', content:'소방서', x:Math.round(w*0.1), y:Math.round(h*0.198), fontSize:Math.round(h*0.038), color:'#FFD100', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'119', x:Math.round(w*0.58), y:Math.round(h*0.195), fontSize:Math.round(h*0.06), color:'#FFFFFF', bold:true, fontFamily:'"Bebas Neue", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.05), y:Math.round(h*0.31), w:Math.round(w*0.9), h:Math.round(h*0.11), fill:'rgba(255,255,255,0.07)', fillOn:true, strokeOn:true, stroke:'rgba(255,255,255,0.14)', strokeW:1, opacity:1, rotation:0, cornerR:7 },
+        { type:'text', content:'경찰서', x:Math.round(w*0.1), y:Math.round(h*0.328), fontSize:Math.round(h*0.038), color:'#FFD100', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'112', x:Math.round(w*0.58), y:Math.round(h*0.325), fontSize:Math.round(h*0.06), color:'#FFFFFF', bold:true, fontFamily:'"Bebas Neue", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.05), y:Math.round(h*0.44), w:Math.round(w*0.9), h:Math.round(h*0.11), fill:'rgba(255,255,255,0.07)', fillOn:true, strokeOn:true, stroke:'rgba(255,255,255,0.14)', strokeW:1, opacity:1, rotation:0, cornerR:7 },
+        { type:'text', content:'안전관리자', x:Math.round(w*0.1), y:Math.round(h*0.46), fontSize:Math.round(h*0.038), color:'#FFD100', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'000-0000-0000', x:Math.round(w*0.1), y:Math.round(h*0.505), fontSize:Math.round(h*0.038), color:'#FFFFFF', bold:false, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.05), y:Math.round(h*0.57), w:Math.round(w*0.9), h:Math.round(h*0.11), fill:'rgba(255,255,255,0.07)', fillOn:true, strokeOn:true, stroke:'rgba(255,255,255,0.14)', strokeW:1, opacity:1, rotation:0, cornerR:7 },
+        { type:'text', content:'병원', x:Math.round(w*0.1), y:Math.round(h*0.59), fontSize:Math.round(h*0.038), color:'#FFD100', bold:true, textAlign:'left', opacity:1, rotation:0 },
+        { type:'text', content:'000-0000-0000', x:Math.round(w*0.1), y:Math.round(h*0.635), fontSize:Math.round(h*0.038), color:'#FFFFFF', bold:false, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:Math.round(h*0.92), w:w, h:Math.round(h*0.08), fill:'rgba(0,0,0,0.28)', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'무사이 안전관리  ·  비상시 즉시 연락하세요', x:Math.round(w*0.06), y:Math.round(h*0.938), fontSize:Math.round(h*0.022), color:'rgba(255,255,255,0.56)', bold:false, textAlign:'left', opacity:1, rotation:0 }
+      ];
+    }
+  },
+  { id:'poster-tbm', cat:'poster', label:'TBM 안전회의\nA4', bg:'#ffffff', paper:'a4p',
+    build: function() {
+      var w=DOC_W, h=DOC_H;
+      return [
+        { type:'shape', shape:'rect', x:0, y:0, w:w, h:h, fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:w, h:Math.round(h*0.12), fill:'#1e3a5f', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:Math.round(h*0.12), w:w, h:Math.round(h*0.006), fill:'#2383E2', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'TBM · 안전작업 회의', x:Math.round(w*0.06), y:Math.round(h*0.022), fontSize:Math.round(h*0.062), color:'#FFFFFF', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.04), y:Math.round(h*0.15), w:Math.round(w*0.28), h:Math.round(h*0.054), fill:'#F5F5F5', fillOn:true, strokeOn:true, stroke:'#E5E5E5', strokeW:1, opacity:1, rotation:0 },
+        { type:'text', content:'일자: ___________', x:Math.round(w*0.06), y:Math.round(h*0.162), fontSize:Math.round(h*0.028), color:'#555', bold:false, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.36), y:Math.round(h*0.15), w:Math.round(w*0.28), h:Math.round(h*0.054), fill:'#F5F5F5', fillOn:true, strokeOn:true, stroke:'#E5E5E5', strokeW:1, opacity:1, rotation:0 },
+        { type:'text', content:'작업명: _________', x:Math.round(w*0.38), y:Math.round(h*0.162), fontSize:Math.round(h*0.028), color:'#555', bold:false, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.68), y:Math.round(h*0.15), w:Math.round(w*0.28), h:Math.round(h*0.054), fill:'#F5F5F5', fillOn:true, strokeOn:true, stroke:'#E5E5E5', strokeW:1, opacity:1, rotation:0 },
+        { type:'text', content:'책임자: _________', x:Math.round(w*0.70), y:Math.round(h*0.162), fontSize:Math.round(h*0.028), color:'#555', bold:false, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.04), y:Math.round(h*0.225), w:Math.round(w*0.92), h:Math.round(h*0.48), fill:'#FAFAFA', fillOn:true, strokeOn:true, stroke:'#E5E5E5', strokeW:1, opacity:1, rotation:0 },
+        { type:'text', content:'오늘의 안전 당부 사항', x:Math.round(w*0.07), y:Math.round(h*0.245), fontSize:Math.round(h*0.028), color:'#AAAAAA', bold:false, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.04), y:Math.round(h*0.73), w:Math.round(w*0.44), h:Math.round(h*0.11), fill:'#F5F5F5', fillOn:true, strokeOn:true, stroke:'#E5E5E5', strokeW:1, opacity:1, rotation:0 },
+        { type:'text', content:'작업지휘자 서명: ___________', x:Math.round(w*0.06), y:Math.round(h*0.772), fontSize:Math.round(h*0.022), color:'#777', bold:false, textAlign:'left', opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:Math.round(w*0.52), y:Math.round(h*0.73), w:Math.round(w*0.44), h:Math.round(h*0.11), fill:'#F5F5F5', fillOn:true, strokeOn:true, stroke:'#E5E5E5', strokeW:1, opacity:1, rotation:0 },
+        { type:'text', content:'안전관리자 확인: __________', x:Math.round(w*0.54), y:Math.round(h*0.772), fontSize:Math.round(h*0.022), color:'#777', bold:false, textAlign:'left', opacity:1, rotation:0 }
       ];
     }
   }
@@ -5242,17 +5655,67 @@ var TEMPLATES = [
 
 var currentTmplCat = '';
 
+function renderTemplateThumbnail(tmpl) {
+  var TW = 120, TH = 68;
+  var dpr = window.devicePixelRatio || 1;
+  var oc = document.createElement('canvas');
+  oc.width = TW * dpr; oc.height = TH * dpr;
+  oc.style.width = TW + 'px'; oc.style.height = TH + 'px';
+  var oc2 = oc.getContext('2d');
+  oc2.scale(dpr, dpr);
+
+  var p = PAPERS[tmpl.paper] || PAPERS['a4p'];
+  var pw = p.w, ph = p.h;
+  var scale = Math.min((TW - 8) / pw, (TH - 8) / ph);
+  var dw = pw * scale, dh = ph * scale;
+  var offX = (TW - dw) / 2, offY = (TH - dh) / 2;
+
+  oc2.fillStyle = '#e8ecf0';
+  oc2.fillRect(0, 0, TW, TH);
+
+  oc2.shadowColor = 'rgba(0,0,0,0.18)';
+  oc2.shadowBlur = 4;
+  oc2.fillStyle = '#ffffff';
+  oc2.fillRect(offX, offY, dw, dh);
+  oc2.shadowBlur = 0;
+
+  var savedDW = DOC_W, savedDH = DOC_H;
+  DOC_W = pw; DOC_H = ph;
+  var defs;
+  try { defs = tmpl.build(); } catch(e) { defs = []; }
+  DOC_W = savedDW; DOC_H = savedDH;
+
+  oc2.save();
+  oc2.beginPath();
+  oc2.rect(offX, offY, dw, dh);
+  oc2.clip();
+  oc2.translate(offX, offY);
+  oc2.scale(scale, scale);
+  defs.forEach(function(def) {
+    if (def.type === 'image') return;
+    var item = {};
+    for (var k in def) item[k] = def[k];
+    item.id = -1;
+    try { drawItem(oc2, item, false, 1); } catch(e) {}
+  });
+  oc2.restore();
+  return oc;
+}
+
 function renderTemplatePanel() {
   var catRow = document.getElementById('tmpl-cat-row');
   var grid   = document.getElementById('tmpl-grid');
   if (!catRow || !grid) return;
   var cats = [
     {v:'', l:'전체'},
+    {v:'blank', l:'빈 캔버스'},
     {v:'prohibition', l:'금지'},
     {v:'warning', l:'경고'},
     {v:'mandatory', l:'지시'},
     {v:'info', l:'안내'},
-    {v:'banner', l:'현수막'}
+    {v:'banner', l:'현수막'},
+    {v:'sign', l:'간판'},
+    {v:'poster', l:'포스터'}
   ];
   catRow.innerHTML = '';
   cats.forEach(function(c) {
@@ -5271,14 +5734,14 @@ function renderTemplatePanel() {
   }).forEach(function(tmpl) {
     var div = document.createElement('div');
     div.className = 'tmpl-item';
-    var thumb = document.createElement('div');
-    thumb.className = 'tmpl-thumb';
-    thumb.style.background = tmpl.bg || '#f5f5f5';
-    thumb.textContent = tmpl.emoji || '📋';
+    var thumbDiv = document.createElement('div');
+    thumbDiv.className = 'tmpl-thumb';
+    var thumbCanvas = renderTemplateThumbnail(tmpl);
+    thumbDiv.appendChild(thumbCanvas);
     var lbl = document.createElement('div');
     lbl.className = 'tmpl-lbl';
     lbl.textContent = tmpl.label;
-    div.appendChild(thumb);
+    div.appendChild(thumbDiv);
     div.appendChild(lbl);
     div.title = tmpl.label + ' 템플릿 적용';
     (function(t) {
