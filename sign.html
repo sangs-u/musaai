@@ -5890,6 +5890,83 @@ if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(function() { renderTemplatePanel(); });
 }
 
+/* ── QR 코드 생성 모달 ── */
+(function() {
+  var modal = document.getElementById('qr-modal');
+  var urlInput = document.getElementById('qr-url-input');
+  var sizeSelect = document.getElementById('qr-size-select');
+  var previewWrap = document.getElementById('qr-preview-wrap');
+  var qrDebounce = null;
+
+  function openQrModal() {
+    modal.classList.add('show');
+    setTimeout(function() { urlInput.focus(); }, 80);
+    generateQrPreview();
+  }
+
+  function closeQrModal() {
+    modal.classList.remove('show');
+    urlInput.value = '';
+    previewWrap.innerHTML = '<span style="font-size:12px;color:var(--text-l);">미리보기</span>';
+  }
+
+  function generateQrPreview() {
+    var text = urlInput.value.trim();
+    var size = parseInt(sizeSelect.value) || 300;
+    if (!text) {
+      previewWrap.innerHTML = '<span style="font-size:12px;color:var(--text-l);">미리보기</span>';
+      return;
+    }
+    if (typeof QRCode === 'undefined') {
+      previewWrap.innerHTML = '<span style="font-size:11px;color:#e53e3e;">QR 라이브러리 로드 중…</span>';
+      return;
+    }
+    var oc = document.createElement('canvas');
+    QRCode.toCanvas(oc, text, { width: Math.min(size, 300), margin: 2, color: { dark: '#000000', light: '#ffffff' } }, function(err) {
+      if (err) {
+        previewWrap.innerHTML = '<span style="font-size:11px;color:#e53e3e;">생성 오류: ' + err.message + '</span>';
+        return;
+      }
+      oc.style.cssText = 'max-width:100%;max-height:120px;border-radius:4px;';
+      previewWrap.innerHTML = '';
+      previewWrap.appendChild(oc);
+    });
+  }
+
+  function addQrToCanvas() {
+    var text = urlInput.value.trim();
+    var size = parseInt(sizeSelect.value) || 300;
+    if (!text) { urlInput.focus(); return; }
+    if (typeof QRCode === 'undefined') { alert('QR 라이브러리가 로드되지 않았습니다. 잠시 후 다시 시도하세요.'); return; }
+    var oc = document.createElement('canvas');
+    QRCode.toCanvas(oc, text, { width: size, margin: 2, color: { dark: '#000000', light: '#ffffff' } }, function(err) {
+      if (err) { alert('QR 코드 생성 오류: ' + err.message); return; }
+      addImageFromSrc(oc.toDataURL('image/png'));
+      closeQrModal();
+    });
+  }
+
+  document.getElementById('btn-qr').addEventListener('click', openQrModal);
+  document.getElementById('qr-modal-close').addEventListener('click', closeQrModal);
+  document.getElementById('qr-modal-cancel').addEventListener('click', closeQrModal);
+  document.getElementById('qr-modal-ok').addEventListener('click', addQrToCanvas);
+
+  urlInput.addEventListener('input', function() {
+    clearTimeout(qrDebounce);
+    qrDebounce = setTimeout(generateQrPreview, 400);
+  });
+  sizeSelect.addEventListener('change', generateQrPreview);
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeQrModal();
+  });
+
+  urlInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') addQrToCanvas();
+    if (e.key === 'Escape') closeQrModal();
+  });
+})();
+
 /* 시스템 클립보드 이미지 붙여넣기 — Ctrl+V 보완 */
 document.addEventListener('paste', function(e) {
   if (!e.clipboardData) return;
