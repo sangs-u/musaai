@@ -1755,15 +1755,15 @@ function startInlineEdit(item) {
   ed.style.fontFamily  = item.fontFamily || 'Pretendard,-apple-system,sans-serif';
   ed.style.fontWeight  = item.bold ? '700' : (item.fontWeight || '400');
   ed.style.fontStyle   = item.italic ? 'italic' : 'normal';
-  ed.style.color       = item.fill || '#1D1D1F';
-  ed.style.textAlign   = item.textAlign || 'center';
+  ed.style.color       = item.color || item.fill || '#1D1D1F';
+  ed.style.textAlign   = item.textAlign || 'left';
   ed.style.lineHeight  = (item.lineHeight !== undefined) ? item.lineHeight : 1.35;
   ed.style.letterSpacing = (item.letterSpacing || 0) + 'px';
   ed.style.padding     = '0';
   ed.style.border      = '1.5px solid #2383E2';
   ed.style.borderRadius = '3px';
   ed.style.boxShadow   = '0 0 0 3px rgba(35,131,226,.18)';
-  ed.value = item.text || '';
+  ed.value = item.content || '';
   ed.classList.add('editing');
   ed.focus();
   ed.select();
@@ -1773,7 +1773,7 @@ function commitInlineEdit() {
   if (!_inlineEditor || !_inlineEditor.classList.contains('editing')) return;
   var item = getItem(_inlineItemId);
   if (item) {
-    item.text = _inlineEditor.value;
+    item.content = _inlineEditor.value;
     pushHistory(); render(); updateProps(); save();
   }
   _inlineEditor.classList.remove('editing');
