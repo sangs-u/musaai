@@ -492,6 +492,14 @@
               <option value="sign-m">간판 중형 (600×400mm)</option>
               <option value="sign-sq">간판 정방형 (600×600mm)</option>
             </optgroup>
+            <optgroup label="── SNS / 디지털 ──">
+              <option value="ig-post">인스타 정방형 (1080×1080px)</option>
+              <option value="ig-land">인스타 가로 (1080×566px)</option>
+              <option value="ig-story">인스타 스토리 (1080×1920px)</option>
+              <option value="yt-thumb">유튜브 썸네일 (1280×720px)</option>
+              <option value="fb-post">페북 포스트 (1200×630px)</option>
+              <option value="pres169">프레젠테이션 16:9 (1920×1080px)</option>
+            </optgroup>
             <option value="custom">사용자 정의</option>
           </select>
           <div class="paper-custom-row" id="paper-custom-row">
@@ -1416,6 +1424,12 @@ var PAPERS = {
   b51:{w:4500,h:900,  mw:900,mh:180},
   b61:{w:5400,h:900,  mw:900,mh:150},
   b81:{w:4800,h:600,  mw:900,mh:113},
+  'ig-post': {w:1080,h:1080, mw:1080,mh:1080, unit:'px'},
+  'ig-land': {w:1080,h:566,  mw:1080,mh:566,  unit:'px'},
+  'ig-story':{w:1080,h:1920, mw:1080,mh:1920, unit:'px'},
+  'yt-thumb':{w:1280,h:720,  mw:1280,mh:720,  unit:'px'},
+  'fb-post': {w:1200,h:630,  mw:1200,mh:630,  unit:'px'},
+  'pres169': {w:1920,h:1080, mw:1920,mh:1080, unit:'px'},
   'sign-l':{w:3780,h:945,  mw:1000,mh:250},
   'sign-m':{w:2268,h:1512, mw:600, mh:400},
   'sign-sq':{w:2268,h:2268,mw:600, mh:600},
@@ -1425,6 +1439,7 @@ var PAPERS = {
 };
 function paperSizeText(key, w, h) {
   var p = PAPERS[key];
+  if (p && p.unit === 'px') return p.mw + ' × ' + p.mh + ' px';
   if (p && p.mw) return p.mw + ' × ' + p.mh + ' mm';
   return Math.round(w / 3.7795) + ' × ' + Math.round(h / 3.7795) + ' mm';
 }
