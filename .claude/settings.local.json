@@ -43,7 +43,9 @@
       "Bash(Measure-Object -Line)",
       "Bash(Select-Object -ExpandProperty Lines)",
       "PowerShell(Get-Content *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(Select-String -Path \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\" -Pattern \"prop-img-rmbg|rmbg-status\")",
+      "Bash(Select-Object LineNumber, Line)"
     ]
   }
 }
