@@ -6056,6 +6056,8 @@ if (document.fonts && document.fonts.ready) {
     previewWrap.appendChild(img);
   }
 
+  var QR_BTN_HTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> 캔버스에 추가';
+
   function addQrToCanvas() {
     var text = urlInput.value.trim();
     var size = parseInt(sizeSelect.value) || 300;
@@ -6063,23 +6065,26 @@ if (document.fonts && document.fonts.ready) {
     var okBtn = document.getElementById('qr-modal-ok');
     okBtn.disabled = true;
     okBtn.textContent = '생성 중…';
-    var img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = function() {
-      var oc = document.createElement('canvas');
-      oc.width = img.naturalWidth; oc.height = img.naturalHeight;
-      oc.getContext('2d').drawImage(img, 0, 0);
-      addImageFromSrc(oc.toDataURL('image/png'));
-      okBtn.disabled = false;
-      okBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> 캔버스에 추가';
-      closeQrModal();
-    };
-    img.onerror = function() {
-      okBtn.disabled = false;
-      okBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> 캔버스에 추가';
-      alert('QR 코드 생성 실패. 인터넷 연결 또는 URL을 확인하세요.');
-    };
-    img.src = qrApiUrl(text, size);
+
+    function resetBtn() { okBtn.disabled = false; okBtn.innerHTML = QR_BTN_HTML; }
+
+    /* fetch → blob → FileReader → dataURL (canvas CORS taint 우회) */
+    fetch(qrApiUrl(text, size))
+      .then(function(r) { return r.blob(); })
+      .then(function(blob) {
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          addImageFromSrc(ev.target.result);
+          resetBtn();
+          closeQrModal();
+        };
+        reader.onerror = function() { resetBtn(); alert('QR 변환 실패'); };
+        reader.readAsDataURL(blob);
+      })
+      .catch(function() {
+        resetBtn();
+        alert('QR 코드 생성 실패. 인터넷 연결 또는 URL을 확인하세요.');
+      });
   }
 
   document.getElementById('btn-qr').addEventListener('click', openQrModal);
