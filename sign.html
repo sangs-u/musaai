@@ -87,6 +87,10 @@
     .panel-section-title { font-size:11px; font-weight:600; color:var(--text-l); margin-bottom:8px; letter-spacing:-.05px; display:flex; align-items:center; gap:6px; }
     .panel-section-title .ps-action { margin-left:auto; cursor:pointer; opacity:.7; transition:opacity .12s; padding:2px 4px; border-radius:4px; }
     .panel-section-title .ps-action:hover { opacity:1; background:var(--hover); }
+    /* Gradient direction buttons */
+    .grad-dir-btn { padding:4px 9px; border:1px solid var(--border); border-radius:4px; background:var(--bg-panel); cursor:pointer; font-size:14px; color:var(--text-m); transition:background .1s,border-color .1s,color .1s; }
+    .grad-dir-btn.active { background:var(--active); border-color:var(--accent); color:var(--accent); }
+    .grad-dir-btn:hover:not(.active) { background:var(--hover); color:var(--text); }
     /* Panel Tabs */
     #panel-tabs { display:flex; border-bottom:1px solid var(--border-s); flex-shrink:0; }
     .panel-tab { flex:1; padding:9px 4px; font-size:11px; font-weight:600; background:transparent; border:none; border-bottom:2px solid transparent; cursor:pointer; color:var(--text-l); transition:color .12s,border-color .12s,background .12s; letter-spacing:-.05px; }
@@ -509,6 +513,33 @@
             <button class="csw" data-color="#005DAA" style="background:#005DAA" title="지시파랑"></button>
             <button class="csw" data-color="#007A4D" style="background:#007A4D" title="안전녹색"></button>
             <button class="csw" data-color="#1D1D1F" style="background:#1D1D1F" title="검정"></button>
+          </div>
+        </div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-weight:500;color:var(--text-m);">
+            <input type="checkbox" id="bg-gradient-toggle"> 그라데이션
+          </label>
+        </div>
+        <div id="bg-gradient-section" style="margin-top:6px;border-top:1px solid var(--border-s);padding-top:7px;flex-direction:column;gap:6px;display:none;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;font-weight:500;color:var(--text-m);">색상 2</span>
+            <input class="prop-color" type="color" id="doc-bg2-color" value="#1E3A5F" title="그라데이션 2번째 색상" style="margin-left:auto;">
+            <div class="color-swatches" data-for="doc-bg2-color" style="margin-top:0;gap:4px;">
+              <button class="csw" data-color="#1E3A5F" style="background:#1E3A5F" title="다크 네이비"></button>
+              <button class="csw" data-color="#2C5282" style="background:#2C5282" title="네이비"></button>
+              <button class="csw" data-color="#FFD100" style="background:#FFD100" title="경고노랑"></button>
+              <button class="csw" data-color="#E8222E" style="background:#E8222E" title="금지빨강"></button>
+              <button class="csw" data-color="#000000" style="background:#000000" title="검정"></button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;font-weight:500;color:var(--text-m);">방향</span>
+            <div style="display:flex;gap:3px;margin-left:auto;">
+              <button class="grad-dir-btn active" data-angle="0"   title="위→아래">↕</button>
+              <button class="grad-dir-btn" data-angle="90"  title="왼→오른">↔</button>
+              <button class="grad-dir-btn" data-angle="135" title="↗ 대각">↗</button>
+              <button class="grad-dir-btn" data-angle="45"  title="↘ 대각">↘</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1506,6 +1537,9 @@ function getSigns() {
 /* ── STATE ── */
 var DOC_W = 1134, DOC_H = 1134, docKey = 's300';
 var docBg = '#FFFFFF';
+var docBgType = 'solid';   /* 'solid' | 'gradient' */
+var docBg2 = '#1E3A5F';    /* 그라데이션 2번 색 */
+var docBgAngle = 0;        /* 0=위→아래, 90=좌→우, 45=↘, 135=↗ */
 var items = [];
 var selectedIds = [];           /* 다중 선택 */
 var hoveredId = null;           /* 마우스 호버 중인 아이템 ID */
@@ -1693,7 +1727,17 @@ function render() {
   ctx.setTransform(zoom, 0, 0, zoom, panX, panY);
   /* 캔버스 그림자 */
   ctx.shadowColor = 'rgba(15,15,15,.10)'; ctx.shadowBlur = 24/zoom; ctx.shadowOffsetY = 6/zoom;
-  ctx.fillStyle = docBg || '#fff'; ctx.fillRect(0, 0, DOC_W, DOC_H);
+  if (docBgType === 'gradient') {
+    var _rad = docBgAngle * Math.PI / 180;
+    var _hw = DOC_W / 2, _hh = DOC_H / 2;
+    var _len = Math.abs(_hw * Math.sin(_rad)) + Math.abs(_hh * Math.cos(_rad));
+    var _g = ctx.createLinearGradient(_hw - _len * Math.sin(_rad), _hh - _len * Math.cos(_rad), _hw + _len * Math.sin(_rad), _hh + _len * Math.cos(_rad));
+    _g.addColorStop(0, docBg || '#ffffff'); _g.addColorStop(1, docBg2 || '#000000');
+    ctx.fillStyle = _g;
+  } else {
+    ctx.fillStyle = docBg || '#fff';
+  }
+  ctx.fillRect(0, 0, DOC_W, DOC_H);
   ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
   /* 격자 */
   if (showGrid) {
@@ -5199,6 +5243,24 @@ document.querySelectorAll('.csw').forEach(function(btn) {
   });
 });
 
+/* ── 배경 그라데이션 컨트롤 ── */
+document.getElementById('bg-gradient-toggle').addEventListener('change', function() {
+  docBgType = this.checked ? 'gradient' : 'solid';
+  document.getElementById('bg-gradient-section').style.display = this.checked ? 'flex' : 'none';
+  render(); save();
+});
+document.getElementById('doc-bg2-color').addEventListener('input', function() {
+  docBg2 = this.value; render(); save();
+});
+document.querySelectorAll('.grad-dir-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    docBgAngle = parseInt(this.dataset.angle);
+    document.querySelectorAll('.grad-dir-btn').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+    render(); save();
+  });
+});
+
 document.getElementById('btn-reset').addEventListener('click', function() {
   if (!confirm('캔버스의 모든 요소를 삭제하시겠습니까?')) return;
   pushHistory();
@@ -5325,7 +5387,7 @@ function save() {
     localStorage.setItem(LS_KEY, JSON.stringify({
       items: saved, nextId: nextId,
       docW: DOC_W, docH: DOC_H, docKey: docKey,
-      docBg: docBg,
+      docBg: docBg, docBgType: docBgType, docBg2: docBg2, docBgAngle: docBgAngle,
       showGrid: showGrid, snapEnabled: snapEnabled, pictogramOnly: pictogramOnly
     }));
   } catch(e) {}
@@ -5351,6 +5413,24 @@ function load() {
       }
     }
     if (data.docBg) { docBg = data.docBg; docBgInput.value = docBg; }
+    if (data.docBgType) {
+      docBgType = data.docBgType;
+      var gToggle = document.getElementById('bg-gradient-toggle');
+      var gSection = document.getElementById('bg-gradient-section');
+      if (gToggle) gToggle.checked = (docBgType === 'gradient');
+      if (gSection) gSection.style.display = (docBgType === 'gradient') ? 'flex' : 'none';
+    }
+    if (data.docBg2) {
+      docBg2 = data.docBg2;
+      var bg2In = document.getElementById('doc-bg2-color');
+      if (bg2In) bg2In.value = docBg2;
+    }
+    if (typeof data.docBgAngle === 'number') {
+      docBgAngle = data.docBgAngle;
+      document.querySelectorAll('.grad-dir-btn').forEach(function(b) {
+        b.classList.toggle('active', parseInt(b.dataset.angle) === docBgAngle);
+      });
+    }
     if (typeof data.showGrid === 'boolean') showGrid = data.showGrid;
     if (typeof data.snapEnabled === 'boolean') snapEnabled = data.snapEnabled;
     if (typeof data.pictogramOnly === 'boolean') {
