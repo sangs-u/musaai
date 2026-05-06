@@ -87,6 +87,13 @@
     .panel-section-title { font-size:11px; font-weight:600; color:var(--text-l); margin-bottom:8px; letter-spacing:-.05px; display:flex; align-items:center; gap:6px; }
     .panel-section-title .ps-action { margin-left:auto; cursor:pointer; opacity:.7; transition:opacity .12s; padding:2px 4px; border-radius:4px; }
     .panel-section-title .ps-action:hover { opacity:1; background:var(--hover); }
+    /* Panel Tabs */
+    #panel-tabs { display:flex; border-bottom:1px solid var(--border-s); flex-shrink:0; }
+    .panel-tab { flex:1; padding:9px 4px; font-size:11px; font-weight:600; background:transparent; border:none; border-bottom:2px solid transparent; cursor:pointer; color:var(--text-l); transition:color .12s,border-color .12s,background .12s; letter-spacing:-.05px; }
+    .panel-tab:hover:not(.active) { color:var(--text); background:var(--hover); }
+    .panel-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+    .panel-section[data-tab] { display:none; }
+    .panel-section[data-tab].tab-active { display:block; }
 
     /* paper size */
     .paper-select-wrap { display:flex; flex-direction:column; gap:6px; }
@@ -506,7 +513,13 @@
         </div>
       </div>
 
-      <div class="panel-section">
+      <div id="panel-tabs">
+        <button class="panel-tab active" data-tab="templates">템플릿</button>
+        <button class="panel-tab" data-tab="signs">표지</button>
+        <button class="panel-tab" data-tab="elements">요소</button>
+      </div>
+
+      <div class="panel-section" data-tab="signs">
         <div class="panel-section-title">
           안전표지 라이브러리
           <span class="ps-action" id="lib-edit-toggle" title="편집 모드"><svg width="12" height="12"><use href="#ic-edit"/></svg></span>
@@ -534,13 +547,13 @@
         </div>
       </div>
 
-      <div class="panel-section" id="templates-section">
+      <div class="panel-section" id="templates-section" data-tab="templates">
         <div class="panel-section-title">템플릿</div>
         <div class="sign-cat-row" id="tmpl-cat-row"></div>
         <div id="tmpl-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;"></div>
       </div>
 
-      <div class="panel-section">
+      <div class="panel-section" data-tab="elements">
         <div class="panel-section-title">도형</div>
         <div class="shape-grid" id="shape-grid">
           <button class="shape-btn" data-shape="rect"    title="사각형 (R)"><svg><use href="#ic-rect"/></svg></button>
@@ -551,7 +564,7 @@
         </div>
       </div>
 
-      <div class="panel-section">
+      <div class="panel-section" data-tab="elements">
         <div class="panel-section-title">요소 추가</div>
         <div id="drop-zone">
           <svg><use href="#ic-upload"/></svg>
@@ -5889,6 +5902,23 @@ window.addEventListener('resize', function() { resizeCanvas(); render(); });
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(function() { renderTemplatePanel(); });
 }
+
+/* ── 좌측 패널 탭 전환 ── */
+(function() {
+  var tabs = document.querySelectorAll('.panel-tab');
+  var sections = document.querySelectorAll('.panel-section[data-tab]');
+
+  function switchTab(name) {
+    tabs.forEach(function(t) { t.classList.toggle('active', t.dataset.tab === name); });
+    sections.forEach(function(s) { s.classList.toggle('tab-active', s.dataset.tab === name); });
+    localStorage.setItem('sign_panel_tab', name);
+  }
+
+  tabs.forEach(function(t) { t.addEventListener('click', function() { switchTab(this.dataset.tab); }); });
+
+  var saved = localStorage.getItem('sign_panel_tab') || 'templates';
+  switchTab(saved);
+})();
 
 /* ── QR 코드 생성 모달 ── */
 (function() {
