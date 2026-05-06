@@ -790,6 +790,15 @@
       </div>
       <div class="prop-section">
         <label class="prop-label">글자 크기</label>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:7px;">
+          <button class="font-size-preset" data-size="24" style="padding:2px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel);font-size:10px;color:var(--text-m);cursor:pointer;transition:.1s;">24</button>
+          <button class="font-size-preset" data-size="36" style="padding:2px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel);font-size:10px;color:var(--text-m);cursor:pointer;transition:.1s;">36</button>
+          <button class="font-size-preset" data-size="48" style="padding:2px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel);font-size:10px;color:var(--text-m);cursor:pointer;transition:.1s;">48</button>
+          <button class="font-size-preset" data-size="72" style="padding:2px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel);font-size:10px;color:var(--text-m);cursor:pointer;transition:.1s;">72</button>
+          <button class="font-size-preset" data-size="96" style="padding:2px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel);font-size:10px;color:var(--text-m);cursor:pointer;transition:.1s;">96</button>
+          <button class="font-size-preset" data-size="144" style="padding:2px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel);font-size:10px;color:var(--text-m);cursor:pointer;transition:.1s;">144</button>
+          <button class="font-size-preset" data-size="200" style="padding:2px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel);font-size:10px;color:var(--text-m);cursor:pointer;transition:.1s;">200</button>
+        </div>
         <div class="prop-range-row">
           <input class="prop-range" type="range" id="prop-text-size" min="8" max="999" value="48">
           <input type="number" class="prop-range-val" id="prop-text-size-val" value="48" min="8" max="999" style="border:1px solid var(--border);border-radius:4px;background:var(--bg-panel);width:52px;text-align:right;padding:1px 4px;cursor:text;height:24px;font-size:11px;color:var(--text);font-weight:500;font-variant-numeric:tabular-nums;outline:none;" title="직접 입력">
@@ -4407,6 +4416,16 @@ propTextSizeVal.addEventListener('change', function() {
   item.fontSize = v; render(); save();
 });
 propTextSizeVal.addEventListener('focus', function() { this.select(); });
+document.querySelectorAll('.font-size-preset').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var v = parseInt(this.dataset.size);
+    propTextSize.value = v; propTextSizeVal.value = v;
+    var item = getItem(selectedId); if (!item) return;
+    item.fontSize = v; render(); save();
+  });
+  btn.addEventListener('mouseenter', function() { this.style.background = 'var(--hover)'; this.style.color = 'var(--text)'; });
+  btn.addEventListener('mouseleave', function() { this.style.background = 'var(--bg-panel)'; this.style.color = 'var(--text-m)'; });
+});
 propTextColor.addEventListener('input', function() {
   var item = getItem(selectedId); if (!item) return;
   item.color = this.value; render(); save();
