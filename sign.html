@@ -6,7 +6,7 @@
   <title>안전표지 제작 — 무사이</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-  <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <!-- qrcode lib: inline via api.qrserver.com, no CDN needed -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Noto+Serif+KR:wght@400;700;900&family=Black+Han+Sans&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Pen+Script&family=Nanum+Brush+Script&family=Gowun+Dodum&family=Gowun+Batang:wght@400;700&family=Do+Hyeon&family=Jua&family=Sunflower:wght@300;500;700&family=Stylish&family=Hahmlet:wght@400;700;900&family=Yeon+Sung&family=Single+Day&family=Gaegu:wght@400;700&family=Cute+Font&family=Dongle:wght@300;400;700&family=Hi+Melody&family=Poor+Story&family=East+Sea+Dokdo&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Bagel+Fat+One&family=Black+And+White+Picture&family=Diphylleia&family=Gugi&family=Kirang+Haerang&family=Song+Myung&family=Bebas+Neue&family=Oswald:wght@400;700&family=Anton&family=Montserrat:wght@400;700;900&family=Roboto:wght@400;700;900&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -5910,40 +5910,51 @@ if (document.fonts && document.fonts.ready) {
     previewWrap.innerHTML = '<span style="font-size:12px;color:var(--text-l);">미리보기</span>';
   }
 
+  function qrApiUrl(text, size) {
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size +
+      '&data=' + encodeURIComponent(text) + '&format=png&margin=10';
+  }
+
   function generateQrPreview() {
     var text = urlInput.value.trim();
-    var size = parseInt(sizeSelect.value) || 300;
     if (!text) {
       previewWrap.innerHTML = '<span style="font-size:12px;color:var(--text-l);">미리보기</span>';
       return;
     }
-    if (typeof QRCode === 'undefined') {
-      previewWrap.innerHTML = '<span style="font-size:11px;color:#e53e3e;">QR 라이브러리 로드 중…</span>';
-      return;
-    }
-    var oc = document.createElement('canvas');
-    QRCode.toCanvas(oc, text, { width: Math.min(size, 300), margin: 2, color: { dark: '#000000', light: '#ffffff' } }, function(err) {
-      if (err) {
-        previewWrap.innerHTML = '<span style="font-size:11px;color:#e53e3e;">생성 오류: ' + err.message + '</span>';
-        return;
-      }
-      oc.style.cssText = 'max-width:100%;max-height:120px;border-radius:4px;';
-      previewWrap.innerHTML = '';
-      previewWrap.appendChild(oc);
-    });
+    var img = document.createElement('img');
+    img.style.cssText = 'max-width:100%;max-height:120px;border-radius:4px;display:block;';
+    img.onerror = function() {
+      previewWrap.innerHTML = '<span style="font-size:11px;color:#e53e3e;">미리보기 로드 실패 (인터넷 연결 확인)</span>';
+    };
+    img.src = qrApiUrl(text, 200);
+    previewWrap.innerHTML = '';
+    previewWrap.appendChild(img);
   }
 
   function addQrToCanvas() {
     var text = urlInput.value.trim();
     var size = parseInt(sizeSelect.value) || 300;
     if (!text) { urlInput.focus(); return; }
-    if (typeof QRCode === 'undefined') { alert('QR 라이브러리가 로드되지 않았습니다. 잠시 후 다시 시도하세요.'); return; }
-    var oc = document.createElement('canvas');
-    QRCode.toCanvas(oc, text, { width: size, margin: 2, color: { dark: '#000000', light: '#ffffff' } }, function(err) {
-      if (err) { alert('QR 코드 생성 오류: ' + err.message); return; }
+    var okBtn = document.getElementById('qr-modal-ok');
+    okBtn.disabled = true;
+    okBtn.textContent = '생성 중…';
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      var oc = document.createElement('canvas');
+      oc.width = img.naturalWidth; oc.height = img.naturalHeight;
+      oc.getContext('2d').drawImage(img, 0, 0);
       addImageFromSrc(oc.toDataURL('image/png'));
+      okBtn.disabled = false;
+      okBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> 캔버스에 추가';
       closeQrModal();
-    });
+    };
+    img.onerror = function() {
+      okBtn.disabled = false;
+      okBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> 캔버스에 추가';
+      alert('QR 코드 생성 실패. 인터넷 연결 또는 URL을 확인하세요.');
+    };
+    img.src = qrApiUrl(text, size);
   }
 
   document.getElementById('btn-qr').addEventListener('click', openQrModal);
