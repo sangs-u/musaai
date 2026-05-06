@@ -669,8 +669,10 @@
         </div>
       </div>
       <div class="prop-section">
-        <label class="prop-label">배경 제거</label>
-        <div style="font-size:11px;color:var(--text-m);margin-bottom:8px;">테두리 색상 기반 자동 감지</div>
+        <label class="prop-label">배경 제거 (누끼)</label>
+        <div style="font-size:11px;color:var(--text-m);margin-bottom:8px;">테두리 픽셀 기준 자동 감지 · 원본 복원 가능</div>
+        <div style="font-size:11px;color:var(--text-m);margin-bottom:3px;display:flex;justify-content:space-between;"><span>허용 범위</span><span id="prop-rmbg-tol-val">자동</span></div>
+        <input class="prop-range" type="range" id="prop-rmbg-tol" min="0" max="100" value="0" style="margin-bottom:8px;">
         <div style="display:flex;gap:6px;">
           <button class="prop-btn dup" style="flex:2;font-size:12px;" id="prop-img-rmbg">배경 제거 적용</button>
           <button class="prop-btn" style="flex:1;font-size:12px;background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.15);color:var(--text-m);" id="prop-img-restore">원본 복원</button>
@@ -688,7 +690,10 @@
             <button class="align-btn" id="btn-eraser-brush" style="font-size:11px;">브러시</button>
           </div>
           <div id="eraser-flood-opts">
-            <div style="font-size:11px;color:var(--text-m);margin-bottom:6px;">클릭한 색과 연결된 영역을 자동으로 제거합니다</div>
+            <div style="font-size:11px;color:var(--text-m);margin-bottom:8px;">클릭한 색과 연결된 영역을 자동으로 제거합니다</div>
+            <div style="font-size:11px;color:var(--text-m);margin-bottom:3px;display:flex;justify-content:space-between;"><span>허용 범위</span><span id="prop-eraser-tol-val">자동</span></div>
+            <input class="prop-range" type="range" id="prop-eraser-tol" min="0" max="100" value="0" style="margin-bottom:4px;">
+            <div style="font-size:10px;color:var(--text-l);">0 = 자동 · 높을수록 넓게 제거</div>
           </div>
           <div id="eraser-brush-opts" style="display:none;">
             <div style="font-size:11px;color:var(--text-m);margin-bottom:6px;">드래그하여 자유롭게 지웁니다</div>
@@ -786,8 +791,8 @@
       <div class="prop-section">
         <label class="prop-label">글자 크기</label>
         <div class="prop-range-row">
-          <input class="prop-range" type="range" id="prop-text-size" min="8" max="500" value="48">
-          <span class="prop-range-val" id="prop-text-size-val">48px</span>
+          <input class="prop-range" type="range" id="prop-text-size" min="8" max="999" value="48">
+          <input type="number" class="prop-range-val" id="prop-text-size-val" value="48" min="8" max="999" style="border:1px solid var(--border);border-radius:4px;background:var(--bg-panel);width:52px;text-align:right;padding:1px 4px;cursor:text;height:24px;font-size:11px;color:var(--text);font-weight:500;font-variant-numeric:tabular-nums;outline:none;" title="직접 입력">
         </div>
       </div>
       <div class="prop-section">
@@ -2966,7 +2971,9 @@ canvas.addEventListener('mousedown', function(e) {
       if (!_eraserCanvas || !_eraserItem || _eraserItem.id !== eItem.id) startEraserSession(eItem);
       var ic = screenToImgCoords(sx, sy, eItem);
       if (eraserType === 'flood') {
-        eraserFloodAt(ic.x, ic.y, -1); /* -1 = 자동 허용오차 */
+        var tolEl = document.getElementById('prop-eraser-tol');
+        var tolVal = tolEl ? parseInt(tolEl.value) : 0;
+        eraserFloodAt(ic.x, ic.y, tolVal > 0 ? tolVal : -1); /* -1 = 자동 허용오차 */
         render();
       } else {
         eraserSnapshot();
@@ -3764,7 +3771,7 @@ function syncTextProps(item) {
   propTextContent.value = item.content;
   propTextFont.value    = item.fontFamily || 'Pretendard, sans-serif';
   propTextSize.value    = item.fontSize;
-  propTextSizeVal.textContent = item.fontSize + 'px';
+  propTextSizeVal.value = item.fontSize;
   propTextColor.value   = item.color || '#000000';
   propTextBold.checked  = !!item.bold;
   propTextItalic.checked = !!item.italic;
@@ -4273,6 +4280,10 @@ document.getElementById('btn-eraser-brush').addEventListener('click', function()
 document.getElementById('prop-eraser-size').addEventListener('input', function() {
   document.getElementById('prop-eraser-size-val').textContent = this.value + 'px';
 });
+document.getElementById('prop-eraser-tol').addEventListener('input', function() {
+  var v = parseInt(this.value);
+  document.getElementById('prop-eraser-tol-val').textContent = v === 0 ? '자동' : v;
+});
 document.getElementById('btn-eraser-undo').addEventListener('click', eraserUndo);
 document.getElementById('btn-eraser-done').addEventListener('click', function() {
   commitEraserSession();
@@ -4291,13 +4302,19 @@ document.getElementById('btn-crop-apply').addEventListener('click', function() {
   applyCrop();
 });
 
+document.getElementById('prop-rmbg-tol').addEventListener('input', function() {
+  var v = parseInt(this.value);
+  document.getElementById('prop-rmbg-tol-val').textContent = v === 0 ? '자동' : v;
+});
 document.getElementById('prop-img-rmbg').addEventListener('click', function() {
   var item = getItem(selectedId); if (!item || item.type !== 'image') return;
   var st  = document.getElementById('rmbg-status');
   st.style.display = 'block';
   st.textContent = '처리 중...';
+  var tolEl = document.getElementById('prop-rmbg-tol');
+  var tolVal = tolEl ? parseInt(tolEl.value) : 0;
   setTimeout(function() {
-    var ok = removeBg(item, -1); /* -1 = 자동 허용오차 */
+    var ok = removeBg(item, tolVal > 0 ? tolVal : -1); /* -1 = 자동 허용오차 */
     if (!ok) {
       st.textContent = '실패: 이미지를 불러올 수 없거나 보안 정책으로 접근이 차단되었습니다.';
     }
@@ -4377,9 +4394,19 @@ propTextFont.addEventListener('change', function() {
 propTextSize.addEventListener('input', function() {
   var item = getItem(selectedId); if (!item) return;
   item.fontSize = parseInt(this.value);
-  propTextSizeVal.textContent = item.fontSize + 'px';
+  propTextSizeVal.value = item.fontSize;
   render(); save();
 });
+propTextSizeVal.addEventListener('change', function() {
+  var v = parseInt(this.value);
+  if (isNaN(v) || v < 8) v = 8;
+  if (v > 999) v = 999;
+  this.value = v;
+  propTextSize.value = v;
+  var item = getItem(selectedId); if (!item) return;
+  item.fontSize = v; render(); save();
+});
+propTextSizeVal.addEventListener('focus', function() { this.select(); });
 propTextColor.addEventListener('input', function() {
   var item = getItem(selectedId); if (!item) return;
   item.color = this.value; render(); save();
@@ -5793,6 +5820,30 @@ var hint = document.getElementById('canvas-hint');
 setTimeout(function() { hint.classList.add('hidden'); }, 6000);
 
 window.addEventListener('resize', function() { resizeCanvas(); render(); });
+
+/* 폰트 로딩 완료 후 썸네일 재렌더 — 구글 폰트 반영 */
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(function() { renderTemplatePanel(); });
+}
+
+/* 시스템 클립보드 이미지 붙여넣기 — Ctrl+V 보완 */
+document.addEventListener('paste', function(e) {
+  if (!e.clipboardData) return;
+  var ae = document.activeElement;
+  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+  if (document.getElementById('inline-text-editor').classList.contains('editing')) return;
+  var items = e.clipboardData.items;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].kind === 'file' && items[i].type.startsWith('image/')) {
+      var file = items[i].getAsFile();
+      if (!file) continue;
+      var reader = new FileReader();
+      (function(r){ r.onload = function(ev){ addImageFromSrc(ev.target.result); }; r.readAsDataURL(file); })(reader);
+      e.preventDefault();
+      return;
+    }
+  }
+});
 
 })();
 </script>
