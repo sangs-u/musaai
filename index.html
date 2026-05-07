@@ -104,6 +104,19 @@
     .tool-card.disabled {
       opacity: 0.45;
       cursor: not-allowed;
+      position: relative;
+    }
+    .tool-card.disabled:hover::after {
+      content: '개발 예정입니다';
+      position: absolute;
+      bottom: 12px; left: 50%; transform: translateX(-50%);
+      background: rgba(28,28,30,.82);
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
+      pointer-events: none;
     }
 
     .tool-badge {
@@ -323,7 +336,7 @@
     </main>
 
     <footer class="hub-footer">
-      <strong>무사이(Musai)</strong> · 현장 안전 플랫폼 · v0.5.0<br>
+      <strong>무사이(Musai)</strong> · 현장 안전 플랫폼 · v0.6.0<br>
       수익화 배제 · 무료 호스팅 · 비전공자 친화 UX
     </footer>
   </div>

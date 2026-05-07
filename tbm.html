@@ -774,7 +774,7 @@
 
 <!-- ── 하단 버튼 바 ── -->
 <div class="bottom-bar">
-  <button class="btn-reset" type="button" onclick="doReset()">처음부터 다시</button>
+  <button class="btn-reset" type="button" onclick="confirmReset()">처음부터 다시</button>
   <button class="btn-print" type="button" onclick="doPrint()">
     <svg><use href="#s-print"/></svg>
     인쇄 / PDF 저장
@@ -996,6 +996,9 @@ function doPrint() {
 }
 
 /* ── 초기화 ── */
+function confirmReset() {
+  if (confirm('작성한 내용이 모두 지워집니다.\n처음부터 다시 시작할까요?')) doReset();
+}
 function doReset() {
   /* 체크박스 해제 */
   var cbs = document.querySelectorAll('input[type="checkbox"]');
