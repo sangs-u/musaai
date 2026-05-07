@@ -45,7 +45,12 @@
       "PowerShell(Get-Content *)",
       "Bash(git add *)",
       "Bash(Select-String -Path \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\" -Pattern \"prop-img-rmbg|rmbg-status\")",
-      "Bash(Select-Object LineNumber, Line)"
+      "Bash(Select-Object LineNumber, Line)",
+      "Bash(dir \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\안전보건표지_2020_수정200310.ai\")",
+      "Bash(where inkscape *)",
+      "Bash(where python *)",
+      "Bash(where python3 *)",
+      "PowerShell(\\(Get-Item \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\"\\).Length; $c = Get-Content \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\" -Raw; \"chars: $\\($c.Length\\)\"; \"has autoCropPictogram: $\\($c.Contains\\('autoCropPictogram'\\)\\)\"; \"has ySkipTop: $\\($c.Contains\\('ySkipTop'\\)\\)\")"
     ]
   }
 }
