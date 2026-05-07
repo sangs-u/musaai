@@ -2676,7 +2676,7 @@ function autoCropPictogram(img) {
   try {
     var origW = img.naturalWidth, origH = img.naturalHeight;
     if (origW === 0 || origH === 0) return null;
-    var scale = Math.min(1, 512 / Math.max(origW, origH));
+    var scale = Math.min(1, 600 / Math.max(origW, origH));
     var w = Math.round(origW * scale), h = Math.round(origH * scale);
     var off = document.createElement('canvas');
     off.width = w; off.height = h;
@@ -2684,99 +2684,82 @@ function autoCropPictogram(img) {
     oc.drawImage(img, 0, 0, w, h);
     var data = oc.getImageData(0, 0, w, h).data;
 
-    /* 배경색: 4모서리 중앙값 */
-    var corners = [
-      [data[0],data[1],data[2]],
-      [data[(w-1)*4],data[(w-1)*4+1],data[(w-1)*4+2]],
-      [data[(h-1)*w*4],data[(h-1)*w*4+1],data[(h-1)*w*4+2]],
-      [data[((h-1)*w+w-1)*4],data[((h-1)*w+w-1)*4+1],data[((h-1)*w+w-1)*4+2]]
-    ];
-    function med(a){ a.sort(function(x,y){return x-y;}); return a[Math.floor(a.length/2)]; }
-    var bgR = med(corners.map(function(c){return c[0];}));
-    var bgG = med(corners.map(function(c){return c[1];}));
-    var bgB = med(corners.map(function(c){return c[2];}));
-    var tol = 38, tol2 = tol*tol*3;
+    /* ── HSL 채도 기반 경계 탐지 ──────────────────────────────────
+       채도(S) ≥ SAT_THRESH 인 픽셀 = 표지 색상 영역(빨강/노랑/파랑/초록).
+       흰색·회색·검정(S≈0)은 제외 → 텍스트·라벨 자동 제외.
+       표지 내부의 검정 심볼은 채색 경계 내부에 자연 포함됨.      */
+    var SAT_THRESH = 0.18;
 
-    /* 행별 비배경 픽셀 수 */
-    var rowCount = new Int32Array(h);
+    function getSat(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      if (mx === mn) return 0;
+      var l = (mx + mn) * 0.5;
+      return l > 0.5 ? (mx - mn) / (2 - mx - mn) : (mx - mn) / (mx + mn);
+    }
+
+    var top = h, bot = -1, lft = w, rgt = -1;
     for (var y = 0; y < h; y++) {
       for (var x = 0; x < w; x++) {
-        var pi = (y*w+x)*4;
-        if (data[pi+3] < 32) continue;
-        var dr=data[pi]-bgR, dg=data[pi+1]-bgG, db=data[pi+2]-bgB;
-        if (dr*dr+dg*dg+db*db > tol2) rowCount[y]++;
+        var pi = (y * w + x) * 4;
+        if (data[pi + 3] < 32) continue;
+        if (getSat(data[pi], data[pi + 1], data[pi + 2]) >= SAT_THRESH) {
+          if (y < top) top = y;
+          if (y > bot) bot = y;
+          if (x < lft) lft = x;
+          if (x > rgt) rgt = x;
+        }
       }
     }
 
-    /* 갭(빈 행)으로 밴드 분리 */
-    var minRow = Math.max(2, w * 0.005);
-    var bands = [], inBand = false, bs = 0;
-    for (var y2 = 0; y2 < h; y2++) {
-      if (rowCount[y2] >= minRow) { if (!inBand) { bs = y2; inBand = true; } }
-      else if (inBand) { bands.push({s:bs, e:y2-1}); inBand = false; }
-    }
-    if (inBand) bands.push({s:bs, e:h-1});
-    if (bands.length === 0) return null;
-    bands.forEach(function(b) {
-      var t=0; for (var yy=b.s;yy<=b.e;yy++) t+=rowCount[yy];
-      b.count=t; b.height=b.e-b.s+1;
-    });
+    if (bot < 0 || rgt < 0) return null;
 
-    var topBand = bands[0];
-    if (topBand.height < h*0.15 && bands.length>1 && bands[1].count > topBand.count*2) topBand = bands[1];
+    /* 패딩: 표지 크기의 4% */
+    var padY = Math.max(3, Math.round((bot - top) * 0.04));
+    var padX = Math.max(3, Math.round((rgt - lft) * 0.04));
+    var cy = Math.max(0, top - padY);
+    var cx = Math.max(0, lft - padX);
+    var cw = Math.min(w, rgt + padX + 1) - cx;
+    var ch = Math.min(h, bot + padY + 1) - cy;
+    if (cw < 8 || ch < 8) return null;
 
-    /* ★ 핵심 개선: 갭이 없거나 밴드 하나뿐이면 밀도 스캔으로 텍스트 분리 */
-    var splitE = topBand.e;
-    if (bands.length === 1 || topBand.height >= h * 0.78) {
-      /* 상단 40% 행의 평균 밀도 = 픽토그램 기준 */
-      var refH2 = Math.floor(topBand.height * 0.4);
-      var avgDens = 0;
-      for (var y3 = topBand.s; y3 < topBand.s + refH2; y3++) avgDens += rowCount[y3];
-      avgDens /= Math.max(1, refH2);
-      /* 아래에서 위로: 밀도 < 30% 구간이 시작하면 텍스트로 간주 */
-      var textThresh = Math.max(1, avgDens * 0.30);
-      for (var y4 = topBand.e; y4 > topBand.s + topBand.height * 0.35; y4--) {
-        if (rowCount[y4] >= textThresh) { splitE = y4; break; }
-      }
-      /* 변화가 8% 미만이면 하드 폴백: 하단 20% 제거 */
-      if (splitE > topBand.e - topBand.height * 0.08) {
-        splitE = Math.floor(topBand.e - topBand.height * 0.20);
-      }
-    }
-
-    /* 좌우 트림 */
-    var minCol = Math.max(2, (splitE - topBand.s) * 0.005);
-    var colCount = new Int32Array(w);
-    for (var yy = topBand.s; yy <= splitE; yy++) {
-      for (var xx = 0; xx < w; xx++) {
-        var pi2=(yy*w+xx)*4;
-        if (data[pi2+3] < 32) continue;
-        var dr2=data[pi2]-bgR,dg2=data[pi2+1]-bgG,db2=data[pi2+2]-bgB;
-        if (dr2*dr2+dg2*dg2+db2*db2 > tol2) colCount[xx]++;
-      }
-    }
-    var lx=0, rx=w-1;
-    while (lx < w && colCount[lx] < minCol) lx++;
-    while (rx > lx && colCount[rx] < minCol) rx--;
-
-    var pad = Math.round(Math.max(2, (rx-lx+1) * 0.03));
-    var cx = Math.max(0, lx-pad);
-    var cy = Math.max(0, topBand.s-pad);
-    var cw = Math.min(w, rx+pad) - cx + 1;
-    var ch = Math.min(h, splitE+pad) - cy + 1;
-    if (cw < 4 || ch < 4) return null;
-
-    var ocx = Math.round(cx/scale);
-    var ocy = Math.round(cy/scale);
-    var ocw = Math.min(origW-ocx, Math.round(cw/scale));
-    var och = Math.min(origH-ocy, Math.round(ch/scale));
-    if (ocw < 4 || och < 4) return null;
+    /* 원본 좌표로 변환 후 크롭 */
+    var ocx = Math.round(cx / scale);
+    var ocy = Math.round(cy / scale);
+    var ocw = Math.min(origW - ocx, Math.round(cw / scale));
+    var och = Math.min(origH - ocy, Math.round(ch / scale));
+    if (ocw < 8 || och < 8) return null;
 
     var out = document.createElement('canvas');
     out.width = ocw; out.height = och;
     out.getContext('2d').drawImage(img, ocx, ocy, ocw, och, 0, 0, ocw, och);
     return out;
   } catch(e) { return null; }
+}
+
+/* ── 표지 사전 크롭 캐시 ─────────────────────────────────────────
+   페이지 로드 후 전체 표지를 비동기로 크롭, SIGN_CROP_CACHE에 저장.
+   템플릿 build()에서 getCroppedSignSrc(id) 로 사용.               */
+var SIGN_CROP_CACHE = {};
+
+function buildCropCache() {
+  var ids = Object.keys(SIGN_DEFAULTS).filter(function(k) {
+    return SIGN_DEFAULTS[k].cat !== '기타';
+  });
+  ids.forEach(function(id) {
+    var src = signSrc(id);
+    if (!src) return;
+    var img = new Image();
+    img.onload = function() {
+      var canvas = autoCropPictogram(img);
+      if (canvas) SIGN_CROP_CACHE[id] = canvas.toDataURL('image/png');
+    };
+    img.src = src;
+  });
+}
+
+function getCroppedSignSrc(id) {
+  return SIGN_CROP_CACHE[id] || signSrc(id);
 }
 
 function addTextItem() {
@@ -5995,84 +5978,84 @@ var TEMPLATES = [
   /* ── KS ISO 7010 표준 표지 (sign-library.js 픽토그램 직접 참조) ── */
   { id:'ks-출입금지',      cat:'prohibition', label:'출입금지\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_3'); var it=[];
+      var s=getCroppedSignSrc('sign_3'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-화기금지',      cat:'prohibition', label:'화기금지\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_9'); var it=[];
+      var s=getCroppedSignSrc('sign_9'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-금연',          cat:'prohibition', label:'금연\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_8'); var it=[];
+      var s=getCroppedSignSrc('sign_8'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-고압전기경고',  cat:'warning', label:'고압전기경고\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_18'); var it=[];
+      var s=getCroppedSignSrc('sign_18'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-낙하물경고',    cat:'warning', label:'낙하물경고\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_20'); var it=[];
+      var s=getCroppedSignSrc('sign_20'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-인화성경고',    cat:'warning', label:'인화성물질경고\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_12'); var it=[];
+      var s=getCroppedSignSrc('sign_12'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-안전모착용',    cat:'mandatory', label:'안전모착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_32'); var it=[];
+      var s=getCroppedSignSrc('sign_32'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-안전화착용',    cat:'mandatory', label:'안전화착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_34'); var it=[];
+      var s=getCroppedSignSrc('sign_34'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-안전복착용',    cat:'mandatory', label:'안전복착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_36'); var it=[];
+      var s=getCroppedSignSrc('sign_36'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-보안경착용',    cat:'mandatory', label:'보안경착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_28'); var it=[];
+      var s=getCroppedSignSrc('sign_28'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-비상구',        cat:'info', label:'비상구\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_43'); var it=[];
+      var s=getCroppedSignSrc('sign_43'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-녹십자',        cat:'info', label:'응급처치\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_38'); var it=[];
+      var s=getCroppedSignSrc('sign_38'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
@@ -6108,7 +6091,7 @@ var TEMPLATES = [
   },
   { id:'sticker-circle-sign',  cat:'sticker', label:'원형 안전모\n스티커', bg:'#005DAA', paper:'s150', docShape:'circle',
     build: function() {
-      var s=signSrc('sign_32'), r=Math.round(Math.min(DOC_W,DOC_H)*0.48), cx=DOC_W/2, cy=DOC_H/2;
+      var s=getCroppedSignSrc('sign_32'), r=Math.round(Math.min(DOC_W,DOC_H)*0.48), cx=DOC_W/2, cy=DOC_H/2;
       var it=[{type:'shape',shape:'ellipse',x:Math.round(cx-r),y:Math.round(cy-r),w:r*2,h:r*2,fill:'#005DAA',fillOn:true,strokeOn:false,opacity:1,rotation:0}];
       if(s) it.push({type:'image',src:s,x:Math.round(cx-r*0.65),y:Math.round(cy-r*0.65),w:Math.round(r*1.3),h:Math.round(r*1.3),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
@@ -6305,6 +6288,7 @@ function applyTemplate(tmpl) {
 /* ── INIT ── */
 loadLibOverrides();
 load();
+buildCropCache();
 renderSignLibrary();
 renderTemplatePanel();
 resizeCanvas();
