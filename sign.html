@@ -2773,14 +2773,18 @@ function buildCropCache() {
   var ids = Object.keys(SIGN_DEFAULTS).filter(function(k) {
     return SIGN_DEFAULTS[k].cat !== '기타';
   });
+  var total = ids.length, done = 0;
   ids.forEach(function(id) {
     var src = signSrc(id);
-    if (!src) return;
+    if (!src) { done++; return; }
     var img = new Image();
     img.onload = function() {
       var canvas = autoCropPictogram(img);
       if (canvas) SIGN_CROP_CACHE[id] = canvas.toDataURL('image/png');
+      done++;
+      if (done === total) renderSignLibrary();
     };
+    img.onerror = function() { done++; if (done === total) renderSignLibrary(); };
     img.src = src;
   });
 }
@@ -2915,7 +2919,7 @@ function renderSignLibrary() {
     div.className = 'sign-thumb';
     div.title = sign.label + ' · ' + (sign.cat || '');
     var img = document.createElement('img');
-    img.src = sign.src; img.alt = sign.label;
+    img.src = getCroppedSignSrc(sign.id); img.alt = sign.label;
     var lbl = document.createElement('div');
     lbl.className = 'sign-thumb-lbl';
     lbl.textContent = sign.label;
