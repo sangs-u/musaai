@@ -55,8 +55,11 @@
     .tb-spacer { flex:1; }
     .tb-btn { display:inline-flex; align-items:center; gap:6px; background:transparent; border:1px solid transparent; color:var(--text); font-size:13px; font-weight:500; padding:5px 11px; border-radius:6px; cursor:pointer; transition:background .12s,border-color .12s,color .12s; flex-shrink:0; letter-spacing:-.1px; height:32px; }
     .tb-btn:hover { background:var(--hover); }
-    .tb-btn.danger { color:var(--danger); }
-    .tb-btn.danger:hover { background:rgba(224,62,62,.08); }
+    .tb-btn.danger { color:var(--danger); border-color:transparent; background:transparent; }
+    .tb-btn.danger:hover { background:rgba(224,62,62,.08); border-color:rgba(224,62,62,.2); }
+    #btn-save, #btn-pdf { background:#2C5282; color:#fff; border-color:#2C5282; }
+    #btn-save:hover, #btn-pdf:hover { background:#1E3A5F; border-color:#1E3A5F; }
+    #btn-save svg, #btn-pdf svg { stroke:#fff; }
     .tb-btn.ai-btn { color:var(--accent); }
     .tb-btn.ai-btn:hover { background:var(--active); }
     .tb-btn svg { width:14px; height:14px; flex-shrink:0; stroke:currentColor; }
@@ -71,6 +74,14 @@
     .zoom-btn:hover { background:var(--hover); color:var(--text); }
     .zoom-val { font-size:12px; font-weight:500; color:var(--text); min-width:42px; text-align:center; user-select:none; padding:0 4px; font-variant-numeric:tabular-nums; }
     .zoom-fit { font-size:11px; font-weight:500; padding:0 8px; width:auto; height:26px; }
+    #sign-hover-preview { position:fixed; display:none; flex-direction:column; align-items:center; gap:6px; background:#fff; border:1px solid var(--border-m); border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.15); padding:12px; z-index:9999; pointer-events:none; }
+    #sign-hover-preview img { width:96px; height:96px; object-fit:contain; }
+    #sign-hover-preview span { font-size:12px; color:var(--text-m); font-weight:500; text-align:center; }
+    .prop-group-title { font-size:10px; font-weight:600; color:var(--text-l); text-transform:uppercase; letter-spacing:.6px; padding:10px 0 4px; border-top:1px solid var(--border-s); margin-top:4px; }
+    .prop-group-title:first-child { border-top:none; padding-top:0; }
+    #toast-container { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:10000; display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; }
+    .toast { background:rgba(28,28,30,.88); color:#fff; font-size:13px; padding:8px 18px; border-radius:20px; backdrop-filter:blur(8px); opacity:0; transform:translateY(8px); transition:opacity .22s,transform .22s; white-space:nowrap; }
+    .toast.show { opacity:1; transform:translateY(0); }
 
     /* LAYOUT */
     #app { display:flex; flex:1; overflow:hidden; }
@@ -409,6 +420,7 @@
     <span class="zoom-val" id="zoom-display">70%</span>
     <button class="zoom-btn" id="btn-zoom-in" title="확대 (+)">+</button>
     <button class="zoom-btn zoom-fit" id="btn-fit" title="화면에 맞춤 (Ctrl+0)">맞춤</button>
+    <button class="zoom-btn zoom-fit" id="btn-zoom-100" title="실제 크기 (100%)">100%</button>
   </div>
 
   <div class="tb-sep"></div>
@@ -441,6 +453,9 @@
   <button class="tb-btn" id="btn-print" title="인쇄 (Ctrl+P)"><svg><use href="#ic-print"/></svg>인쇄</button>
   <button class="tb-btn danger" id="btn-reset" title="모든 요소 삭제"><svg><use href="#ic-reset"/></svg>초기화</button>
 </div>
+
+<div id="sign-hover-preview"><img src="" alt=""><span></span></div>
+<div id="toast-container"></div>
 
 <!-- CONTEXT MENU -->
 <div id="ctx-menu">
@@ -596,7 +611,7 @@
         <div class="sign-cat-row" id="sign-cat-row"></div>
         <div class="lib-toggle-row">
           <input type="checkbox" id="lib-pictogram-only" checked>
-          <label for="lib-pictogram-only">캔버스에 추가 시 픽토그램만 자르기</label>
+          <label for="lib-pictogram-only">그림 기호만 추가 (텍스트·배경 제외)</label>
         </div>
         <button class="tool-btn" id="lib-batch-btn" style="margin-bottom:6px;font-size:11px;padding:7px 9px;">
           <svg><use href="#ic-shape"/></svg>
@@ -755,9 +770,9 @@
         </div>
       </div>
       <div class="prop-section">
-        <label class="prop-label">배경 제거 (누끼)</label>
-        <div style="font-size:11px;color:var(--text-m);margin-bottom:8px;">테두리 픽셀 기준 자동 감지 · 원본 복원 가능</div>
-        <div style="font-size:11px;color:var(--text-m);margin-bottom:3px;display:flex;justify-content:space-between;"><span>허용 범위</span><span id="prop-rmbg-tol-val">자동</span></div>
+        <label class="prop-label">배경 투명하게</label>
+        <div style="font-size:11px;color:var(--text-m);margin-bottom:8px;">모서리 색 기준 자동 감지 · 원본 복원 가능</div>
+        <div style="font-size:11px;color:var(--text-m);margin-bottom:3px;display:flex;justify-content:space-between;"><span>감지 민감도</span><span id="prop-rmbg-tol-val">자동</span></div>
         <input class="prop-range" type="range" id="prop-rmbg-tol" min="0" max="100" value="0" style="margin-bottom:8px;">
         <div style="display:flex;gap:6px;">
           <button class="prop-btn dup" style="flex:2;font-size:12px;" id="prop-img-rmbg">배경 제거 적용</button>
@@ -777,7 +792,7 @@
           </div>
           <div id="eraser-flood-opts">
             <div style="font-size:11px;color:var(--text-m);margin-bottom:8px;">클릭한 색과 연결된 영역을 자동으로 제거합니다</div>
-            <div style="font-size:11px;color:var(--text-m);margin-bottom:3px;display:flex;justify-content:space-between;"><span>허용 범위</span><span id="prop-eraser-tol-val">자동</span></div>
+            <div style="font-size:11px;color:var(--text-m);margin-bottom:3px;display:flex;justify-content:space-between;"><span>감지 민감도</span><span id="prop-eraser-tol-val">자동</span></div>
             <input class="prop-range" type="range" id="prop-eraser-tol" min="0" max="100" value="0" style="margin-bottom:4px;">
             <div style="font-size:10px;color:var(--text-l);">0 = 자동 · 높을수록 넓게 제거</div>
           </div>
@@ -2621,6 +2636,40 @@ function expandGroupSelection(id) {
 }
 
 /* ── ADD ITEMS ── */
+/* ── 토스트 알림 ── */
+function showToast(msg, dur) {
+  var tc = document.getElementById('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  tc.appendChild(t);
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ t.classList.add('show'); }); });
+  setTimeout(function(){
+    t.classList.remove('show');
+    setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 280);
+  }, dur || 2200);
+}
+
+/* ── 호버 미리보기 ── */
+var _hoverPreview = null;
+function initHoverPreview() {
+  _hoverPreview = document.getElementById('sign-hover-preview');
+}
+function showSignPreview(sign, thumbEl) {
+  if (!_hoverPreview) initHoverPreview();
+  _hoverPreview.querySelector('img').src = getCroppedSignSrc(sign.id);
+  _hoverPreview.querySelector('span').textContent = sign.label + ' · ' + sign.cat;
+  var rect = thumbEl.getBoundingClientRect();
+  var py = rect.top - 20;
+  if (py + 140 > window.innerHeight) py = window.innerHeight - 150;
+  _hoverPreview.style.left = (rect.right + 10) + 'px';
+  _hoverPreview.style.top = Math.max(8, py) + 'px';
+  _hoverPreview.style.display = 'flex';
+}
+function hideSignPreview() {
+  if (_hoverPreview) _hoverPreview.style.display = 'none';
+}
+
 function addImageFromSrc(src, opts) {
   opts = opts || {};
   var img = new Image();
@@ -2665,8 +2714,10 @@ function addImageFromSrc(src, opts) {
     var item = { id:nextId++, type:'image', src:srcF,
       x:Math.round(DOC_W/2-w/2), y:Math.round(DOC_H/2-h/2),
       w:w, h:h, opacity:1, rotation:0, flipH:false, flipV:false };
+    if (opts.label) item._label = opts.label;
     items.push(item); selectOne(item.id);
     updateProps(); render(); save();
+    if (opts.label) showToast('"' + opts.label + '" 추가됨 · PNG 저장은 우측 상단 버튼');
   }
 }
 
@@ -2932,10 +2983,15 @@ function renderSignLibrary() {
     }); })(sign);
     div.appendChild(editBtn);
 
-    (function(s){ div.addEventListener('click', function() {
-      if (libEditMode) { openLibraryEdit(s); return; }
-      addImageFromSrc(s.src, { cropPictogram: pictogramOnly });
-    }); })(sign);
+    (function(s, el){
+      el.addEventListener('mouseenter', function() { showSignPreview(s, el); });
+      el.addEventListener('mouseleave', hideSignPreview);
+      el.addEventListener('click', function() {
+        hideSignPreview();
+        if (libEditMode) { openLibraryEdit(s); return; }
+        addImageFromSrc(s.src, { cropPictogram: pictogramOnly, label: s.label });
+      });
+    })(sign, div);
     grid.appendChild(div);
   });
 }
@@ -5404,6 +5460,7 @@ document.getElementById('btn-reset').addEventListener('click', function() {
 document.getElementById('btn-zoom-in').addEventListener('click',  function() { zoomAt(1.25, canvas.width/2, canvas.height/2); });
 document.getElementById('btn-zoom-out').addEventListener('click', function() { zoomAt(1/1.25, canvas.width/2, canvas.height/2); });
 document.getElementById('btn-fit').addEventListener('click', fitToScreen);
+document.getElementById('btn-zoom-100').addEventListener('click', function() { zoom = 1; panX = (canvas.width - DOC_W) / 2; panY = (canvas.height - DOC_H) / 2; updateZoomDisplay(); render(); });
 
 /* ── LAYER PANEL ── */
 var layerDragSrc = null;
