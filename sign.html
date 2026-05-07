@@ -1521,46 +1521,56 @@ var SIGNS_RAW = (typeof SIGN_LIBRARY !== 'undefined') ? SIGN_LIBRARY : [];
 /* 산업안전보건법 안전보건표지 40종 기본 매핑 (sign_1~40 표준 순서 기준)
    libOverrides가 없는 경우 이 기본값을 적용 */
 var SIGN_DEFAULTS = {
-  sign_1:  {label:'출입금지',             cat:'금지'},
-  sign_2:  {label:'보행금지',             cat:'금지'},
-  sign_3:  {label:'차량통행금지',         cat:'금지'},
-  sign_4:  {label:'사용금지',             cat:'금지'},
-  sign_5:  {label:'탑승금지',             cat:'금지'},
-  sign_6:  {label:'금연',                 cat:'금지'},
-  sign_7:  {label:'화기금지',             cat:'금지'},
-  sign_8:  {label:'물체이동금지',         cat:'금지'},
-  sign_9:  {label:'인화성물질경고',       cat:'경고'},
-  sign_10: {label:'산화성물질경고',       cat:'경고'},
-  sign_11: {label:'폭발성물질경고',       cat:'경고'},
-  sign_12: {label:'급성독성물질경고',     cat:'경고'},
-  sign_13: {label:'부식성물질경고',       cat:'경고'},
-  sign_14: {label:'방사성물질경고',       cat:'경고'},
-  sign_15: {label:'고압전기경고',         cat:'경고'},
-  sign_16: {label:'매달린물체경고',       cat:'경고'},
-  sign_17: {label:'낙하물경고',           cat:'경고'},
-  sign_18: {label:'고온경고',             cat:'경고'},
-  sign_19: {label:'저온경고',             cat:'경고'},
-  sign_20: {label:'몸균형상실경고',       cat:'경고'},
-  sign_21: {label:'레이저광선경고',       cat:'경고'},
-  sign_22: {label:'발암성물질경고',       cat:'경고'},
-  sign_23: {label:'위험장소경고',         cat:'경고'},
-  sign_24: {label:'보안경착용',           cat:'지시'},
-  sign_25: {label:'방독마스크착용',       cat:'지시'},
-  sign_26: {label:'방진마스크착용',       cat:'지시'},
-  sign_27: {label:'보안면착용',           cat:'지시'},
-  sign_28: {label:'안전모착용',           cat:'지시'},
-  sign_29: {label:'귀마개착용',           cat:'지시'},
-  sign_30: {label:'안전화착용',           cat:'지시'},
-  sign_31: {label:'안전장갑착용',         cat:'지시'},
-  sign_32: {label:'안전복착용',           cat:'지시'},
-  sign_33: {label:'안전대착용',           cat:'지시'},
-  sign_34: {label:'손세척',               cat:'지시'},
-  sign_35: {label:'녹십자표지',           cat:'안내'},
-  sign_36: {label:'들것',                 cat:'안내'},
-  sign_37: {label:'세안장치',             cat:'안내'},
-  sign_38: {label:'비상구',               cat:'안내'},
-  sign_39: {label:'좌측비상구',           cat:'안내'},
-  sign_40: {label:'우측비상구',           cat:'안내'}
+  /* 섹션 헤더 페이지 — 표지 아님, 기타로 분류하여 라이브러리에서 숨김 */
+  sign_1:  {label:'[문서 개요]',          cat:'기타'},
+  sign_2:  {label:'[금지표지 섹션]',      cat:'기타'},
+  sign_11: {label:'[경고표지 섹션]',      cat:'기타'},
+  sign_27: {label:'[지시표지 섹션]',      cat:'기타'},
+  sign_37: {label:'[안내표지 섹션]',      cat:'기타'},
+  /* 금지 */
+  sign_3:  {label:'출입금지',             cat:'금지'},
+  sign_4:  {label:'보행금지',             cat:'금지'},
+  sign_5:  {label:'차량통행금지',         cat:'금지'},
+  sign_6:  {label:'사용금지',             cat:'금지'},
+  sign_7:  {label:'탑승금지',             cat:'금지'},
+  sign_8:  {label:'금연',                 cat:'금지'},
+  sign_9:  {label:'화기금지',             cat:'금지'},
+  sign_10: {label:'물체이동금지',         cat:'금지'},
+  /* 경고 */
+  sign_12: {label:'인화성물질경고',       cat:'경고'},
+  sign_13: {label:'산화성물질경고',       cat:'경고'},
+  sign_14: {label:'폭발성물질경고',       cat:'경고'},
+  sign_15: {label:'급성독성물질경고',     cat:'경고'},
+  sign_16: {label:'부식성물질경고',       cat:'경고'},
+  sign_17: {label:'방사성물질경고',       cat:'경고'},
+  sign_18: {label:'고압전기경고',         cat:'경고'},
+  sign_19: {label:'매달린물체경고',       cat:'경고'},
+  sign_20: {label:'낙하물경고',           cat:'경고'},
+  sign_21: {label:'고온경고',             cat:'경고'},
+  sign_22: {label:'저온경고',             cat:'경고'},
+  sign_23: {label:'몸균형상실경고',       cat:'경고'},
+  sign_24: {label:'레이저광선경고',       cat:'경고'},
+  sign_25: {label:'발암성물질경고',       cat:'경고'},
+  sign_26: {label:'위험장소경고',         cat:'경고'},
+  /* 지시 */
+  sign_28: {label:'보안경착용',           cat:'지시'},
+  sign_29: {label:'방독마스크착용',       cat:'지시'},
+  sign_30: {label:'방진마스크착용',       cat:'지시'},
+  sign_31: {label:'보안면착용',           cat:'지시'},
+  sign_32: {label:'안전모착용',           cat:'지시'},
+  sign_33: {label:'귀마개착용',           cat:'지시'},
+  sign_34: {label:'안전화착용',           cat:'지시'},
+  sign_35: {label:'안전장갑착용',         cat:'지시'},
+  sign_36: {label:'안전복착용',           cat:'지시'},
+  /* 안내 */
+  sign_38: {label:'녹십자표지',           cat:'안내'},
+  sign_39: {label:'응급구호표지',         cat:'안내'},
+  sign_40: {label:'들것',                 cat:'안내'},
+  sign_41: {label:'세안장치',             cat:'안내'},
+  sign_42: {label:'비상용기구',           cat:'안내'},
+  sign_43: {label:'비상구',               cat:'안내'},
+  sign_44: {label:'좌측비상구',           cat:'안내'},
+  sign_45: {label:'우측비상구',           cat:'안내'}
 };
 
 /* 라이브러리 메타 오버라이드 (이름·카테고리 변경 시) — localStorage에 저장 */
@@ -1572,7 +1582,7 @@ function getSigns() {
     var d = SIGN_DEFAULTS[s.id];
     if (d) return Object.assign({}, s, d);
     return s;
-  });
+  }).filter(function(s) { return s.cat !== '기타'; });
 }
 
 /* ── STATE ── */
@@ -2867,8 +2877,8 @@ var librarySearch = '';
 function renderSignLibrary() {
   var catRow  = document.getElementById('sign-cat-row');
   var grid    = document.getElementById('sign-library-grid');
-  var cats = ['', '금지', '경고', '지시', '안내', '기타'];
-  var catLabels = {'':'전체', '금지':'금지', '경고':'경고', '지시':'지시', '안내':'안내', '기타':'기타'};
+  var cats = ['', '금지', '경고', '지시', '안내'];
+  var catLabels = {'':'전체', '금지':'금지', '경고':'경고', '지시':'지시', '안내':'안내'};
   catRow.innerHTML = '';
   cats.forEach(function(c) {
     var btn = document.createElement('button');
@@ -5985,84 +5995,84 @@ var TEMPLATES = [
   /* ── KS ISO 7010 표준 표지 (sign-library.js 픽토그램 직접 참조) ── */
   { id:'ks-출입금지',      cat:'prohibition', label:'출입금지\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_1'); var it=[];
+      var s=signSrc('sign_3'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-화기금지',      cat:'prohibition', label:'화기금지\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_7'); var it=[];
+      var s=signSrc('sign_9'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-금연',          cat:'prohibition', label:'금연\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_6'); var it=[];
+      var s=signSrc('sign_8'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-고압전기경고',  cat:'warning', label:'고압전기경고\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_15'); var it=[];
+      var s=signSrc('sign_18'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-낙하물경고',    cat:'warning', label:'낙하물경고\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_17'); var it=[];
+      var s=signSrc('sign_20'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-인화성경고',    cat:'warning', label:'인화성물질경고\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_9'); var it=[];
+      var s=signSrc('sign_12'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-안전모착용',    cat:'mandatory', label:'안전모착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_28'); var it=[];
+      var s=signSrc('sign_32'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-안전화착용',    cat:'mandatory', label:'안전화착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_30'); var it=[];
+      var s=signSrc('sign_34'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
-  { id:'ks-안전대착용',    cat:'mandatory', label:'안전대착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+  { id:'ks-안전복착용',    cat:'mandatory', label:'안전복착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_33'); var it=[];
+      var s=signSrc('sign_36'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-보안경착용',    cat:'mandatory', label:'보안경착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_24'); var it=[];
+      var s=signSrc('sign_28'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-비상구',        cat:'info', label:'비상구\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_38'); var it=[];
+      var s=signSrc('sign_43'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
   },
   { id:'ks-녹십자',        cat:'info', label:'응급처치\n(KS표준)', bg:'#FFFFFF', paper:'s300',
     build: function() {
-      var s=signSrc('sign_35'); var it=[];
+      var s=signSrc('sign_38'); var it=[];
       if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
     }
@@ -6098,7 +6108,7 @@ var TEMPLATES = [
   },
   { id:'sticker-circle-sign',  cat:'sticker', label:'원형 안전모\n스티커', bg:'#005DAA', paper:'s150', docShape:'circle',
     build: function() {
-      var s=signSrc('sign_28'), r=Math.round(Math.min(DOC_W,DOC_H)*0.48), cx=DOC_W/2, cy=DOC_H/2;
+      var s=signSrc('sign_32'), r=Math.round(Math.min(DOC_W,DOC_H)*0.48), cx=DOC_W/2, cy=DOC_H/2;
       var it=[{type:'shape',shape:'ellipse',x:Math.round(cx-r),y:Math.round(cy-r),w:r*2,h:r*2,fill:'#005DAA',fillOn:true,strokeOn:false,opacity:1,rotation:0}];
       if(s) it.push({type:'image',src:s,x:Math.round(cx-r*0.65),y:Math.round(cy-r*0.65),w:Math.round(r*1.3),h:Math.round(r*1.3),opacity:1,rotation:0,flipH:false,flipV:false});
       return it;
