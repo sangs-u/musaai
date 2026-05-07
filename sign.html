@@ -523,10 +523,30 @@
             <button class="csw" data-color="#1D1D1F" style="background:#1D1D1F" title="검정"></button>
           </div>
         </div>
-        <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+        <div style="margin-top:6px;display:flex;gap:10px;align-items:center;">
           <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-weight:500;color:var(--text-m);">
             <input type="checkbox" id="bg-gradient-toggle"> 그라데이션
           </label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-weight:500;color:var(--text-m);">
+            <input type="checkbox" id="bg-dots-toggle"> 도트
+          </label>
+        </div>
+        <div id="bg-dots-section" style="margin-top:6px;border-top:1px solid var(--border-s);padding-top:7px;flex-direction:column;gap:6px;display:none;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;font-weight:500;color:var(--text-m);">도트 색상</span>
+            <input class="prop-color" type="color" id="doc-dot-color" value="#CCCCCC" title="도트 색상" style="margin-left:auto;">
+            <div class="color-swatches" data-for="doc-dot-color" style="margin-top:0;gap:4px;">
+              <button class="csw" data-color="#CCCCCC" style="background:#CCCCCC" title="연회색"></button>
+              <button class="csw" data-color="#9CA3AF" style="background:#9CA3AF" title="회색"></button>
+              <button class="csw" data-color="#2383E2" style="background:#2383E2" title="파랑"></button>
+              <button class="csw" data-color="#FFFFFF" style="background:#FFFFFF;border:1px solid var(--border)" title="흰색"></button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;font-weight:500;color:var(--text-m);">간격</span>
+            <input type="range" class="prop-range" id="doc-dot-size" min="8" max="80" value="20" style="flex:1;">
+            <span id="doc-dot-size-val" style="font-size:11px;color:var(--text-m);min-width:28px;text-align:right;">20px</span>
+          </div>
         </div>
         <div id="bg-gradient-section" style="margin-top:6px;border-top:1px solid var(--border-s);padding-top:7px;flex-direction:column;gap:6px;display:none;">
           <div style="display:flex;align-items:center;gap:6px;">
@@ -549,6 +569,12 @@
               <button class="grad-dir-btn" data-angle="45"  title="↘ 대각">↘</button>
             </div>
           </div>
+        </div>
+        <div style="margin-top:7px;display:flex;align-items:center;gap:6px;border-top:1px solid var(--border-s);padding-top:7px;">
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-weight:500;color:var(--text-m);">
+            <input type="checkbox" id="doc-shape-circle"> 원형 캔버스
+          </label>
+          <span style="font-size:10px;color:var(--text-l);">스티커·원형 표지용</span>
         </div>
       </div>
 
@@ -1552,9 +1578,12 @@ function getSigns() {
 /* ── STATE ── */
 var DOC_W = 1134, DOC_H = 1134, docKey = 's300';
 var docBg = '#FFFFFF';
-var docBgType = 'solid';   /* 'solid' | 'gradient' */
+var docBgType = 'solid';   /* 'solid' | 'gradient' | 'dots' */
 var docBg2 = '#1E3A5F';    /* 그라데이션 2번 색 */
 var docBgAngle = 0;        /* 0=위→아래, 90=좌→우, 45=↘, 135=↗ */
+var docBgDotSize = 20;     /* 도트 간격 (px) */
+var docBgDotColor = '#CCCCCC'; /* 도트 색상 */
+var docShape = 'rect';     /* 'rect' | 'circle' */
 var items = [];
 var selectedIds = [];           /* 다중 선택 */
 var hoveredId = null;           /* 마우스 호버 중인 아이템 ID */
@@ -1741,19 +1770,37 @@ function render() {
   ctx.save();
   ctx.setTransform(zoom, 0, 0, zoom, panX, panY);
   /* 캔버스 그림자 */
-  ctx.shadowColor = 'rgba(15,15,15,.10)'; ctx.shadowBlur = 24/zoom; ctx.shadowOffsetY = 6/zoom;
+  /* 원형 캔버스: 그림자를 먼저 그린 뒤 클리핑 적용 */
+  if (docShape === 'circle') {
+    var _cr = Math.min(DOC_W, DOC_H) / 2;
+    ctx.shadowColor = 'rgba(15,15,15,.12)'; ctx.shadowBlur = 28/zoom; ctx.shadowOffsetY = 6/zoom;
+    ctx.beginPath(); ctx.arc(DOC_W/2, DOC_H/2, _cr, 0, Math.PI*2); ctx.fillStyle = docBg || '#fff'; ctx.fill();
+    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    ctx.beginPath(); ctx.arc(DOC_W/2, DOC_H/2, _cr, 0, Math.PI*2); ctx.clip();
+  } else {
+    ctx.shadowColor = 'rgba(15,15,15,.10)'; ctx.shadowBlur = 24/zoom; ctx.shadowOffsetY = 6/zoom;
+    ctx.fillStyle = docBg || '#fff'; ctx.fillRect(0, 0, DOC_W, DOC_H);
+    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  }
+  /* 배경 채우기 */
   if (docBgType === 'gradient') {
     var _rad = docBgAngle * Math.PI / 180;
     var _hw = DOC_W / 2, _hh = DOC_H / 2;
     var _len = Math.abs(_hw * Math.sin(_rad)) + Math.abs(_hh * Math.cos(_rad));
     var _g = ctx.createLinearGradient(_hw - _len * Math.sin(_rad), _hh - _len * Math.cos(_rad), _hw + _len * Math.sin(_rad), _hh + _len * Math.cos(_rad));
     _g.addColorStop(0, docBg || '#ffffff'); _g.addColorStop(1, docBg2 || '#000000');
-    ctx.fillStyle = _g;
-  } else {
-    ctx.fillStyle = docBg || '#fff';
+    ctx.fillStyle = _g; ctx.fillRect(0, 0, DOC_W, DOC_H);
+  } else if (docBgType === 'dots') {
+    /* 도트 패턴 오버레이 */
+    ctx.fillStyle = docBgDotColor || '#CCCCCC';
+    var _ds = Math.max(8, docBgDotSize || 20);
+    var _dr = Math.max(1, Math.round(_ds * 0.13));
+    for (var _dy = _ds/2; _dy < DOC_H + _ds; _dy += _ds) {
+      for (var _dx = _ds/2; _dx < DOC_W + _ds; _dx += _ds) {
+        ctx.beginPath(); ctx.arc(_dx, _dy, _dr, 0, Math.PI*2); ctx.fill();
+      }
+    }
   }
-  ctx.fillRect(0, 0, DOC_W, DOC_H);
-  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
   /* 격자 */
   if (showGrid) {
     ctx.strokeStyle = 'rgba(15,15,15,0.045)'; ctx.lineWidth = 1/zoom;
@@ -2613,15 +2660,12 @@ function addImageFromSrc(src, opts) {
   }
 }
 
-/* 픽토그램 자동 자르기 — 하단 라벨 영역 제거 */
-/* 알고리즘: 가로 스캔라인에서 비배경 픽셀이 있는 영역만 남김.
-   각 행별로 비배경 픽셀 개수를 세어 큰 갭을 기준으로 분할 → 가장 큰 영역만 보존.
-   대부분 KOSHA 표지처럼 (그림 + 빈공간 + 글자) 구조에서 그림 부분만 남김. */
+/* 픽토그램 자동 자르기 — 하단 텍스트 라벨 영역 제거
+   개선: 갭이 없어도 밀도 스캔으로 텍스트 구간 분리 */
 function autoCropPictogram(img) {
   try {
     var origW = img.naturalWidth, origH = img.naturalHeight;
     if (origW === 0 || origH === 0) return null;
-    /* 픽셀 스캔은 max 512px 다운스케일 — 메인 스레드 블로킹 방지 */
     var scale = Math.min(1, 512 / Math.max(origW, origH));
     var w = Math.round(origW * scale), h = Math.round(origH * scale);
     var off = document.createElement('canvas');
@@ -2630,7 +2674,7 @@ function autoCropPictogram(img) {
     oc.drawImage(img, 0, 0, w, h);
     var data = oc.getImageData(0, 0, w, h).data;
 
-    /* 배경색 추정: 4개 모서리의 중앙값 */
+    /* 배경색: 4모서리 중앙값 */
     var corners = [
       [data[0],data[1],data[2]],
       [data[(w-1)*4],data[(w-1)*4+1],data[(w-1)*4+2]],
@@ -2643,82 +2687,86 @@ function autoCropPictogram(img) {
     var bgB = med(corners.map(function(c){return c[2];}));
     var tol = 38, tol2 = tol*tol*3;
 
-    /* 각 행별 비배경 픽셀 수 */
+    /* 행별 비배경 픽셀 수 */
     var rowCount = new Int32Array(h);
     for (var y = 0; y < h; y++) {
-      var cnt = 0;
       for (var x = 0; x < w; x++) {
-        var pi = (y*w + x)*4;
+        var pi = (y*w+x)*4;
         if (data[pi+3] < 32) continue;
-        var dr = data[pi]-bgR, dg = data[pi+1]-bgG, db = data[pi+2]-bgB;
-        if (dr*dr + dg*dg + db*db > tol2) cnt++;
+        var dr=data[pi]-bgR, dg=data[pi+1]-bgG, db=data[pi+2]-bgB;
+        if (dr*dr+dg*dg+db*db > tol2) rowCount[y]++;
       }
-      rowCount[y] = cnt;
-    }
-    var minRow = Math.max(2, w * 0.005);
-    /* 행을 비어있음/내용있음으로 분류, 연속 영역 추출 */
-    var bands = [];
-    var inBand = false, bs = 0;
-    for (var y2 = 0; y2 < h; y2++) {
-      if (rowCount[y2] >= minRow) {
-        if (!inBand) { bs = y2; inBand = true; }
-      } else if (inBand) {
-        bands.push({ s: bs, e: y2-1, count: 0 });
-        inBand = false;
-      }
-    }
-    if (inBand) bands.push({ s: bs, e: h-1, count: 0 });
-    if (bands.length === 0) return null;
-    /* 각 밴드의 총 비배경 픽셀 수 */
-    bands.forEach(function(b) {
-      var t = 0;
-      for (var yy = b.s; yy <= b.e; yy++) t += rowCount[yy];
-      b.count = t;
-      b.height = b.e - b.s + 1;
-    });
-    /* 가장 위(첫 번째)의 큰 밴드를 그림으로 추정 — 안전표지 PDF는 그림 위, 글자 아래 */
-    var topBand = bands[0];
-    /* 너무 작으면 (글자처럼 얇으면) 다음 밴드도 검토 */
-    if (topBand.height < h * 0.15 && bands.length > 1 && bands[1].count > topBand.count * 2) {
-      topBand = bands[1];
     }
 
-    /* 좌우 트림: 해당 밴드 내에서 비배경 픽셀이 있는 열만 보존 */
-    var minCol = Math.max(2, topBand.height * 0.005);
-    var colCount = new Int32Array(w);
-    for (var yy = topBand.s; yy <= topBand.e; yy++) {
-      for (var xx = 0; xx < w; xx++) {
-        var pi2 = (yy*w + xx)*4;
-        if (data[pi2+3] < 32) continue;
-        var dr2 = data[pi2]-bgR, dg2 = data[pi2+1]-bgG, db2 = data[pi2+2]-bgB;
-        if (dr2*dr2 + dg2*dg2 + db2*db2 > tol2) colCount[xx]++;
+    /* 갭(빈 행)으로 밴드 분리 */
+    var minRow = Math.max(2, w * 0.005);
+    var bands = [], inBand = false, bs = 0;
+    for (var y2 = 0; y2 < h; y2++) {
+      if (rowCount[y2] >= minRow) { if (!inBand) { bs = y2; inBand = true; } }
+      else if (inBand) { bands.push({s:bs, e:y2-1}); inBand = false; }
+    }
+    if (inBand) bands.push({s:bs, e:h-1});
+    if (bands.length === 0) return null;
+    bands.forEach(function(b) {
+      var t=0; for (var yy=b.s;yy<=b.e;yy++) t+=rowCount[yy];
+      b.count=t; b.height=b.e-b.s+1;
+    });
+
+    var topBand = bands[0];
+    if (topBand.height < h*0.15 && bands.length>1 && bands[1].count > topBand.count*2) topBand = bands[1];
+
+    /* ★ 핵심 개선: 갭이 없거나 밴드 하나뿐이면 밀도 스캔으로 텍스트 분리 */
+    var splitE = topBand.e;
+    if (bands.length === 1 || topBand.height >= h * 0.78) {
+      /* 상단 40% 행의 평균 밀도 = 픽토그램 기준 */
+      var refH2 = Math.floor(topBand.height * 0.4);
+      var avgDens = 0;
+      for (var y3 = topBand.s; y3 < topBand.s + refH2; y3++) avgDens += rowCount[y3];
+      avgDens /= Math.max(1, refH2);
+      /* 아래에서 위로: 밀도 < 30% 구간이 시작하면 텍스트로 간주 */
+      var textThresh = Math.max(1, avgDens * 0.30);
+      for (var y4 = topBand.e; y4 > topBand.s + topBand.height * 0.35; y4--) {
+        if (rowCount[y4] >= textThresh) { splitE = y4; break; }
+      }
+      /* 변화가 8% 미만이면 하드 폴백: 하단 20% 제거 */
+      if (splitE > topBand.e - topBand.height * 0.08) {
+        splitE = Math.floor(topBand.e - topBand.height * 0.20);
       }
     }
-    var lx = 0, rx = w - 1;
+
+    /* 좌우 트림 */
+    var minCol = Math.max(2, (splitE - topBand.s) * 0.005);
+    var colCount = new Int32Array(w);
+    for (var yy = topBand.s; yy <= splitE; yy++) {
+      for (var xx = 0; xx < w; xx++) {
+        var pi2=(yy*w+xx)*4;
+        if (data[pi2+3] < 32) continue;
+        var dr2=data[pi2]-bgR,dg2=data[pi2+1]-bgG,db2=data[pi2+2]-bgB;
+        if (dr2*dr2+dg2*dg2+db2*db2 > tol2) colCount[xx]++;
+      }
+    }
+    var lx=0, rx=w-1;
     while (lx < w && colCount[lx] < minCol) lx++;
     while (rx > lx && colCount[rx] < minCol) rx--;
 
-    var pad = Math.round(Math.max(2, (rx - lx + 1) * 0.03));
-    var cx = Math.max(0, lx - pad);
-    var cy = Math.max(0, topBand.s - pad);
-    var cw = Math.min(w, rx + pad) - cx + 1;
-    var ch = Math.min(h, topBand.e + pad) - cy + 1;
+    var pad = Math.round(Math.max(2, (rx-lx+1) * 0.03));
+    var cx = Math.max(0, lx-pad);
+    var cy = Math.max(0, topBand.s-pad);
+    var cw = Math.min(w, rx+pad) - cx + 1;
+    var ch = Math.min(h, splitE+pad) - cy + 1;
     if (cw < 4 || ch < 4) return null;
 
-    /* 스케일이 적용된 경우 원본 이미지 좌표로 역변환 */
-    var ocx = Math.round(cx / scale);
-    var ocy = Math.round(cy / scale);
-    var ocw = Math.min(origW - ocx, Math.round(cw / scale));
-    var och = Math.min(origH - ocy, Math.round(ch / scale));
+    var ocx = Math.round(cx/scale);
+    var ocy = Math.round(cy/scale);
+    var ocw = Math.min(origW-ocx, Math.round(cw/scale));
+    var och = Math.min(origH-ocy, Math.round(ch/scale));
     if (ocw < 4 || och < 4) return null;
 
     var out = document.createElement('canvas');
     out.width = ocw; out.height = och;
     out.getContext('2d').drawImage(img, ocx, ocy, ocw, och, 0, 0, ocw, och);
     return out;
-  } catch (e) {
-    return null;
-  }
+  } catch(e) { return null; }
 }
 
 function addTextItem() {
@@ -5085,8 +5133,29 @@ function renderDoc(scale) {
   var off = document.createElement('canvas');
   off.width = Math.round(DOC_W * scale); off.height = Math.round(DOC_H * scale);
   var oc = off.getContext('2d');
-  oc.fillStyle = docBg || '#fff'; oc.fillRect(0, 0, off.width, off.height);
   if (scale !== 1) oc.scale(scale, scale);
+  if (docShape === 'circle') {
+    oc.beginPath(); oc.arc(DOC_W/2, DOC_H/2, Math.min(DOC_W, DOC_H)/2, 0, Math.PI*2); oc.clip();
+  }
+  if (docBgType === 'gradient') {
+    var _rad = docBgAngle * Math.PI / 180;
+    var _hw = DOC_W/2, _hh = DOC_H/2;
+    var _len = Math.abs(_hw * Math.sin(_rad)) + Math.abs(_hh * Math.cos(_rad));
+    var _eg = oc.createLinearGradient(_hw - _len*Math.sin(_rad), _hh - _len*Math.cos(_rad), _hw + _len*Math.sin(_rad), _hh + _len*Math.cos(_rad));
+    _eg.addColorStop(0, docBg || '#fff'); _eg.addColorStop(1, docBg2 || '#000');
+    oc.fillStyle = _eg; oc.fillRect(0, 0, DOC_W, DOC_H);
+  } else {
+    oc.fillStyle = docBg || '#fff'; oc.fillRect(0, 0, DOC_W, DOC_H);
+    if (docBgType === 'dots') {
+      oc.fillStyle = docBgDotColor || '#CCCCCC';
+      var _ds = Math.max(8, docBgDotSize || 20);
+      var _dr = Math.max(1, Math.round(_ds * 0.13));
+      for (var _edy = _ds/2; _edy < DOC_H + _ds; _edy += _ds)
+        for (var _edx = _ds/2; _edx < DOC_W + _ds; _edx += _ds) {
+          oc.beginPath(); oc.arc(_edx, _edy, _dr, 0, Math.PI*2); oc.fill();
+        }
+    }
+  }
   for (var i = 0; i < items.length; i++) drawItem(oc, items[i], false, 1);
   return off;
 }
@@ -5258,11 +5327,41 @@ document.querySelectorAll('.csw').forEach(function(btn) {
   });
 });
 
-/* ── 배경 그라데이션 컨트롤 ── */
+/* ── 배경 그라데이션 / 도트 / 원형 컨트롤 ── */
 document.getElementById('bg-gradient-toggle').addEventListener('change', function() {
-  docBgType = this.checked ? 'gradient' : 'solid';
-  document.getElementById('bg-gradient-section').style.display = this.checked ? 'flex' : 'none';
+  if (this.checked) {
+    docBgType = 'gradient';
+    document.getElementById('bg-dots-toggle').checked = false;
+    document.getElementById('bg-dots-section').style.display = 'none';
+    document.getElementById('bg-gradient-section').style.display = 'flex';
+  } else {
+    docBgType = 'solid';
+    document.getElementById('bg-gradient-section').style.display = 'none';
+  }
   render(); save();
+});
+document.getElementById('bg-dots-toggle').addEventListener('change', function() {
+  if (this.checked) {
+    docBgType = 'dots';
+    document.getElementById('bg-gradient-toggle').checked = false;
+    document.getElementById('bg-gradient-section').style.display = 'none';
+    document.getElementById('bg-dots-section').style.display = 'flex';
+  } else {
+    docBgType = 'solid';
+    document.getElementById('bg-dots-section').style.display = 'none';
+  }
+  render(); save();
+});
+document.getElementById('doc-dot-color').addEventListener('input', function() {
+  docBgDotColor = this.value; render(); save();
+});
+document.getElementById('doc-dot-size').addEventListener('input', function() {
+  docBgDotSize = parseInt(this.value) || 20;
+  document.getElementById('doc-dot-size-val').textContent = docBgDotSize + 'px';
+  render(); save();
+});
+document.getElementById('doc-shape-circle').addEventListener('change', function() {
+  docShape = this.checked ? 'circle' : 'rect'; render(); save();
 });
 document.getElementById('doc-bg2-color').addEventListener('input', function() {
   docBg2 = this.value; render(); save();
@@ -5403,6 +5502,7 @@ function save() {
       items: saved, nextId: nextId,
       docW: DOC_W, docH: DOC_H, docKey: docKey,
       docBg: docBg, docBgType: docBgType, docBg2: docBg2, docBgAngle: docBgAngle,
+      docBgDotSize: docBgDotSize, docBgDotColor: docBgDotColor, docShape: docShape,
       showGrid: showGrid, snapEnabled: snapEnabled, pictogramOnly: pictogramOnly
     }));
   } catch(e) {}
@@ -5434,6 +5534,10 @@ function load() {
       var gSection = document.getElementById('bg-gradient-section');
       if (gToggle) gToggle.checked = (docBgType === 'gradient');
       if (gSection) gSection.style.display = (docBgType === 'gradient') ? 'flex' : 'none';
+      var dtgl2 = document.getElementById('bg-dots-toggle');
+      var dsec2 = document.getElementById('bg-dots-section');
+      if (dtgl2) dtgl2.checked = (docBgType === 'dots');
+      if (dsec2) dsec2.style.display = (docBgType === 'dots') ? 'flex' : 'none';
     }
     if (data.docBg2) {
       docBg2 = data.docBg2;
@@ -5453,6 +5557,25 @@ function load() {
       var pi = document.getElementById('lib-pictogram-only');
       if (pi) pi.checked = pictogramOnly;
     }
+    /* 도트 배경 복원 */
+    if (data.docBgDotSize) docBgDotSize = data.docBgDotSize;
+    if (data.docBgDotColor) {
+      docBgDotColor = data.docBgDotColor;
+      var dcIn = document.getElementById('doc-dot-color');
+      if (dcIn) dcIn.value = docBgDotColor;
+    }
+    if (data.docBgType === 'dots') {
+      var dtgl = document.getElementById('bg-dots-toggle');
+      if (dtgl) { dtgl.checked = true; document.getElementById('bg-dots-section').style.display = 'flex'; }
+      var dsEl = document.getElementById('doc-dot-size');
+      if (dsEl) { dsEl.value = docBgDotSize; document.getElementById('doc-dot-size-val').textContent = docBgDotSize + 'px'; }
+    }
+    /* 원형 캔버스 복원 */
+    if (data.docShape) {
+      docShape = data.docShape;
+      var scEl = document.getElementById('doc-shape-circle');
+      if (scEl) scEl.checked = (docShape === 'circle');
+    }
     paperInfo.textContent = paperSizeText(docKey, DOC_W, DOC_H);
     for (var i = 0; i < items.length; i++) {
       if (items[i].type === 'image' && items[i].src) {
@@ -5467,13 +5590,21 @@ function load() {
 }
 
 /* ── TEMPLATES ── */
+/* sign-library.js 이미지 src 가져오기 헬퍼 */
+function signSrc(id) {
+  if (!SIGNS_RAW) return null;
+  for (var i = 0; i < SIGNS_RAW.length; i++) if (SIGNS_RAW[i].id === id) return SIGNS_RAW[i].src;
+  return null;
+}
+
 var TEMPLATES = [
 
   /* ── 빈 캔버스 ── */
-  { id:'blank-sq',  cat:'blank', label:'빈 캔버스\n정방형', bg:'#ffffff', paper:'s300', build:function(){return [];} },
-  { id:'blank-a4p', cat:'blank', label:'빈 A4\n세로',       bg:'#ffffff', paper:'a4p',  build:function(){return [];} },
-  { id:'blank-a4l', cat:'blank', label:'빈 A4\n가로',       bg:'#ffffff', paper:'a4l',  build:function(){return [];} },
-  { id:'blank-b31', cat:'blank', label:'빈 현수막\n3:1',    bg:'#f9fafb', paper:'b31',  build:function(){return [];} },
+  { id:'blank-sq',  cat:'blank', label:'빈 캔버스\n정방형', bg:'#ffffff', paper:'s300', changePaper:true, build:function(){return [];} },
+  { id:'blank-a4p', cat:'blank', label:'빈 A4\n세로',       bg:'#ffffff', paper:'a4p',  changePaper:true, build:function(){return [];} },
+  { id:'blank-a4l', cat:'blank', label:'빈 A4\n가로',       bg:'#ffffff', paper:'a4l',  changePaper:true, build:function(){return [];} },
+  { id:'blank-b31', cat:'blank', label:'빈 현수막\n3:1',    bg:'#f9fafb', paper:'b31',  changePaper:true, build:function(){return [];} },
+  { id:'blank-circle-s', cat:'blank', label:'빈 원형\n캔버스', bg:'#ffffff', paper:'s300', changePaper:true, docShape:'circle', build:function(){return [];} },
   { id:'blank-sign',cat:'blank', label:'빈 간판\n가로형',   bg:'#f9fafb', paper:'sign-l', build:function(){return [];} },
 
   /* ── 금지 표지 ── */
@@ -5849,7 +5980,159 @@ var TEMPLATES = [
         { type:'text', content:'안전관리자 확인: __________', x:Math.round(w*0.54), y:Math.round(h*0.772), fontSize:Math.round(h*0.022), color:'#777', bold:false, textAlign:'left', opacity:1, rotation:0 }
       ];
     }
+  },
+
+  /* ── KS ISO 7010 표준 표지 (sign-library.js 픽토그램 직접 참조) ── */
+  { id:'ks-출입금지',      cat:'prohibition', label:'출입금지\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_1'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'ks-화기금지',      cat:'prohibition', label:'화기금지\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_7'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'ks-금연',          cat:'prohibition', label:'금연\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_6'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'ks-고압전기경고',  cat:'warning', label:'고압전기경고\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_15'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'ks-낙하물경고',    cat:'warning', label:'낙하물경고\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_17'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'ks-인화성경고',    cat:'warning', label:'인화성물질경고\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_9'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'ks-안전모착용',    cat:'mandatory', label:'안전모착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_28'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'ks-안전화착용',    cat:'mandatory', label:'안전화착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_30'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'ks-안전대착용',    cat:'mandatory', label:'안전대착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_33'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'ks-보안경착용',    cat:'mandatory', label:'보안경착용\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_24'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'ks-비상구',        cat:'info', label:'비상구\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_38'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'ks-녹십자',        cat:'info', label:'응급처치\n(KS표준)', bg:'#FFFFFF', paper:'s300',
+    build: function() {
+      var s=signSrc('sign_35'); var it=[];
+      if(s) it.push({type:'image',src:s,x:Math.round(DOC_W*0.05),y:Math.round(DOC_H*0.05),w:Math.round(DOC_W*0.9),h:Math.round(DOC_H*0.9),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+
+  /* ── 스티커 ── */
+  { id:'sticker-circle-red',  cat:'sticker', label:'원형 금지\n스티커', bg:'#E8222E', paper:'s150', docShape:'circle',
+    build: function() {
+      var r=Math.round(Math.min(DOC_W,DOC_H)*0.48), cx=DOC_W/2, cy=DOC_H/2;
+      return [
+        {type:'shape',shape:'ellipse',x:Math.round(cx-r),y:Math.round(cy-r),w:r*2,h:r*2,fill:'#E8222E',fillOn:true,strokeOn:true,stroke:'#FFFFFF',strokeW:Math.round(DOC_W*0.03),opacity:1,rotation:0},
+        {type:'text',content:'위험',x:Math.round(cx-DOC_W*0.3),y:Math.round(cy-DOC_H*0.12),fontSize:Math.round(DOC_H*0.22),color:'#FFFFFF',bold:true,fontFamily:'"Black Han Sans", sans-serif',textAlign:'center',opacity:1,rotation:0,w:Math.round(DOC_W*0.6)}
+      ];
+    }
+  },
+  { id:'sticker-circle-yellow', cat:'sticker', label:'원형 경고\n스티커', bg:'#FFD100', paper:'s150', docShape:'circle',
+    build: function() {
+      var r=Math.round(Math.min(DOC_W,DOC_H)*0.48), cx=DOC_W/2, cy=DOC_H/2;
+      return [
+        {type:'shape',shape:'ellipse',x:Math.round(cx-r),y:Math.round(cy-r),w:r*2,h:r*2,fill:'#FFD100',fillOn:true,strokeOn:true,stroke:'#1D1D1F',strokeW:Math.round(DOC_W*0.025),opacity:1,rotation:0},
+        {type:'text',content:'주의',x:Math.round(cx-DOC_W*0.3),y:Math.round(cy-DOC_H*0.12),fontSize:Math.round(DOC_H*0.22),color:'#1D1D1F',bold:true,fontFamily:'"Black Han Sans", sans-serif',textAlign:'center',opacity:1,rotation:0,w:Math.round(DOC_W*0.6)}
+      ];
+    }
+  },
+  { id:'sticker-circle-blue',  cat:'sticker', label:'원형 지시\n스티커', bg:'#005DAA', paper:'s150', docShape:'circle',
+    build: function() {
+      var r=Math.round(Math.min(DOC_W,DOC_H)*0.48), cx=DOC_W/2, cy=DOC_H/2;
+      return [
+        {type:'shape',shape:'ellipse',x:Math.round(cx-r),y:Math.round(cy-r),w:r*2,h:r*2,fill:'#005DAA',fillOn:true,strokeOn:true,stroke:'#FFFFFF',strokeW:Math.round(DOC_W*0.025),opacity:1,rotation:0},
+        {type:'text',content:'지시',x:Math.round(cx-DOC_W*0.3),y:Math.round(cy-DOC_H*0.12),fontSize:Math.round(DOC_H*0.22),color:'#FFFFFF',bold:true,fontFamily:'"Black Han Sans", sans-serif',textAlign:'center',opacity:1,rotation:0,w:Math.round(DOC_W*0.6)}
+      ];
+    }
+  },
+  { id:'sticker-circle-sign',  cat:'sticker', label:'원형 안전모\n스티커', bg:'#005DAA', paper:'s150', docShape:'circle',
+    build: function() {
+      var s=signSrc('sign_28'), r=Math.round(Math.min(DOC_W,DOC_H)*0.48), cx=DOC_W/2, cy=DOC_H/2;
+      var it=[{type:'shape',shape:'ellipse',x:Math.round(cx-r),y:Math.round(cy-r),w:r*2,h:r*2,fill:'#005DAA',fillOn:true,strokeOn:false,opacity:1,rotation:0}];
+      if(s) it.push({type:'image',src:s,x:Math.round(cx-r*0.65),y:Math.round(cy-r*0.65),w:Math.round(r*1.3),h:Math.round(r*1.3),opacity:1,rotation:0,flipH:false,flipV:false});
+      return it;
+    }
+  },
+  { id:'sticker-rect-caution',  cat:'sticker', label:'사각 경고\n스티커', bg:'#FFD100', paper:'s150',
+    build: function() {
+      var m=Math.round(DOC_W*0.04);
+      return [
+        {type:'shape',shape:'rect',x:0,y:0,w:DOC_W,h:DOC_H,fill:'#FFD100',fillOn:true,strokeOn:true,stroke:'#1D1D1F',strokeW:Math.round(DOC_W*0.025),opacity:1,rotation:0,cornerR:Math.round(DOC_W*0.06)},
+        {type:'text',content:'⚠',x:Math.round(DOC_W*0.28),y:Math.round(DOC_H*0.1),fontSize:Math.round(DOC_H*0.38),color:'#1D1D1F',bold:false,textAlign:'center',opacity:1,rotation:0,w:Math.round(DOC_W*0.44)},
+        {type:'text',content:'주  의',x:Math.round(DOC_W*0.1),y:Math.round(DOC_H*0.6),fontSize:Math.round(DOC_H*0.2),color:'#1D1D1F',bold:true,fontFamily:'"Black Han Sans", sans-serif',textAlign:'center',opacity:1,rotation:0,w:Math.round(DOC_W*0.8)}
+      ];
+    }
+  },
+  { id:'sticker-rect-no-entry', cat:'sticker', label:'사각 출입금지\n스티커', bg:'#E8222E', paper:'s150',
+    build: function() {
+      return [
+        {type:'shape',shape:'rect',x:0,y:0,w:DOC_W,h:DOC_H,fill:'#E8222E',fillOn:true,strokeOn:true,stroke:'#FFFFFF',strokeW:Math.round(DOC_W*0.025),opacity:1,rotation:0,cornerR:Math.round(DOC_W*0.06)},
+        {type:'text',content:'✕',x:Math.round(DOC_W*0.3),y:Math.round(DOC_H*0.06),fontSize:Math.round(DOC_H*0.46),color:'#FFFFFF',bold:false,textAlign:'center',opacity:1,rotation:0,w:Math.round(DOC_W*0.4)},
+        {type:'text',content:'출입금지',x:Math.round(DOC_W*0.07),y:Math.round(DOC_H*0.62),fontSize:Math.round(DOC_H*0.18),color:'#FFFFFF',bold:true,fontFamily:'"Black Han Sans", sans-serif',textAlign:'center',opacity:1,rotation:0,w:Math.round(DOC_W*0.86)}
+      ];
+    }
+  },
+  { id:'sticker-dot-bg-info',   cat:'sticker', label:'도트배경\n안내 스티커', bg:'#2383E2', paper:'s150', bgType:'dots',
+    build: function() {
+      return [
+        {type:'shape',shape:'rect',x:0,y:0,w:DOC_W,h:DOC_H,fill:'#2383E2',fillOn:true,strokeOn:false,opacity:1,rotation:0,cornerR:Math.round(DOC_W*0.1)},
+        {type:'text',content:'안전구역',x:Math.round(DOC_W*0.06),y:Math.round(DOC_H*0.3),fontSize:Math.round(DOC_H*0.2),color:'#FFFFFF',bold:true,fontFamily:'"Black Han Sans", sans-serif',textAlign:'center',opacity:1,rotation:0,w:Math.round(DOC_W*0.88)},
+        {type:'text',content:'SAFETY ZONE',x:Math.round(DOC_W*0.06),y:Math.round(DOC_H*0.6),fontSize:Math.round(DOC_H*0.1),color:'rgba(255,255,255,0.7)',bold:false,textAlign:'center',opacity:1,rotation:0,w:Math.round(DOC_W*0.88)}
+      ];
+    }
   }
+
 ];
 
 var currentTmplCat = '';
@@ -5872,10 +6155,17 @@ function renderTemplateThumbnail(tmpl) {
   oc2.fillStyle = '#e8ecf0';
   oc2.fillRect(0, 0, TW, TH);
 
+  /* 원형 썸네일 */
+  var isCircle = (tmpl.docShape === 'circle');
   oc2.shadowColor = 'rgba(0,0,0,0.18)';
   oc2.shadowBlur = 4;
-  oc2.fillStyle = '#ffffff';
-  oc2.fillRect(offX, offY, dw, dh);
+  oc2.fillStyle = tmpl.bg || '#ffffff';
+  if (isCircle) {
+    var cr = Math.min(dw, dh) / 2;
+    oc2.beginPath(); oc2.arc(offX + dw/2, offY + dh/2, cr, 0, Math.PI*2); oc2.fill();
+  } else {
+    oc2.fillRect(offX, offY, dw, dh);
+  }
   oc2.shadowBlur = 0;
 
   var savedDW = DOC_W, savedDH = DOC_H;
@@ -5886,7 +6176,12 @@ function renderTemplateThumbnail(tmpl) {
 
   oc2.save();
   oc2.beginPath();
-  oc2.rect(offX, offY, dw, dh);
+  if (isCircle) {
+    var cr2 = Math.min(dw, dh) / 2;
+    oc2.arc(offX + dw/2, offY + dh/2, cr2, 0, Math.PI*2);
+  } else {
+    oc2.rect(offX, offY, dw, dh);
+  }
   oc2.clip();
   oc2.translate(offX, offY);
   oc2.scale(scale, scale);
@@ -5908,6 +6203,7 @@ function renderTemplatePanel() {
   var cats = [
     {v:'', l:'전체'},
     {v:'blank', l:'빈 캔버스'},
+    {v:'sticker', l:'스티커'},
     {v:'prohibition', l:'금지'},
     {v:'warning', l:'경고'},
     {v:'mandatory', l:'지시'},
@@ -5954,12 +6250,38 @@ function renderTemplatePanel() {
 
 function applyTemplate(tmpl) {
   pushHistory();
-  /* 용지 변경 */
-  var p = PAPERS[tmpl.paper];
-  if (p) { DOC_W = p.w; DOC_H = p.h; docKey = tmpl.paper; applyPaper(tmpl.paper, p.w, p.h); }
-  /* 캔버스 초기화 */
+  /* 빈 캔버스 템플릿은 용지 변경, 나머지는 현재 용지 유지 (build()가 DOC_W/H 비율 사용) */
+  if (tmpl.changePaper !== false && tmpl.cat === 'blank') {
+    var p = PAPERS[tmpl.paper];
+    if (p) { DOC_W = p.w; DOC_H = p.h; docKey = tmpl.paper; applyPaper(tmpl.paper, p.w, p.h); }
+  }
+  /* 배경색 적용 */
+  if (tmpl.bg) {
+    docBg = tmpl.bg;
+    var bgInput = document.getElementById('doc-bg-color');
+    if (bgInput) bgInput.value = docBg;
+  }
+  /* 배경 타입 초기화 */
+  if (tmpl.bgType) {
+    docBgType = tmpl.bgType;
+    document.getElementById('bg-gradient-toggle').checked = (docBgType === 'gradient');
+    document.getElementById('bg-dots-toggle').checked = (docBgType === 'dots');
+    document.getElementById('bg-gradient-section').style.display = (docBgType === 'gradient') ? 'flex' : 'none';
+    document.getElementById('bg-dots-section').style.display = (docBgType === 'dots') ? 'flex' : 'none';
+  } else {
+    /* 기본: solid */
+    docBgType = 'solid';
+    document.getElementById('bg-gradient-toggle').checked = false;
+    document.getElementById('bg-dots-toggle').checked = false;
+    document.getElementById('bg-gradient-section').style.display = 'none';
+    document.getElementById('bg-dots-section').style.display = 'none';
+  }
+  /* 원형 캔버스 설정 */
+  docShape = tmpl.docShape || 'rect';
+  var shapeChk = document.getElementById('doc-shape-circle');
+  if (shapeChk) shapeChk.checked = (docShape === 'circle');
+  /* 캔버스 초기화 및 아이템 추가 */
   items = []; selectedIds = [];
-  /* 아이템 추가 */
   var defs = tmpl.build();
   defs.forEach(function(def) {
     var it = { id: nextId++ };
