@@ -2670,10 +2670,10 @@ function addImageFromSrc(src, opts) {
   }
 }
 
-/* 픽토그램 자동 자르기 v3 — 행·열 밀도 기반 심볼 영역 추출
-   - 상·하단 12% 스킵: PDF 텍스트 라벨·섹션 번호 완전 제거
-   - 행·열 각각 피크의 6% 이상인 구간만 유효 영역으로 인정
-   - 좌우 잘림 방지(삼각형 심볼), 우측 쏠림 방지, 10% 패딩 */
+/* 픽토그램 자동 자르기 v4
+   - Y축: 행 밀도(피크 6%) → 상하 텍스트 제거, 유효 행 범위 확정
+   - X축: 유효 행 범위 내 min/max 스캔 → 삼각형 꼭짓점 포함 보장
+   - 상·하단 12% 하드 스킵 */
 function autoCropPictogram(img) {
   try {
     var origW = img.naturalWidth, origH = img.naturalHeight;
@@ -2695,34 +2695,24 @@ function autoCropPictogram(img) {
       return l > 0.5 ? (mx - mn) / (2 - mx - mn) : (mx - mn) / (mx + mn);
     }
 
-    /* 상·하단 12% 스킵 — PDF 텍스트 라벨·섹션 번호 영역 */
+    /* 상·하단 12% 하드 스킵 */
     var ySkipTop = Math.floor(h * 0.12);
     var ySkipBot = Math.ceil(h * 0.88);
 
-    /* 행·열별 채색 픽셀 수 카운트 (중간 76% 구간만) */
+    /* Y축: 행별 채색 픽셀 수 → 밀도 기반 유효 행 범위 */
     var rowCnt = new Int32Array(h);
-    var colCnt = new Int32Array(w);
     for (var y = ySkipTop; y < ySkipBot; y++) {
       for (var x = 0; x < w; x++) {
         var pi = (y * w + x) * 4;
         if (data[pi + 3] < 32) continue;
-        if (getSat(data[pi], data[pi + 1], data[pi + 2]) >= SAT_THRESH) {
-          rowCnt[y]++;
-          colCnt[x]++;
-        }
+        if (getSat(data[pi], data[pi + 1], data[pi + 2]) >= SAT_THRESH) rowCnt[y]++;
       }
     }
-
-    /* 피크 밀도 계산 */
-    var peakRow = 0, peakCol = 0;
+    var peakRow = 0;
     for (var i = 0; i < h; i++) if (rowCnt[i] > peakRow) peakRow = rowCnt[i];
-    for (var j = 0; j < w; j++) if (colCnt[j] > peakCol) peakCol = colCnt[j];
-    if (peakRow === 0 || peakCol === 0) return null;
+    if (peakRow === 0) return null;
 
     var rowThresh = peakRow * 0.06;
-    var colThresh = peakCol * 0.06;
-
-    /* 유효 행 범위 (피크의 6% 이상) */
     var top = h, bot = -1;
     for (var ry = ySkipTop; ry < ySkipBot; ry++) {
       if (rowCnt[ry] >= rowThresh) {
@@ -2730,16 +2720,21 @@ function autoCropPictogram(img) {
         if (ry > bot) bot = ry;
       }
     }
-    /* 유효 열 범위 (피크의 6% 이상) */
+    if (bot < 0) return null;
+
+    /* X축: 유효 행 범위(top~bot) 내 채색 픽셀 min/max — 삼각형 꼭짓점 포함 */
     var lft = w, rgt = -1;
-    for (var cx2 = 0; cx2 < w; cx2++) {
-      if (colCnt[cx2] >= colThresh) {
-        if (cx2 < lft) lft = cx2;
-        if (cx2 > rgt) rgt = cx2;
+    for (var y2 = top; y2 <= bot; y2++) {
+      for (var x2 = 0; x2 < w; x2++) {
+        var pi2 = (y2 * w + x2) * 4;
+        if (data[pi2 + 3] < 32) continue;
+        if (getSat(data[pi2], data[pi2 + 1], data[pi2 + 2]) >= SAT_THRESH) {
+          if (x2 < lft) lft = x2;
+          if (x2 > rgt) rgt = x2;
+        }
       }
     }
-
-    if (bot < 0 || rgt < 0) return null;
+    if (rgt < 0) return null;
 
     /* 패딩: 심볼 크기의 10% */
     var padY = Math.max(4, Math.round((bot - top) * 0.10));
