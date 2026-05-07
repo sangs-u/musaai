@@ -2670,8 +2670,10 @@ function addImageFromSrc(src, opts) {
   }
 }
 
-/* 픽토그램 자동 자르기 — 하단 텍스트 라벨 영역 제거
-   개선: 갭이 없어도 밀도 스캔으로 텍스트 구간 분리 */
+/* 픽토그램 자동 자르기 v3 — 행·열 밀도 기반 심볼 영역 추출
+   - 상·하단 12% 스킵: PDF 텍스트 라벨·섹션 번호 완전 제거
+   - 행·열 각각 피크의 6% 이상인 구간만 유효 영역으로 인정
+   - 좌우 잘림 방지(삼각형 심볼), 우측 쏠림 방지, 10% 패딩 */
 function autoCropPictogram(img) {
   try {
     var origW = img.naturalWidth, origH = img.naturalHeight;
@@ -2684,12 +2686,7 @@ function autoCropPictogram(img) {
     oc.drawImage(img, 0, 0, w, h);
     var data = oc.getImageData(0, 0, w, h).data;
 
-    /* ── HSL 채도 기반 경계 탐지 ──────────────────────────────────
-       채도(S) ≥ SAT_THRESH 인 픽셀 = 표지 색상 영역(빨강/노랑/파랑/초록).
-       흰색·회색·검정(S≈0)은 제외 → 텍스트·라벨 자동 제외.
-       표지 내부의 검정 심볼은 채색 경계 내부에 자연 포함됨.      */
-    var SAT_THRESH = 0.18;
-
+    var SAT_THRESH = 0.20;
     function getSat(r, g, b) {
       r /= 255; g /= 255; b /= 255;
       var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
@@ -2698,25 +2695,55 @@ function autoCropPictogram(img) {
       return l > 0.5 ? (mx - mn) / (2 - mx - mn) : (mx - mn) / (mx + mn);
     }
 
-    var top = h, bot = -1, lft = w, rgt = -1;
-    for (var y = 0; y < h; y++) {
+    /* 상·하단 12% 스킵 — PDF 텍스트 라벨·섹션 번호 영역 */
+    var ySkipTop = Math.floor(h * 0.12);
+    var ySkipBot = Math.ceil(h * 0.88);
+
+    /* 행·열별 채색 픽셀 수 카운트 (중간 76% 구간만) */
+    var rowCnt = new Int32Array(h);
+    var colCnt = new Int32Array(w);
+    for (var y = ySkipTop; y < ySkipBot; y++) {
       for (var x = 0; x < w; x++) {
         var pi = (y * w + x) * 4;
         if (data[pi + 3] < 32) continue;
         if (getSat(data[pi], data[pi + 1], data[pi + 2]) >= SAT_THRESH) {
-          if (y < top) top = y;
-          if (y > bot) bot = y;
-          if (x < lft) lft = x;
-          if (x > rgt) rgt = x;
+          rowCnt[y]++;
+          colCnt[x]++;
         }
+      }
+    }
+
+    /* 피크 밀도 계산 */
+    var peakRow = 0, peakCol = 0;
+    for (var i = 0; i < h; i++) if (rowCnt[i] > peakRow) peakRow = rowCnt[i];
+    for (var j = 0; j < w; j++) if (colCnt[j] > peakCol) peakCol = colCnt[j];
+    if (peakRow === 0 || peakCol === 0) return null;
+
+    var rowThresh = peakRow * 0.06;
+    var colThresh = peakCol * 0.06;
+
+    /* 유효 행 범위 (피크의 6% 이상) */
+    var top = h, bot = -1;
+    for (var ry = ySkipTop; ry < ySkipBot; ry++) {
+      if (rowCnt[ry] >= rowThresh) {
+        if (ry < top) top = ry;
+        if (ry > bot) bot = ry;
+      }
+    }
+    /* 유효 열 범위 (피크의 6% 이상) */
+    var lft = w, rgt = -1;
+    for (var cx2 = 0; cx2 < w; cx2++) {
+      if (colCnt[cx2] >= colThresh) {
+        if (cx2 < lft) lft = cx2;
+        if (cx2 > rgt) rgt = cx2;
       }
     }
 
     if (bot < 0 || rgt < 0) return null;
 
-    /* 패딩: 표지 크기의 4% */
-    var padY = Math.max(3, Math.round((bot - top) * 0.04));
-    var padX = Math.max(3, Math.round((rgt - lft) * 0.04));
+    /* 패딩: 심볼 크기의 10% */
+    var padY = Math.max(4, Math.round((bot - top) * 0.10));
+    var padX = Math.max(4, Math.round((rgt - lft) * 0.10));
     var cy = Math.max(0, top - padY);
     var cx = Math.max(0, lft - padX);
     var cw = Math.min(w, rgt + padX + 1) - cx;
