@@ -132,6 +132,18 @@
       background: rgba(0,0,0,0.06);
       color: var(--text-m);
     }
+    .tool-badge.sim   { background: #0891b2; color: #fff; }
+
+    .section-label {
+      grid-column: 1 / -1;
+      padding: 28px 0 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-l);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-top: 1px solid var(--border-s);
+    }
 
     .tool-icon {
       width: 48px; height: 48px;
@@ -231,6 +243,11 @@
   <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
     <line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="13" y2="11"/>
+  </symbol>
+  <symbol id="i-sim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="12,3 22,8.5 12,14 2,8.5"/>
+    <polyline points="2,8.5 2,15.5 12,21 22,15.5 22,8.5"/>
+    <line x1="12" y1="14" x2="12" y2="21"/>
   </symbol>
 </svg>
 
@@ -332,6 +349,17 @@
         <div class="tool-meta">Phase 4 예정</div>
         <div class="tool-cta">준비 중</div>
       </div>
+
+      <div class="section-label">안전 시뮬레이션</div>
+
+      <a href="https://sangs-u.github.io/bulsa/index.html" class="tool-card active" target="_blank" rel="noopener">
+        <span class="tool-badge sim">SIM</span>
+        <div class="tool-icon"><svg><use href="#i-sim"/></svg></div>
+        <div class="tool-title">BULSA 시뮬레이션</div>
+        <div class="tool-desc">건설현장 1인칭 3D 안전 시뮬레이션. 줄걸이·고소작업·밀폐공간 등 6종 작업 시나리오를 실제처럼 체험하며 안전 절차를 익힙니다.</div>
+        <div class="tool-meta">KOSHA GUIDE G-133-2020 · 6종 시나리오</div>
+        <div class="tool-cta">시뮬레이션 시작 →</div>
+      </a>
 
     </main>
 
