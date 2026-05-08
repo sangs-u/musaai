@@ -60,7 +60,16 @@
       "Bash(Format-List)",
       "PowerShell(Start-Process \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\")",
       "Bash(python -m http.server 7777)",
-      "WebFetch(domain:localhost)"
+      "WebFetch(domain:localhost)",
+      "PowerShell(\\(Get-Content \"C:/Users/sangs/OneDrive/Desktop/Musaai/sign.html\" | Measure-Object -Line\\).Lines)",
+      "Bash(Remove-Item -Recurse -Force \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\bulsa\\\\.git\\\\worktrees\\\\agent-a1056d60d1292c051\" -ErrorAction SilentlyContinue)",
+      "Bash(Write-Output \"cleaned\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\bulsa\" -Recurse -Name \"scene.js\")",
+      "Bash(Select-Object -First 20)",
+      "Bash(firebase deploy *)",
+      "WebFetch(domain:kop-safety.web.app)",
+      "Bash(firebase hosting:sites:list)",
+      "WebFetch(domain:safety-management-c7518.web.app)"
     ]
   },
   "hooks": {
