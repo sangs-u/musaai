@@ -5796,131 +5796,113 @@ var TEMPLATES = [
   /* ── 금지 표지 ── */
   { id:'prohibition-no-entry', cat:'prohibition', label:'출입금지', bg:'#fff5f5', paper:'s300',
     build: function() {
-      var cx=DOC_W/2, cy=DOC_H*0.43, r=DOC_W*0.38;
-      return [
-        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#E8222E', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(cy-r), w:Math.round(r*2), h:Math.round(r*2), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.82), w:Math.round(r*2*0.82), h:Math.round(r*2*0.82), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.125), w:Math.round(r*2*0.82), h:Math.round(r*0.25), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:45 },
-        { type:'text', content:'출  입  금  지', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#E8222E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
-        { type:'text', content:'관계자 외 출입을 금합니다', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.18), fontSize:Math.round(DOC_W*0.055), color:'#1D1D1F', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
-      ];
+      var s=getCroppedSignSrc('sign_3'), cx=DOC_W/2, it=[];
+      it.push({ type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#E8222E', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 });
+      if(s) it.push({ type:'image', src:s, x:Math.round(DOC_W*0.08), y:Math.round(DOC_H*0.04), w:Math.round(DOC_W*0.84), h:Math.round(DOC_H*0.70), opacity:1, rotation:0, flipH:false, flipV:false });
+      it.push({ type:'shape', shape:'rect', x:Math.round(DOC_W*0.06), y:Math.round(DOC_H*0.76), w:Math.round(DOC_W*0.88), h:2, fill:'#FECACA', fillOn:true, strokeOn:false, opacity:1, rotation:0 });
+      it.push({ type:'text', content:'출  입  금  지', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.79), fontSize:Math.round(DOC_W*0.09), color:'#E8222E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      it.push({ type:'text', content:'관계자 외 출입을 금합니다', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.90), fontSize:Math.round(DOC_W*0.046), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      return it;
     }
   },
   { id:'prohibition-no-smoking', cat:'prohibition', label:'금연구역', bg:'#fff5f5', paper:'s300',
     build: function() {
-      var cx=DOC_W/2, cy=DOC_H*0.41, r=DOC_W*0.38;
-      return [
-        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#E8222E', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(cy-r), w:Math.round(r*2), h:Math.round(r*2), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.82), w:Math.round(r*2*0.82), h:Math.round(r*2*0.82), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-r*0.5), y:Math.round(cy-r*0.09), w:Math.round(r*1.0), h:Math.round(r*0.18), fill:'#555', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx+r*0.35), y:Math.round(cy-r*0.22), w:Math.round(r*0.18), h:Math.round(r*0.42), fill:'#ccc', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.125), w:Math.round(r*2*0.82), h:Math.round(r*0.25), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:45 },
-        { type:'text', content:'금  연  구  역', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#E8222E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
-        { type:'text', content:'No Smoking Area', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.18), fontSize:Math.round(DOC_W*0.055), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
-      ];
+      var s=getCroppedSignSrc('sign_8'), cx=DOC_W/2, it=[];
+      it.push({ type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#E8222E', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 });
+      if(s) it.push({ type:'image', src:s, x:Math.round(DOC_W*0.08), y:Math.round(DOC_H*0.04), w:Math.round(DOC_W*0.84), h:Math.round(DOC_H*0.70), opacity:1, rotation:0, flipH:false, flipV:false });
+      it.push({ type:'shape', shape:'rect', x:Math.round(DOC_W*0.06), y:Math.round(DOC_H*0.76), w:Math.round(DOC_W*0.88), h:2, fill:'#FECACA', fillOn:true, strokeOn:false, opacity:1, rotation:0 });
+      it.push({ type:'text', content:'금  연  구  역', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.79), fontSize:Math.round(DOC_W*0.09), color:'#E8222E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      it.push({ type:'text', content:'No Smoking Area', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.90), fontSize:Math.round(DOC_W*0.046), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      return it;
     }
   },
   { id:'prohibition-no-fire', cat:'prohibition', label:'화기금지', bg:'#fff5f5', paper:'s300',
     build: function() {
-      var cx=DOC_W/2, cy=DOC_H*0.41, r=DOC_W*0.38;
-      return [
-        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FEF2F2', fillOn:true, strokeOn:true, stroke:'#E8222E', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(cy-r), w:Math.round(r*2), h:Math.round(r*2), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.82), w:Math.round(r*2*0.82), h:Math.round(r*2*0.82), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.2), y:Math.round(cy-r*0.55), w:Math.round(r*0.4), h:Math.round(r*0.7), fill:'#FF6B00', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.28), y:Math.round(cy-r*0.28), w:Math.round(r*0.56), h:Math.round(r*0.56), fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-r*0.82), y:Math.round(cy-r*0.125), w:Math.round(r*2*0.82), h:Math.round(r*0.25), fill:'#E8222E', fillOn:true, strokeOn:false, opacity:1, rotation:45 },
-        { type:'text', content:'화  기  금  지', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#E8222E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
-        { type:'text', content:'No Open Fire', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.18), fontSize:Math.round(DOC_W*0.055), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
-      ];
+      var s=getCroppedSignSrc('sign_9'), cx=DOC_W/2, it=[];
+      it.push({ type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FEF2F2', fillOn:true, strokeOn:true, stroke:'#E8222E', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 });
+      if(s) it.push({ type:'image', src:s, x:Math.round(DOC_W*0.08), y:Math.round(DOC_H*0.04), w:Math.round(DOC_W*0.84), h:Math.round(DOC_H*0.70), opacity:1, rotation:0, flipH:false, flipV:false });
+      it.push({ type:'shape', shape:'rect', x:Math.round(DOC_W*0.06), y:Math.round(DOC_H*0.76), w:Math.round(DOC_W*0.88), h:2, fill:'#FECACA', fillOn:true, strokeOn:false, opacity:1, rotation:0 });
+      it.push({ type:'text', content:'화  기  금  지', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.79), fontSize:Math.round(DOC_W*0.09), color:'#E8222E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      it.push({ type:'text', content:'No Open Fire', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.90), fontSize:Math.round(DOC_W*0.046), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      return it;
     }
   },
 
   /* ── 경고 표지 ── */
   { id:'warning-electricity', cat:'warning', label:'고압전기경고', bg:'#fffde7', paper:'s300',
     build: function() {
-      var cx=DOC_W/2, r=DOC_W*0.44, side=r*2, triH=side*0.87, top=DOC_H*0.06;
-      return [
-        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFDE7', fillOn:true, strokeOn:true, stroke:'#FFD100', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 },
-        { type:'shape', shape:'tri', x:Math.round(cx-side/2), y:Math.round(top), w:Math.round(side), h:Math.round(triH), fill:'#FFD100', fillOn:true, strokeOn:true, stroke:'#1D1D1F', strokeW:Math.round(DOC_W*0.018), opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-side*0.065), y:Math.round(top+triH*0.18), w:Math.round(side*0.2), h:Math.round(triH*0.32), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:-20 },
-        { type:'shape', shape:'rect', x:Math.round(cx-side*0.13), y:Math.round(top+triH*0.42), w:Math.round(side*0.2), h:Math.round(triH*0.3), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:-20 },
-        { type:'text', content:'고압전기 경고', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.04), fontSize:Math.round(DOC_W*0.088), color:'#1D1D1F', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
-        { type:'text', content:'High Voltage · Danger', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
-      ];
+      var s=getCroppedSignSrc('sign_18'), cx=DOC_W/2, it=[];
+      it.push({ type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFDE7', fillOn:true, strokeOn:true, stroke:'#FFD100', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 });
+      if(s) it.push({ type:'image', src:s, x:Math.round(DOC_W*0.08), y:Math.round(DOC_H*0.04), w:Math.round(DOC_W*0.84), h:Math.round(DOC_H*0.70), opacity:1, rotation:0, flipH:false, flipV:false });
+      it.push({ type:'shape', shape:'rect', x:Math.round(DOC_W*0.06), y:Math.round(DOC_H*0.76), w:Math.round(DOC_W*0.88), h:2, fill:'#FDE68A', fillOn:true, strokeOn:false, opacity:1, rotation:0 });
+      it.push({ type:'text', content:'고압전기 경고', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.79), fontSize:Math.round(DOC_W*0.09), color:'#92400E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      it.push({ type:'text', content:'High Voltage · Danger', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.90), fontSize:Math.round(DOC_W*0.046), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      return it;
     }
   },
   { id:'warning-fall', cat:'warning', label:'추락위험경고', bg:'#fffde7', paper:'s300',
     build: function() {
-      var cx=DOC_W/2, r=DOC_W*0.44, side=r*2, triH=side*0.87, top=DOC_H*0.06;
+      var cx=DOC_W/2, r=DOC_W*0.40, side=r*2, triH=side*0.87, top=DOC_H*0.06;
       return [
         { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFDE7', fillOn:true, strokeOn:true, stroke:'#FFD100', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 },
-        { type:'shape', shape:'tri', x:Math.round(cx-side/2), y:Math.round(top), w:Math.round(side), h:Math.round(triH), fill:'#FFD100', fillOn:true, strokeOn:true, stroke:'#1D1D1F', strokeW:Math.round(DOC_W*0.018), opacity:1, rotation:0 },
+        { type:'shape', shape:'tri', x:Math.round(cx-side/2), y:Math.round(top), w:Math.round(side), h:Math.round(triH), fill:'#FFD100', fillOn:true, strokeOn:true, stroke:'#1D1D1F', strokeW:Math.round(DOC_W*0.016), opacity:1, rotation:0 },
         { type:'shape', shape:'ellipse', x:Math.round(cx-side*0.1), y:Math.round(top+triH*0.1), w:Math.round(side*0.2), h:Math.round(side*0.2), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
         { type:'shape', shape:'rect', x:Math.round(cx-side*0.12), y:Math.round(top+triH*0.3), w:Math.round(side*0.24), h:Math.round(triH*0.22), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:28 },
-        { type:'text', content:'추 락 위 험', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#1D1D1F', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
-        { type:'text', content:'Fall Hazard · Danger', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
+        { type:'shape', shape:'rect', x:Math.round(DOC_W*0.06), y:Math.round(top+triH+DOC_H*0.025), w:Math.round(DOC_W*0.88), h:2, fill:'#FDE68A', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'추 락 위 험', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.05), fontSize:Math.round(DOC_W*0.09), color:'#92400E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'Fall Hazard · Danger', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.155), fontSize:Math.round(DOC_W*0.046), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
       ];
     }
   },
   { id:'warning-chemicals', cat:'warning', label:'위험물질경고', bg:'#fffde7', paper:'s300',
     build: function() {
-      var cx=DOC_W/2, r=DOC_W*0.44, side=r*2, triH=side*0.87, top=DOC_H*0.06;
-      return [
-        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFDE7', fillOn:true, strokeOn:true, stroke:'#FFD100', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 },
-        { type:'shape', shape:'tri', x:Math.round(cx-side/2), y:Math.round(top), w:Math.round(side), h:Math.round(triH), fill:'#FFD100', fillOn:true, strokeOn:true, stroke:'#1D1D1F', strokeW:Math.round(DOC_W*0.018), opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-side*0.14), y:Math.round(top+triH*0.13), w:Math.round(side*0.28), h:Math.round(side*0.26), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-side*0.07), y:Math.round(top+triH*0.38), w:Math.round(side*0.14), h:Math.round(triH*0.14), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-side*0.18), y:Math.round(top+triH*0.42), w:Math.round(side*0.36), h:Math.round(triH*0.08), fill:'#1D1D1F', fillOn:true, strokeOn:false, opacity:1, rotation:18 },
-        { type:'text', content:'위험물질 경고', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.04), fontSize:Math.round(DOC_W*0.088), color:'#1D1D1F', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
-        { type:'text', content:'Hazardous Materials', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+triH+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
-      ];
+      var s=getCroppedSignSrc('sign_12'), cx=DOC_W/2, it=[];
+      it.push({ type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFDE7', fillOn:true, strokeOn:true, stroke:'#FFD100', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 });
+      if(s) it.push({ type:'image', src:s, x:Math.round(DOC_W*0.08), y:Math.round(DOC_H*0.04), w:Math.round(DOC_W*0.84), h:Math.round(DOC_H*0.70), opacity:1, rotation:0, flipH:false, flipV:false });
+      it.push({ type:'shape', shape:'rect', x:Math.round(DOC_W*0.06), y:Math.round(DOC_H*0.76), w:Math.round(DOC_W*0.88), h:2, fill:'#FDE68A', fillOn:true, strokeOn:false, opacity:1, rotation:0 });
+      it.push({ type:'text', content:'위험물질 경고', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.79), fontSize:Math.round(DOC_W*0.09), color:'#92400E', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      it.push({ type:'text', content:'Hazardous Materials', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.90), fontSize:Math.round(DOC_W*0.046), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      return it;
     }
   },
 
   /* ── 지시 표지 ── */
   { id:'mandatory-hard-hat', cat:'mandatory', label:'안전모 착용', bg:'#eff6ff', paper:'s300',
     build: function() {
-      var cx=DOC_W/2, r=DOC_W*0.38, top=DOC_H*0.06;
-      return [
-        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#005DAA', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(top), w:Math.round(r*2), h:Math.round(r*2), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.55), y:Math.round(top+r*0.2), w:Math.round(r*1.1), h:Math.round(r*0.88), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-r*0.62), y:Math.round(top+r*0.96), w:Math.round(r*1.24), h:Math.round(r*0.16), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'text', content:'안전모 착용', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#005DAA', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
-        { type:'text', content:'Safety Helmet Required', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
-      ];
+      var s=getCroppedSignSrc('sign_32'), cx=DOC_W/2, it=[];
+      it.push({ type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#005DAA', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 });
+      if(s) it.push({ type:'image', src:s, x:Math.round(DOC_W*0.08), y:Math.round(DOC_H*0.04), w:Math.round(DOC_W*0.84), h:Math.round(DOC_H*0.70), opacity:1, rotation:0, flipH:false, flipV:false });
+      it.push({ type:'shape', shape:'rect', x:Math.round(DOC_W*0.06), y:Math.round(DOC_H*0.76), w:Math.round(DOC_W*0.88), h:2, fill:'#BFDBFE', fillOn:true, strokeOn:false, opacity:1, rotation:0 });
+      it.push({ type:'text', content:'안전모 착용', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.79), fontSize:Math.round(DOC_W*0.09), color:'#005DAA', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      it.push({ type:'text', content:'Safety Helmet Required', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.90), fontSize:Math.round(DOC_W*0.046), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      return it;
     }
   },
   { id:'mandatory-safety-vest', cat:'mandatory', label:'안전조끼 착용', bg:'#eff6ff', paper:'s300',
     build: function() {
-      var cx=DOC_W/2, r=DOC_W*0.38, top=DOC_H*0.06;
-      return [
-        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#005DAA', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(top), w:Math.round(r*2), h:Math.round(r*2), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.21), y:Math.round(top+r*0.12), w:Math.round(r*0.42), h:Math.round(r*0.42), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-r*0.38), y:Math.round(top+r*0.5), w:Math.round(r*0.76), h:Math.round(r*0.88), fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-r*0.04), y:Math.round(top+r*0.5), w:Math.round(r*0.08), h:Math.round(r*0.88), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'text', content:'안전조끼 착용', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.04), fontSize:Math.round(DOC_W*0.088), color:'#005DAA', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
-        { type:'text', content:'Safety Vest Required', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.18), fontSize:Math.round(DOC_W*0.05), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
-      ];
+      var s=getCroppedSignSrc('sign_36'), cx=DOC_W/2, it=[];
+      it.push({ type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#005DAA', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 });
+      if(s) it.push({ type:'image', src:s, x:Math.round(DOC_W*0.08), y:Math.round(DOC_H*0.04), w:Math.round(DOC_W*0.84), h:Math.round(DOC_H*0.70), opacity:1, rotation:0, flipH:false, flipV:false });
+      it.push({ type:'shape', shape:'rect', x:Math.round(DOC_W*0.06), y:Math.round(DOC_H*0.76), w:Math.round(DOC_W*0.88), h:2, fill:'#BFDBFE', fillOn:true, strokeOn:false, opacity:1, rotation:0 });
+      it.push({ type:'text', content:'안전조끼 착용', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.79), fontSize:Math.round(DOC_W*0.088), color:'#005DAA', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      it.push({ type:'text', content:'Safety Vest Required', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.90), fontSize:Math.round(DOC_W*0.046), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      return it;
     }
   },
   { id:'mandatory-safety-belt', cat:'mandatory', label:'안전대 착용', bg:'#eff6ff', paper:'s300',
     build: function() {
-      var cx=DOC_W/2, r=DOC_W*0.38, top=DOC_H*0.06;
+      var cx=DOC_W/2, r=DOC_W*0.36, top=DOC_H*0.05;
       return [
-        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#005DAA', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
+        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#005DAA', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 },
         { type:'shape', shape:'ellipse', x:Math.round(cx-r), y:Math.round(top), w:Math.round(r*2), h:Math.round(r*2), fill:'#005DAA', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
         { type:'shape', shape:'ellipse', x:Math.round(cx-r*0.21), y:Math.round(top+r*0.1), w:Math.round(r*0.42), h:Math.round(r*0.42), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
         { type:'shape', shape:'rect', x:Math.round(cx-r*0.08), y:Math.round(top+r*0.5), w:Math.round(r*0.16), h:Math.round(r*0.72), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
         { type:'shape', shape:'rect', x:Math.round(cx-r*0.5), y:Math.round(top+r*0.5), w:Math.round(r), h:Math.round(r*0.14), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
         { type:'shape', shape:'rect', x:Math.round(cx-r*0.5), y:Math.round(top+r*0.88), w:Math.round(r*0.42), h:Math.round(r*0.32), fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
         { type:'shape', shape:'rect', x:Math.round(cx+r*0.08), y:Math.round(top+r*0.88), w:Math.round(r*0.42), h:Math.round(r*0.32), fill:'#FFD100', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'text', content:'안전대 착용', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#005DAA', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
-        { type:'text', content:'Safety Harness Required', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.18), fontSize:Math.round(DOC_W*0.048), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
+        { type:'shape', shape:'rect', x:Math.round(DOC_W*0.06), y:Math.round(top+r*2+DOC_H*0.03), w:Math.round(DOC_W*0.88), h:2, fill:'#BFDBFE', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
+        { type:'text', content:'안전대 착용', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.055), fontSize:Math.round(DOC_W*0.09), color:'#005DAA', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
+        { type:'text', content:'Safety Harness Required', x:Math.round(cx-DOC_W*0.38), y:Math.round(top+r*2+DOC_H*0.165), fontSize:Math.round(DOC_W*0.046), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
       ];
     }
   },
@@ -5942,15 +5924,13 @@ var TEMPLATES = [
   },
   { id:'info-first-aid', cat:'info', label:'응급처치', bg:'#f0fdf4', paper:'s300',
     build: function() {
-      var cx=DOC_W/2, cy=DOC_H*0.4, r=DOC_W*0.32;
-      return [
-        { type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#007A4D', strokeW:Math.round(DOC_W*0.025), opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-r), y:Math.round(cy-r), w:Math.round(r*2), h:Math.round(r*2), fill:'#007A4D', fillOn:true, strokeOn:false, opacity:1, rotation:0, cornerR:Math.round(r*0.14) },
-        { type:'shape', shape:'rect', x:Math.round(cx-r*0.18), y:Math.round(cy-r*0.68), w:Math.round(r*0.36), h:Math.round(r*1.36), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'shape', shape:'rect', x:Math.round(cx-r*0.68), y:Math.round(cy-r*0.18), w:Math.round(r*1.36), h:Math.round(r*0.36), fill:'#FFFFFF', fillOn:true, strokeOn:false, opacity:1, rotation:0 },
-        { type:'text', content:'응  급  처  치', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.04), fontSize:Math.round(DOC_W*0.1), color:'#007A4D', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) },
-        { type:'text', content:'First Aid Station', x:Math.round(cx-DOC_W*0.38), y:Math.round(cy+r+DOC_H*0.18), fontSize:Math.round(DOC_W*0.055), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) }
-      ];
+      var s=getCroppedSignSrc('sign_38'), cx=DOC_W/2, it=[];
+      it.push({ type:'shape', shape:'rect', x:0, y:0, w:DOC_W, h:DOC_H, fill:'#FFFFFF', fillOn:true, strokeOn:true, stroke:'#007A4D', strokeW:Math.round(DOC_W*0.022), opacity:1, rotation:0 });
+      if(s) it.push({ type:'image', src:s, x:Math.round(DOC_W*0.08), y:Math.round(DOC_H*0.04), w:Math.round(DOC_W*0.84), h:Math.round(DOC_H*0.70), opacity:1, rotation:0, flipH:false, flipV:false });
+      it.push({ type:'shape', shape:'rect', x:Math.round(DOC_W*0.06), y:Math.round(DOC_H*0.76), w:Math.round(DOC_W*0.88), h:2, fill:'#BBF7D0', fillOn:true, strokeOn:false, opacity:1, rotation:0 });
+      it.push({ type:'text', content:'응  급  처  치', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.79), fontSize:Math.round(DOC_W*0.09), color:'#007A4D', bold:true, fontFamily:'"Black Han Sans", sans-serif', textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      it.push({ type:'text', content:'First Aid Station', x:Math.round(cx-DOC_W*0.38), y:Math.round(DOC_H*0.90), fontSize:Math.round(DOC_W*0.046), color:'#787774', bold:false, textAlign:'center', opacity:1, rotation:0, w:Math.round(DOC_W*0.76) });
+      return it;
     }
   },
 
