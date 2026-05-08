@@ -609,10 +609,6 @@
           <input type="text" class="lib-search" id="lib-search" placeholder="표지 검색...">
         </div>
         <div class="sign-cat-row" id="sign-cat-row"></div>
-        <div class="lib-toggle-row">
-          <input type="checkbox" id="lib-pictogram-only" checked>
-          <label for="lib-pictogram-only">그림 기호만 추가 (텍스트·배경 제외)</label>
-        </div>
         <button class="tool-btn" id="lib-batch-btn" style="margin-bottom:6px;font-size:11px;padding:7px 9px;">
           <svg><use href="#ic-shape"/></svg>
           <div class="tool-btn-inner">
@@ -4970,9 +4966,6 @@ document.getElementById('lib-edit-toggle').addEventListener('click', function() 
   this.style.color = libEditMode ? 'var(--accent)' : '';
   renderSignLibrary();
 });
-document.getElementById('lib-pictogram-only').addEventListener('change', function() {
-  pictogramOnly = this.checked;
-});
 document.getElementById('lib-edit-close').addEventListener('click', closeLibraryEdit);
 document.getElementById('lib-edit-cancel').addEventListener('click', closeLibraryEdit);
 document.getElementById('lib-edit-save').addEventListener('click', saveLibraryEdit);
@@ -5597,7 +5590,7 @@ function save() {
       docW: DOC_W, docH: DOC_H, docKey: docKey,
       docBg: docBg, docBgType: docBgType, docBg2: docBg2, docBgAngle: docBgAngle,
       docBgDotSize: docBgDotSize, docBgDotColor: docBgDotColor, docShape: docShape,
-      showGrid: showGrid, snapEnabled: snapEnabled, pictogramOnly: pictogramOnly
+      showGrid: showGrid, snapEnabled: snapEnabled
     }));
   } catch(e) {}
   renderLayerPanel();
@@ -5646,11 +5639,6 @@ function load() {
     }
     if (typeof data.showGrid === 'boolean') showGrid = data.showGrid;
     if (typeof data.snapEnabled === 'boolean') snapEnabled = data.snapEnabled;
-    if (typeof data.pictogramOnly === 'boolean') {
-      pictogramOnly = data.pictogramOnly;
-      var pi = document.getElementById('lib-pictogram-only');
-      if (pi) pi.checked = pictogramOnly;
-    }
     /* 도트 배경 복원 */
     if (data.docBgDotSize) docBgDotSize = data.docBgDotSize;
     if (data.docBgDotColor) {
