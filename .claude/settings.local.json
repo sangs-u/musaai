@@ -57,7 +57,10 @@
       "PowerShell(Test-NetConnection *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\bulsa\" -Recurse -Include \"*.html\", \"*.js\")",
       "Bash(Select-Object FullName)",
-      "Bash(Format-List)"
+      "Bash(Format-List)",
+      "PowerShell(Start-Process \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\")",
+      "Bash(python -m http.server 7777)",
+      "WebFetch(domain:localhost)"
     ]
   },
   "hooks": {
@@ -67,7 +70,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "git push origin main"
+            "command": "powershell -NoProfile -NonInteractive -Command \"git push origin main 2>&1 | Out-Null; exit 0\""
           }
         ]
       }
