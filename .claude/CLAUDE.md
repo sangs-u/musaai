@@ -124,7 +124,7 @@
 1. task.txt에 지시사항이 있으면 확인 없이 바로 적용
 2. **절대 질문하지 말 것.** 모호한 부분은 스스로 판단하고 진행
 3. **파일 삭제 절대 금지.** 수정만 허용
-4. **작업 시작 전 자동 백업:** `git add . && git commit -m "pre-work backup"` 실행
+4. **작업 시작 전 자동 백업:** `git add . && git commit -m "pre-work backup" && git push origin main` 실행
 5. **core.js / style.css / index.html** — 계산 로직 외 수정 금지; 수정 시 다른 파일 영향 반드시 확인
 6. plan-template.js 수정 시 스모크 테스트(console.assert) 통과 확인
 7. PDF 출력 관련 작업 시 기존 레이아웃 깨지지 않도록 주의
