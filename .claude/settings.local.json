@@ -50,7 +50,10 @@
       "Bash(where inkscape *)",
       "Bash(where python *)",
       "Bash(where python3 *)",
-      "PowerShell(\\(Get-Item \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\"\\).Length; $c = Get-Content \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\" -Raw; \"chars: $\\($c.Length\\)\"; \"has autoCropPictogram: $\\($c.Contains\\('autoCropPictogram'\\)\\)\"; \"has ySkipTop: $\\($c.Contains\\('ySkipTop'\\)\\)\")"
+      "PowerShell(\\(Get-Item \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\"\\).Length; $c = Get-Content \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\" -Raw; \"chars: $\\($c.Length\\)\"; \"has autoCropPictogram: $\\($c.Contains\\('autoCropPictogram'\\)\\)\"; \"has ySkipTop: $\\($c.Contains\\('ySkipTop'\\)\\)\")",
+      "Bash(curl *)",
+      "Read(//tmp/**)",
+      "Bash(git *)"
     ]
   }
 }
