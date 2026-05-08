@@ -53,7 +53,11 @@
       "PowerShell(\\(Get-Item \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\"\\).Length; $c = Get-Content \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\Musaai\\\\sign.html\" -Raw; \"chars: $\\($c.Length\\)\"; \"has autoCropPictogram: $\\($c.Contains\\('autoCropPictogram'\\)\\)\"; \"has ySkipTop: $\\($c.Contains\\('ySkipTop'\\)\\)\")",
       "Bash(curl *)",
       "Read(//tmp/**)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "PowerShell(Test-NetConnection *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\sangs\\\\OneDrive\\\\Desktop\\\\bulsa\" -Recurse -Include \"*.html\", \"*.js\")",
+      "Bash(Select-Object FullName)",
+      "Bash(Format-List)"
     ]
   },
   "hooks": {
